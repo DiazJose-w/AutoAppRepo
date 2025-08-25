@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -56,4 +57,17 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Librería Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
+    // Opcional: auto-detección del SMS (SMS Retriever / User Consent)
+    implementation(libs.play.services.auth.api.phone)
+
+    // Librería de navegación
+    implementation(libs.androidx.navigation.compose)
+    // Librería para convertir el número de teléfono
+    implementation(libs.libphonenumber)
 }
