@@ -1,5 +1,6 @@
 package com.proyecto.autoapp.inicio.registro
 
+import com.proyecto.autoapp.R
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -55,7 +56,7 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
     LaunchedEffect(loginOk) {
         if (loginOk) {
             Toast.makeText(context, "Inicio de sesión correcto", Toast.LENGTH_LONG).show()
-            // navController.navigate("home") { popUpTo("login") { inclusive = true } }
+            navController.navigate("home") { popUpTo("login") { inclusive = true } }
         }
     }
 

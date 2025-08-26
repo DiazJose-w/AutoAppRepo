@@ -1,7 +1,10 @@
 package com.proyecto.autoapp.inicio.viewInicial
 
-import android.R
+import com.proyecto.autoapp.R
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,11 +32,47 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.proyecto.autoapp.general.Rutas
+import com.proyecto.autoapp.inicio.login.LoginVM
 
 @Composable
-fun ViewInicial(navController: NavController) {
+fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.result
+            val idToken = account?.idToken
+            if (idToken != null) {
+                loginVM.loginWithGoogle(idToken)
+                /**     CREAR PÁGINA DE INICIO Y NAVEGAR DESDE AQUÍ
+                 *  Recuerda cerrar sesión con:
+                 *
+                 *                          loginVM.signOut(context)
+                 *                          navController.navigate(Rutas.ViewInicial){
+                 *                                 popUpTo(Rutas.Login){inclusive = true}
+                 *                          }
+                 * */
+                Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun launchGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -54,7 +93,7 @@ fun ViewInicial(navController: NavController) {
                 Spacer(Modifier.height(48.dp))
 
                 Image(
-                    painter = painterResource(R.drawable.ic_menu_view),
+                    painter = painterResource(R.drawable.ic_launcher_background),
                     contentDescription = "Logo",
                     modifier = Modifier
                         .size(160.dp)
@@ -65,7 +104,7 @@ fun ViewInicial(navController: NavController) {
                 Spacer(Modifier.height(24.dp))
 
                 Text(
-                    text = "Hitch-Way",
+                    text = "FingerUp",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -101,7 +140,7 @@ fun ViewInicial(navController: NavController) {
 
                 Button(
                     onClick = {
-                        Toast.makeText( context,"NO DISPONIBLE", Toast.LENGTH_SHORT).show()
+                        launchGoogleSignIn()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(

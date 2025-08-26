@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(navController, Rutas.ViewInicial) {
                     composable(Rutas.ViewInicial) {
-                        ViewInicial(navController)
+                        ViewInicial(navController, loginVM)
                     }
                     composable(Rutas.Login) {
                         Login(navController, loginVM)
