@@ -7,6 +7,5 @@ open class Usuario (
     val id: Int,
     val nombre: String,
     val email: String,
-    val rol: RolUser,
-    val perfil : Perfiles
+    val rol: RolUser
 )
