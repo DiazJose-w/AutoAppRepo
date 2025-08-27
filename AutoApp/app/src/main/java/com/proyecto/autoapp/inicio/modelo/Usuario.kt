@@ -1,7 +1,6 @@
 package com.proyecto.autoapp.inicio.modelo
 
 import com.proyecto.autoapp.inicio.modelo.enumClass.RolUser
-import com.proyecto.autoapp.inicio.modelo.perfil.Perfiles
 
 open class Usuario (
     val id: Int,

@@ -9,7 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.proyecto.autoapp.inicio.login.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
-import com.proyecto.autoapp.inicio.registro.Registro
+import com.proyecto.autoapp.inicio.registro.ventanas.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme

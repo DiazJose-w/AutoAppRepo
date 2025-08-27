@@ -1,6 +1,5 @@
-package com.proyecto.autoapp.inicio.registro
+package com.proyecto.autoapp.inicio.registro.ventanas
 
-import com.proyecto.autoapp.R
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -32,13 +31,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import com.google.i18n.phonenumbers.NumberParseException
-import com.google.i18n.phonenumbers.PhoneNumberUtil
-import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
 import com.proyecto.autoapp.general.TopBarGeneral
+import com.proyecto.autoapp.inicio.registro.RegistroVM
+
 
 @Composable
-fun Registro(navController: NavController ,registroVM: RegistroVM) {
+fun TokenSMS(navController: NavController, registroVM: RegistroVM){
     var context = LocalContext.current
 
     // Estados para teléfono y código
@@ -152,19 +150,5 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
                 }
             }
         }
-    }
-}
-
-// Función para castear el número de teléfono
-fun formatE164(phoneRaw: String, defaultRegion: String = "ES"): String? {
-    val util = PhoneNumberUtil.getInstance()
-
-    return try {
-        val proto = util.parse(phoneRaw, defaultRegion)
-        if (util.isValidNumber(proto)) util.format(proto, PhoneNumberFormat.E164)
-        else
-            null
-    } catch (_: NumberParseException) {
-        null
     }
 }

@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.TimeUnit
 
@@ -19,6 +20,8 @@ class RegistroVM() {
     val errorMessage = MutableStateFlow<String?>(null)
     val codeSent = MutableStateFlow(false)
 
+
+    /**     MÉTODOS Y HERRAMIENTAS PARA LA VERIFICACIÓN MEDIANTE SMS     */
     // Guardamos datos del proceso OTP
     private var verificationId: String? = null
     private var resendToken: PhoneAuthProvider.ForceResendingToken? = null
@@ -51,7 +54,7 @@ class RegistroVM() {
         }
     }
 
-    /** 1) Enviar SMS */
+    // 1) Enviar SMS
     fun startPhoneVerification(activity: Activity, numberPhone: String) {
         if (numberPhone.isBlank()) {
             errorMessage.value = "Introduce un teléfono válido"
@@ -70,7 +73,7 @@ class RegistroVM() {
         }
     }
 
-    /** 2) Reenviar SMS */
+    // 2) Reenviar SMS
     fun resendCode(activity: Activity, phoneE164: String) {
         val token = resendToken ?: run { errorMessage.value = "No hay token de reenvío"; return }
         isLoading.value = true
@@ -86,7 +89,7 @@ class RegistroVM() {
         PhoneAuthProvider.verifyPhoneNumber(options)
     }
 
-    /** 3) Verificar código manual */
+    // 3) Verificar código manual
     fun verifyCode(code: String) {
         val id = verificationId ?: run { errorMessage.value = "Primero solicita el código"; return }
         if (code.length < 6) { errorMessage.value = "El código debe tener 6 dígitos"; return }
@@ -96,6 +99,7 @@ class RegistroVM() {
         signInWithPhoneAuthCredential(credential)
     }
 
+    // 4) Entrar con el código enviado al teléfono
     private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
@@ -109,5 +113,15 @@ class RegistroVM() {
                         ?: "Código incorrecto o caducado"
                 }
             }
+    }
+
+
+    /**     MÉTODOS PARA EL REGISTRO DEL USUARIO     */
+
+    fun registroWhitEmail(nombre: String, apellidos: String, email: String,
+                          edad: Int, password: String,
+                          onResult: (Boolean) -> Unit){
+
+
     }
 }
