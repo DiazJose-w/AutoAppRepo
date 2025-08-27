@@ -102,7 +102,6 @@ class LoginVM {
                 }
             }
         } else {
-            //El usuario no inició sesión con Google (email/contraseña u otro proveedor)
             auth.signOut()
             Log.d(TAG, "Sesión cerrada para usuario no Google")
         }

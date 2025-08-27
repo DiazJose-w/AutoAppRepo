@@ -59,6 +59,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                  *                          }
                  * */
                 Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
+                navController.navigate(Rutas.Registro)
             } else {
                 Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
             }

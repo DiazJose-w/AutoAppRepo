@@ -53,7 +53,7 @@ fun PasoEdad(
                     error = when {
                         edad.isBlank() -> "La edad es obligatoria"
                         edad.toIntOrNull() == null -> "Introduce una edad válida"
-                        edad.toInt() < 18 -> "Debes ser mayor de edad"
+                        !edadUsuario(edad.toInt()) -> "Edad no válida"
                         else -> null
                     }
                     if (error == null) onNext()

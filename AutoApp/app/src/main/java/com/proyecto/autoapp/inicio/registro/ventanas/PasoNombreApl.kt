@@ -36,8 +36,6 @@ fun PasoNombreApl(nombre: String, apellidos: String, onNombreChange: (String) ->
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ){
         Column(Modifier.padding(16.dp)) {
-            TitulosRegistro("Nombre y apellidos")
-
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { onNombreChange(it); error = null },

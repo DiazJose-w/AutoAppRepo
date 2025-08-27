@@ -73,5 +73,5 @@ dependencies {
     implementation(libs.libphonenumber)
 
     //Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:21.4.0")
+    implementation(libs.play.services.auth)
 }

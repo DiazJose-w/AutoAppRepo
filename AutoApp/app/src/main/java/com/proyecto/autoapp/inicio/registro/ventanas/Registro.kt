@@ -25,6 +25,8 @@ import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
 import com.proyecto.autoapp.general.TopBarGeneral
+import com.proyecto.autoapp.inicio.login.Login
+import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 
 @Composable
@@ -39,24 +41,12 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var edad by rememberSaveable { mutableStateOf("") }
-
+    var confirmEmail by rememberSaveable { mutableStateOf("") }
+    var tokenServidor by rememberSaveable { mutableStateOf<String?>(null) }
 
     var cont by rememberSaveable { mutableIntStateOf(1) }
 
-    Scaffold (
-        topBar = {
-            TopBarGeneral(
-                "Registro",
-                onAccion = {
-                    when (it) {
-                        1 -> {
-                            navController.popBackStack()
-                        }
-                    }
-                }
-            )
-        }
-    )
+    Scaffold ()
     { padding ->
         Box(
             modifier = Modifier
@@ -82,22 +72,35 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
                     onBack = { cont = 1 }
                 )
 
-                3 -> PasoEmail(
-                    email = email,
-                    onEmailChange = { email = it },
-                    onNext = { cont = 4 },
-                    onBack = { cont = 3 }
-                )
-
-                4 -> PasoPassword(
+                3 -> PasoPassword(
                     password = password,
                     onPasswordChange = { password = it },
-                    onBack = { cont = 2 },
+                    onBack = { cont = 3 },
                     onFinish = {
                         /** EN ESTE PASO ES DONDE DEBO ENVIAR EL TOKEN DE VERIFICACIÓN
-                            SI EL TOKEN COINCIDE, PASAR A LA SIGUIENTE PÁGINA QUE SERÍA LA PÁGINA DE INICIO DE LA APP
+                        SI EL TOKEN COINCIDE, PASAR A LA SIGUIENTE PÁGINA QUE SERÍA LA PÁGINA DE INICIO DE LA APP
                          * */
                     }
+                )
+
+                4 -> PasoEmail(
+                    email = email,
+                    onEmailChange = { email = it },
+                    confirmEmail = confirmEmail,
+                    onConfirmEmailChange = { confirmEmail = it },
+                    onRequestToken = { correo ->
+                        // Aquí implementar mi propio método el cual va a incluir letras may y min y números
+                        val nuevoToken = (100000..999999).random().toString()
+                        tokenServidor = nuevoToken
+
+                        // 2) Envíalo por correo (tu implementación real aquí)
+                        // registroVM.enviarTokenEmail(correo, nuevoToken)
+                    },
+                    onVerifyToken = {
+                        it -> tokenServidor != null && tokenServidor == it
+                    },
+                    onNext = { cont = 4 },
+                    onBack = { cont = 2 }
                 )
             }
 
@@ -145,31 +148,6 @@ fun formatE164(phoneRaw: String, defaultRegion: String = "ES"): String? {
     }
 }
 
-// Función que comprueba que los campos tengan algún valor
-fun comprobarCampos(
-    nombre: String, apellidos: String, email: String,
-    edad: Int, passwor: String, confPassword: String, context: Context
-): Boolean{
-    var flag = true
-
-    if(nombre.isNullOrEmpty() || apellidos.isNullOrEmpty() || email.isNullOrEmpty()
-        || confPassword.isNullOrEmpty()){
-        Toast.makeText(context, "Rellena todos los campos", Toast.LENGTH_SHORT).show()
-        flag = false
-    }else if(!edadUsuario(edad)){
-        Toast.makeText(context, "Edad no válidad", Toast.LENGTH_SHORT).show()
-        flag = false
-    }else if(passwor != confPassword){
-        Toast.makeText(context, "Contraseñas distintas", Toast.LENGTH_SHORT).show()
-        flag = false
-    }else if (!validarEmail(email)){
-        Toast.makeText(context, "Email no válido", Toast.LENGTH_SHORT).show()
-        flag = false
-    }
-
-    return flag
-}
-
 // Expresión para comprobar si el formato del email es correcto
 fun validarEmail(email: String): Boolean {
     val emailPermitido = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
@@ -180,14 +158,8 @@ fun validarEmail(email: String): Boolean {
 fun edadUsuario(edad: Int): Boolean{
     var flag = true
 
-    if (edad < 16){
+    if (edad < 16 || edad > 80){
         flag = false
     }
     return flag
-}
-
-// Expresión que comprueba el mínimo de seguridad de la contraseña
-
-fun comprobarPassword(){
-    /**     FALTA POR IMPLEMENTAR. BUSCAR EXPRESIÓN REGULAR PARA ELLO     */
 }
