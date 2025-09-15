@@ -1,16 +1,15 @@
 package com.proyecto.autoapp.inicio.modelo.enumClass
 
-
-enum class PerfilUser(var valor: Int) {
+enum class PerfilCustomer(var valor: Int) {
     CONDUCTOR(2),
     PASAJERO(3);
 
     companion object {
-        fun desdeValor(valor: Int): PerfilUser {
+        fun desdeValor(valor: Int): PerfilCustomer {
             return entries.first { it.valor == valor }
         }
 
-        fun desdeString(valor : PerfilUser): Int{
+        fun desdeString(valor : PerfilCustomer): Int{
             var res: Int
 
             if(valor == CONDUCTOR){

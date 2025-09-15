@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -20,10 +22,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasoNombreApl(nombre: String, apellidos: String, onNombreChange: (String) -> Unit, onApellidosChange: (String) -> Unit,
                   onNext: () -> Unit, onBack: () -> Unit){
@@ -36,6 +41,7 @@ fun PasoNombreApl(nombre: String, apellidos: String, onNombreChange: (String) ->
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ){
         Column(Modifier.padding(16.dp)) {
+
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { onNombreChange(it); error = null },

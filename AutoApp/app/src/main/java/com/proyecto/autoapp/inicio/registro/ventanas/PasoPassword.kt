@@ -25,12 +25,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PasoPassword(
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    onBack: () -> Unit,
-    onFinish: () -> Unit
-) {
+fun PasoPassword(password: String, onPasswordChange: (String) -> Unit, onBack: () -> Unit, onNext: () -> Unit) {
     var show by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var showConfirm by remember { mutableStateOf(false) }
@@ -83,10 +78,10 @@ fun PasoPassword(
                         password != pass -> "Deben coincidir las contraseñas"
                         else -> null
                     }
-                    if (error == null) onFinish()
+                    if (error == null) onNext()
                 }
             )
-            { Text("Crear cuenta") }
+            { Text("Siguiente") }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }

@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                         Login(navController, loginVM)
                     }
                     composable(Rutas.Registro) {
-                        Registro(navController, registroVM)
+                        Registro(navController, registroVM, loginVM)
                     }
                 }
             }

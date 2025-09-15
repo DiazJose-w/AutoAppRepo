@@ -24,13 +24,14 @@ import androidx.navigation.NavController
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
+import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.TopBarGeneral
 import com.proyecto.autoapp.inicio.login.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 
 @Composable
-fun Registro(navController: NavController ,registroVM: RegistroVM) {
+fun Registro(navController: NavController ,registroVM: RegistroVM, loginVM: LoginVM) {
     var context = LocalContext.current
 
     val isLoading by registroVM.isLoading.collectAsState()
@@ -46,7 +47,25 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
 
     var cont by rememberSaveable { mutableIntStateOf(1) }
 
-    Scaffold ()
+    Scaffold (
+        topBar = {
+            TopBarGeneral(
+                "Registro",
+                onAccion = {
+                    when (it) {
+                        1 -> {
+                            navController.popBackStack()
+                            loginVM.signOut(context)
+                            navController.navigate(Rutas.ViewInicial){
+                                popUpTo(Rutas.Login){ inclusive = true }
+                            }
+                            // CUANDO HAGA LA PÁGINA PRINCIPAL Y TENGA EL ESTILO CREADO, BORRAR ESTA TOPBAR
+                        }
+                    }
+                }
+            )
+        }
+    )
     { padding ->
         Box(
             modifier = Modifier
@@ -75,12 +94,8 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
                 3 -> PasoPassword(
                     password = password,
                     onPasswordChange = { password = it },
-                    onBack = { cont = 3 },
-                    onFinish = {
-                        /** EN ESTE PASO ES DONDE DEBO ENVIAR EL TOKEN DE VERIFICACIÓN
-                        SI EL TOKEN COINCIDE, PASAR A LA SIGUIENTE PÁGINA QUE SERÍA LA PÁGINA DE INICIO DE LA APP
-                         * */
-                    }
+                    onBack = { cont = 2 },
+                    onNext = { cont = 4 }
                 )
 
                 4 -> PasoEmail(
@@ -95,11 +110,14 @@ fun Registro(navController: NavController ,registroVM: RegistroVM) {
 
                         // 2) Envíalo por correo (tu implementación real aquí)
                         // registroVM.enviarTokenEmail(correo, nuevoToken)
+                        /** EN ESTE PASO ES DONDE DEBO ENVIAR EL TOKEN DE VERIFICACIÓN
+                        SI EL TOKEN COINCIDE, PASAR A LA SIGUIENTE PÁGINA QUE SERÍA LA PÁGINA DE INICIO DE LA APP
+                         * */
                     },
                     onVerifyToken = {
                         it -> tokenServidor != null && tokenServidor == it
                     },
-                    onNext = { cont = 4 },
+                    onFinish = { cont = 4 },
                     onBack = { cont = 2 }
                 )
             }

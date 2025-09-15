@@ -1,18 +1,18 @@
 package com.proyecto.autoapp.inicio.modelo.enumClass
 
-enum class RolUser (var valor: Int){
+enum class RolUsuario (var valor: Int){
     ADMIN(0),
-    USER(1);
+    CUSTOMER(1);
 
     companion object {
-        fun desdeValor(valor: Int): RolUser {
+        fun desdeValor(valor: Int): RolUsuario {
             return entries.first { it.valor == valor }
         }
 
-        fun desdeString(valor : RolUser): Int{
+        fun desdeString(valor : RolUsuario): Int{
             var res: Int
 
-            if(valor == USER){
+            if(valor == CUSTOMER){
                 res = 1
             }else{
                 res = 0

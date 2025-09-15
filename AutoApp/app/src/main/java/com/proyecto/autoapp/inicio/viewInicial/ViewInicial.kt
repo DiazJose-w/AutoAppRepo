@@ -41,6 +41,7 @@ import com.proyecto.autoapp.inicio.login.LoginVM
 fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
 
+
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -54,12 +55,12 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                  *  Recuerda cerrar sesión con:
                  *
                  *                          loginVM.signOut(context)
-                 *                          navController.navigate(Rutas.ViewInicial){
-                 *                                 popUpTo(Rutas.Login){inclusive = true}
-                 *                          }
+                                                navController.navigate(Rutas.ViewInicial){
+                                                   popUpTo(Rutas.Login){inclusive = true}
+                                            }
                  * */
                 Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
-                navController.navigate(Rutas.Registro)
+                navController.navigate(Rutas.Registro) // Esta la tengo de ejemplo, para poder cerrar sesión después
             } else {
                 Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
             }
