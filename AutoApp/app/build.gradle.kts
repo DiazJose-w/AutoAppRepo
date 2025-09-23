@@ -78,8 +78,11 @@ dependencies {
     // Librería para enviar token email
     implementation(libs.firebase.functions)
 
-
-
+    // Librerias para mapService
+    implementation(libs.play.services.maps.v1900)
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.lifecycle.runtime.ktx.v287)
 
 
 }
