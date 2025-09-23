@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.inicio.registro.ventanas
+package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

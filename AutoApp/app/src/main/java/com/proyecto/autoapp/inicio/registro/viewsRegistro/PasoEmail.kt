@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.inicio.registro.ventanas
+package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: String, onConfirmEmailChange: (String) -> Unit,
     onRequestToken: (String) -> Unit, onVerifyToken: (String) -> Boolean, onFinish: () -> Unit, onBack: () -> Unit) {
-    var context = LocalContext.current
+    val context = LocalContext.current
     var errorEmail by remember { mutableStateOf<String?>(null) }
     var errorConfirm by remember { mutableStateOf<String?>(null) }
 
@@ -53,8 +53,8 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
                     onEmailChange(it)
                     errorEmail = null
                     if (errorConfirm != null && confirmEmail == it) errorConfirm = null
-                    // Si el usuario cambia el email tras haber pedido token, reseteamos token/visibilidad
                     if (showTokenField) {
+                        // resetear token si cambia el email
                         showTokenField = false
                         tokenRequested = false
                         token = ""
@@ -74,8 +74,8 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
                 onValueChange = {
                     onConfirmEmailChange(it)
                     errorConfirm = null
-                    // Si cambia la confirmación y ya se mostró el token, reseteamos
                     if (showTokenField) {
+                        // resetear token si cambia la confirmación
                         showTokenField = false
                         tokenRequested = false
                         token = ""
@@ -117,7 +117,10 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = { onRequestToken(email) }) {
+                    TextButton(onClick = {
+                        onRequestToken(email)
+                        Toast.makeText(context, "Código reenviado", Toast.LENGTH_SHORT).show()
+                    }) {
                         Text("Reenviar código")
                     }
                 }
@@ -156,16 +159,18 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
                             }
                         } else {
                             // 3) Ya visible: verificar token
-                            errorToken = when {
-                                token.isBlank() -> "Introduce el código de verificación"
-                                !onVerifyToken(token) -> "Código incorrecto"
-                                else -> null
-                            }
-
-                            if (errorToken == null){
-                                errorToken = "Algo ha ocurrido"
-                            } else {
-                                onFinish()
+                            when {
+                                token.isBlank() -> {
+                                    errorToken = "Introduce el código de verificación"
+                                }
+                                !onVerifyToken(token) -> {
+                                    errorToken = "Código incorrecto"
+                                }
+                                else -> {
+                                    // Token válido
+                                    errorToken = null
+                                    onFinish()
+                                }
                             }
                         }
                     }
@@ -176,3 +181,4 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
         }
     }
 }
+

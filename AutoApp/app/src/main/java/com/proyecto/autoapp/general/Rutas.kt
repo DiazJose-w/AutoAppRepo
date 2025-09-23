@@ -5,5 +5,7 @@ object Rutas {
     var Login = "login"
     var Registro = "registro"
 
-    
+    var TokenSMS = "tokenSMS"
+
+    var MapScreen = "mapScreen"
 }

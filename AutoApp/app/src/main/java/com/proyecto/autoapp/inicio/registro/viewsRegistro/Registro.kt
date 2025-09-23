@@ -1,7 +1,5 @@
-package com.proyecto.autoapp.inicio.registro.ventanas
+package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,7 +24,6 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.TopBarGeneral
-import com.proyecto.autoapp.inicio.login.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 

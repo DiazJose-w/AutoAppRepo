@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.inicio.registro.ventanas
+package com.proyecto.autoapp.inicio.login.ViewsLogin
 
 import android.app.Activity
 import android.widget.Toast
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -28,25 +29,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.proyecto.autoapp.general.TopBarGeneral
-import com.proyecto.autoapp.inicio.registro.RegistroVM
+import com.proyecto.autoapp.inicio.login.LoginVM
+import com.proyecto.autoapp.inicio.registro.viewsRegistro.formatE164
 
 
 @Composable
-fun TokenSMS(navController: NavController, registroVM: RegistroVM){
+fun TokenSMS(navController: NavController, loginVM: LoginVM){
     var context = LocalContext.current
 
     // Estados para teléfono y código
     var phone by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
 
-    val isLoading by registroVM.isLoading.collectAsState()
-    val errorMsg by registroVM.errorMessage.collectAsState()
-    val codeSent by registroVM.codeSent.collectAsState()       // <- ver ajuste del VM abajo
-    val loginOk by registroVM.loginSuccess.collectAsState()
+    val isLoading by loginVM.isLoading.collectAsState()
+    val errorMsg by loginVM.errorMessage.collectAsState()
+    val codeSent by loginVM.codeSent.collectAsState()       // <- ver ajuste del VM abajo
+    val loginOk by loginVM.loginSuccess.collectAsState()
 
     // Feedback
     LaunchedEffect(errorMsg) { errorMsg?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show() } }
@@ -91,8 +94,9 @@ fun TokenSMS(navController: NavController, registroVM: RegistroVM){
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it.trim() },
-                    label = { Text("Teléfono (+34...)") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = { Text("Teléfono") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -102,7 +106,8 @@ fun TokenSMS(navController: NavController, registroVM: RegistroVM){
                     value = code,
                     onValueChange = { code = it.filter(Char::isDigit).take(6) },
                     label = { Text("Código (SMS)") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 // Enviar SMS
@@ -112,7 +117,7 @@ fun TokenSMS(navController: NavController, registroVM: RegistroVM){
                         if (e164 == null) {
                             Toast.makeText(context, "Teléfono inválido", Toast.LENGTH_SHORT).show()
                         } else {
-                            registroVM.startPhoneVerification(context as Activity, e164) // ← ya en E.164
+                            loginVM.startPhoneVerification(context as Activity, e164) // ← ya en E.164
                         }
                     },
                     enabled = phone.isNotBlank() && !isLoading,
@@ -126,7 +131,7 @@ fun TokenSMS(navController: NavController, registroVM: RegistroVM){
 
                 // Verificar código
                 Button(
-                    onClick = { registroVM.verifyCode(code) },
+                    onClick = { loginVM.verifyCode(code) },
                     enabled = code.length == 6 && !isLoading,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(

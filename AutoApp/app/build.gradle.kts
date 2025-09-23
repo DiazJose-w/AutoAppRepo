@@ -74,4 +74,12 @@ dependencies {
 
     //Google Sign-In
     implementation(libs.play.services.auth)
+
+    // Librería para enviar token email
+    implementation(libs.firebase.functions)
+
+
+
+
+
 }

@@ -7,9 +7,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.proyecto.autoapp.inicio.login.Login
+import com.proyecto.autoapp.general.Maps.MapScreen
+import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
-import com.proyecto.autoapp.inicio.registro.ventanas.Registro
+import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS
+import com.proyecto.autoapp.inicio.registro.viewsRegistro.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
@@ -33,6 +35,12 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Rutas.Registro) {
                         Registro(navController, registroVM, loginVM)
+                    }
+                    composable(Rutas.TokenSMS){
+                        TokenSMS(navController, loginVM)
+                    }
+                    composable(Rutas.MapScreen){
+                        MapScreen()
                     }
                 }
             }

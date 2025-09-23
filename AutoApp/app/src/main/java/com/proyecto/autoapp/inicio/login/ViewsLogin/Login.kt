@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.inicio.login
+package com.proyecto.autoapp.inicio.login.ViewsLogin
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -32,7 +32,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.TopBarGeneral
+import com.proyecto.autoapp.inicio.login.LoginVM
 
 @Composable
 fun Login(navController: NavController, loginVM: LoginVM) {
@@ -91,7 +93,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
 
                 TextButton(
                     onClick = {
-                        /**     IMPLEMENTAR MÉTODO PARA REESTABLECE CONTRASEÑA     */
+                        navController.navigate(Rutas.TokenSMS)
                     }
                 ) {
                     Text("Reestablecer contraseña")
