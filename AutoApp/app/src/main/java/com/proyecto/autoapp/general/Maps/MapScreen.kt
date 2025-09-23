@@ -43,6 +43,10 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerInfoWindow
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
+import androidx.activity.result.IntentSenderRequest
+
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
@@ -53,6 +57,11 @@ fun MapScreen(mapViewModel: MapViewModel){
 
     val selectedCoordinates by mapViewModel.selectedCoordinates.collectAsState()
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    val settingsClient = LocationServices.getSettingsClient(context)
+    val resolutionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) {  }
 
     var longitude by remember { mutableStateOf(TextFieldValue("")) }
     var latitude by remember { mutableStateOf(TextFieldValue("")) }
@@ -70,8 +79,6 @@ fun MapScreen(mapViewModel: MapViewModel){
     val location = remember { mutableStateOf<Location?>(null) }
     val cameraPositionState = rememberCameraPositionState{position = cameraPosition}
 
-
-
     //Solicitamos permisos de ubicación al iniciar.
     LaunchedEffect(Unit) {
         if (!locationPermissionGranted) {
@@ -79,32 +86,40 @@ fun MapScreen(mapViewModel: MapViewModel){
         }
     }
 
-
     //Obtenemos la ubicación actual si está permitida.
     LaunchedEffect(locationPermissionGranted) {
         if (locationPermissionGranted) {
+            // 1. Comprobar que la ubicación del sistema está encendida
+            val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000).build()
+            val settingsRequest = LocationSettingsRequest.Builder()
+                .addLocationRequest(req).build()
+
+            settingsClient.checkLocationSettings(settingsRequest)
+                .addOnFailureListener { ex ->
+                    if (ex is ResolvableApiException) {
+                        resolutionLauncher.launch(
+                            IntentSenderRequest.Builder(ex.resolution.intentSender).build()
+                        )
+                    }
+                }
+
+            // 2. Obtener lastLocation de forma segura
             if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
+                    context, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return@LaunchedEffect
-            }
-            fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-                location.value = loc
+                try {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                        location.value = loc
+                    }
+                } catch (_: SecurityException) { }
             }
         }
     }
+
 
 
     //Si tenemos la ubicación, mover la cámara a la ubicación del usuario.
@@ -142,7 +157,7 @@ fun MapScreen(mapViewModel: MapViewModel){
 //                .weight(1f)
             ,
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = true),
+            properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = locationPermissionGranted),
             uiSettings = MapUiSettings(myLocationButtonEnabled = true),
             onMapLongClick = { latLng ->
                 mapViewModel.addMarker(latLng)

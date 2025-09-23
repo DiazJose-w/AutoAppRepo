@@ -7,7 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.proyecto.autoapp.ContenidoAppUsuario.Pasajero.ViewUsPasajero
 import com.proyecto.autoapp.general.Maps.MapScreen
+import com.proyecto.autoapp.general.Maps.MapViewModel
 import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS
@@ -20,13 +22,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         var loginVM = LoginVM()
         var registroVM = RegistroVM()
+        var mapViewModel = MapViewModel()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.ViewInicial) {
+                NavHost(navController, Rutas.ViewUsPasajero) {
                     composable(Rutas.ViewInicial) {
                         ViewInicial(navController, loginVM)
                     }
@@ -39,8 +42,8 @@ class MainActivity : ComponentActivity() {
                     composable(Rutas.TokenSMS){
                         TokenSMS(navController, loginVM)
                     }
-                    composable(Rutas.MapScreen){
-                        MapScreen()
+                    composable(Rutas.ViewUsPasajero){
+                        ViewUsPasajero(mapViewModel)
                     }
                 }
             }
