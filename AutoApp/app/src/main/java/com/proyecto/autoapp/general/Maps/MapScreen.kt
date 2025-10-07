@@ -8,17 +8,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +40,10 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import androidx.activity.result.IntentSenderRequest
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
@@ -148,19 +146,14 @@ fun MapScreen(mapViewModel: MapViewModel){
     Column(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier
-                .systemBarsPadding()
-                .fillMaxWidth()
-                .height(300.dp)
-            //.width(200.dp)
-//                .weight(1f)
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
             ,
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = locationPermissionGranted),
             uiSettings = MapUiSettings(myLocationButtonEnabled = true),
             onMapLongClick = { latLng ->
                 mapViewModel.addMarker(latLng)
-                longitude = TextFieldValue(latLng.longitude.toString())
-                latitude = TextFieldValue(latLng.latitude.toString())
                 // Centra la cámara en el marcador.
                 mapViewModel.updateCameraPosition(latLng)
             },
@@ -180,21 +173,20 @@ fun MapScreen(mapViewModel: MapViewModel){
             onMapLoaded = {
                 cameraPositionState.position = mapViewModel.cameraPosition.value
                 if (locationPermissionGranted) {
-                    if (locationPermissionGranted) {
-                        // Si el permiso es concedido, activa el punto azul
-                        location.value?.let { loc ->
-                            //Aquí no es necesario hacer nada extra para mostrar el punto azul,
-                            //solo asegurarte de que la ubicación está permitida.
-                            //Esto es para dibujar un círculo en la posición actual del usuario.
-                            circleCenter.value = LatLng(loc.latitude, loc.longitude)
-                        }
+                    // Si el permiso es concedido, activa el punto azul
+                    location.value?.let { loc ->
+                        //Aquí no es necesario hacer nada extra para mostrar el punto azul,
+                        //solo asegurarte de que la ubicación está permitida.
+                        //Esto es para dibujar un círculo en la posición actual del usuario.
+                        circleCenter.value = LatLng(loc.latitude, loc.longitude)
                     }
                 }
             },
-            //Lanzador de ubicación actual.
+            /**
+             * Lanzamos la ubicación actual del usuario
+             * */
             onMyLocationButtonClick = {
                 Toast.makeText(context, "Ubicación actual", Toast.LENGTH_SHORT).show()
-                //mapViewModel.irAHome()
                 val ubiActual = LatLng(location.value!!.latitude, location.value!!.longitude)
 
                 if (location.value != null) {
@@ -203,8 +195,6 @@ fun MapScreen(mapViewModel: MapViewModel){
                 } else {
                     Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Es un valor nulo")
                 }
-
-                Log.d(TAG, "Cámara actualizada: $cameraPosition")
                 true
             },
             //Se lanza cuando pulsamos en el punto azul de mi localización en tiempo real.
@@ -277,28 +267,6 @@ fun MapScreen(mapViewModel: MapViewModel){
 //                )
 //            }
             /**     -------------------------------      */
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            OutlinedTextField(
-                value = latitude,
-                onValueChange = { latitude = it },
-                label = { Text("Latitude") },
-                modifier = Modifier.weight(1f).padding(end = 8.dp)
-            )
-            OutlinedTextField(
-                value = longitude,
-                onValueChange = { longitude = it },
-                label = { Text("Longitude") },
-                modifier = Modifier.weight(1f).padding(start = 8.dp)
-            )
         }
     }
 }
