@@ -75,7 +75,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
         googleSignInLauncher.launch(googleSignInClient.signInIntent)
     }
-    /***/
+    /**  -----------------------------------------------   */
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -107,7 +107,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                 Spacer(Modifier.height(24.dp))
 
                 Text(
-                    text = "ThumbUp",
+                    text = "ThumbsUp",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold
                 )

@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.ContenidoAppUsuario.Pasajero
+package com.proyecto.autoapp.viewUsuario
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +11,7 @@ import com.proyecto.autoapp.general.Maps.MapScreen
 import com.proyecto.autoapp.general.Maps.MapViewModel
 
 @Composable
-fun ViewUsPasajero(mapViewModel: MapViewModel){
+fun ViewUsuario(mapViewModel: MapViewModel){
 
     Scaffold(
         modifier = Modifier.fillMaxSize()

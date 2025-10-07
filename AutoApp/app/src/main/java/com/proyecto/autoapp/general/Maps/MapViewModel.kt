@@ -33,18 +33,16 @@ class MapViewModel : ViewModel() {
     private val _selectedCoordinates = MutableStateFlow<LatLng?>(null)
     val selectedCoordinates: StateFlow<LatLng?> = _selectedCoordinates
 
-    // Add a marker
+    // Función para añadir un punto de interés
     fun addMarker(latLng: LatLng, title: String = "Título del marcador", snippet: String = "Contenido del marcador") {
         viewModelScope.launch {
             _markers.value += MapMarker(position = latLng, title = title, snippet = snippet)
         }
     }
 
-    // Remove a marker
+    // Eliminar el punto de interés
     fun removeMarker(marker: MapMarker) {
-//        viewModelScope.launch { //Esto no lo pongo con corrutinas porque no sigo hasta que no se borre. Hace un efecto no deseado en caso contrario.
         _markers.value -= marker
-//        }
     }
 
     /**
@@ -72,11 +70,11 @@ class MapViewModel : ViewModel() {
     /**
      * Mantiene en zoom a 15 de distancia la posición de la cámara.
      */
-//    fun updateCameraPosition(latLng: LatLng, zoom: Float = 15f) {
-//        viewModelScope.launch {
-//            _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom)
-//        }
-//    }
+    fun updateCameraPosition(latLng: LatLng, zoom: Float = 15f) {
+        viewModelScope.launch {
+            _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom)
+        }
+    }
 
     /**
      * Actualiza la posición de la cámara sin cambiar el zoom / tilt? / bearing?.

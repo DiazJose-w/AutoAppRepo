@@ -47,7 +47,6 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import androidx.activity.result.IntentSenderRequest
 
-
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
     val context = LocalContext.current
@@ -79,6 +78,7 @@ fun MapScreen(mapViewModel: MapViewModel){
     val location = remember { mutableStateOf<Location?>(null) }
     val cameraPositionState = rememberCameraPositionState{position = cameraPosition}
 
+            /**     PERMISOS UBICACIÓN     */
     //Solicitamos permisos de ubicación al iniciar.
     LaunchedEffect(Unit) {
         if (!locationPermissionGranted) {
@@ -86,7 +86,7 @@ fun MapScreen(mapViewModel: MapViewModel){
         }
     }
 
-    //Obtenemos la ubicación actual si está permitida.
+    //Obtenemos la ubicación actual si esta está ya en caché.
     LaunchedEffect(locationPermissionGranted) {
         if (locationPermissionGranted) {
             // 1. Comprobar que la ubicación del sistema está encendida
@@ -115,12 +115,10 @@ fun MapScreen(mapViewModel: MapViewModel){
                     fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
                         location.value = loc
                     }
-                } catch (_: SecurityException) { }
+                } catch (_: SecurityException) {  }
             }
         }
     }
-
-
 
     //Si tenemos la ubicación, mover la cámara a la ubicación del usuario.
     // Garantizamos que la cámara se centre automáticamente en la ubicación del usuario cuando se obtenga o actualice.
@@ -145,7 +143,7 @@ fun MapScreen(mapViewModel: MapViewModel){
     LaunchedEffect(cameraPosition) {
         cameraPositionState.position = cameraPosition
     }
-
+            /** -------------------------- */
 
     Column(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
@@ -193,10 +191,19 @@ fun MapScreen(mapViewModel: MapViewModel){
                     }
                 }
             },
-            //Estp se lanza cuando pulsamos en la diana de arriba.
+            //Lanzador de ubicación actual.
             onMyLocationButtonClick = {
-                Toast.makeText(context, "Volviendo a casa", Toast.LENGTH_SHORT).show()
-                mapViewModel.irAHome()
+                Toast.makeText(context, "Ubicación actual", Toast.LENGTH_SHORT).show()
+                //mapViewModel.irAHome()
+                val ubiActual = LatLng(location.value!!.latitude, location.value!!.longitude)
+
+                if (location.value != null) {
+                    mapViewModel.updateCameraPosition(ubiActual, 17f)
+                    Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Tiene valores")
+                } else {
+                    Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Es un valor nulo")
+                }
+
                 Log.d(TAG, "Cámara actualizada: $cameraPosition")
                 true
             },
@@ -211,8 +218,9 @@ fun MapScreen(mapViewModel: MapViewModel){
             //En la ubicación actual
             location.value?.let {
 
+                //Marca una línea de trayecto entre el punto de ubicación donde te encuentres y donde pinches en el mapa.
 //                Polyline(
-//                    points = listOf(viewModel.cameraPosition.value.target, viewModel.home),
+//                    points = listOf(mapViewModel.cameraPosition.value.target, mapViewModel.home),
 //                    color = Color.Blue,
 //                    width = 9f
 //                )
@@ -227,6 +235,7 @@ fun MapScreen(mapViewModel: MapViewModel){
                 )
             }
 
+            /**     USO DE MARCADORES Y LOCALIZACIÓN     */
             //Calculamos la distancia entre la ubicación del usuario y el marcador.
             location.value?.let { loc ->
                 val userLocation = Location("")
@@ -267,7 +276,7 @@ fun MapScreen(mapViewModel: MapViewModel){
 //                    }
 //                )
 //            }
-
+            /**     -------------------------------      */
         }
 
         Spacer(modifier = Modifier.height(16.dp))
