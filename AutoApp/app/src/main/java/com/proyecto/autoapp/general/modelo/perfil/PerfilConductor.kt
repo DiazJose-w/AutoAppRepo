@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.inicio.modelo.perfil
+package com.proyecto.autoapp.general.modelo.perfil
 
 data class PerfilConductor(
     val enabled: Boolean = false,

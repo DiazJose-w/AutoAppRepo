@@ -83,4 +83,8 @@ dependencies {
     implementation(libs.maps.compose)
     implementation(libs.play.services.location)
     implementation(libs.androidx.lifecycle.runtime.ktx.v287)
+    implementation(libs.places) // Para recomendaciones de ubicaciones cercanas
+
+    // Librería de iconos
+    implementation(libs.androidx.material.icons.extended)
 }

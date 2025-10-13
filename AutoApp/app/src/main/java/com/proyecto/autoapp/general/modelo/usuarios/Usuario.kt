@@ -1,6 +1,6 @@
-package com.proyecto.autoapp.inicio.modelo.usuarios
+package com.proyecto.autoapp.general.modelo.usuarios
 
-import com.proyecto.autoapp.inicio.modelo.enumClass.RolUsuario
+import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 
 open class Usuario (
     val id: String,
