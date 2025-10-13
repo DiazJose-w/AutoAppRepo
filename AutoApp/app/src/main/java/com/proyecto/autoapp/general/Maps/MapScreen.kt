@@ -147,11 +147,10 @@ fun MapScreen(mapViewModel: MapViewModel){
         GoogleMap(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
-            ,
+                .clip(RoundedCornerShape(16.dp)),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = locationPermissionGranted),
-            uiSettings = MapUiSettings(myLocationButtonEnabled = true),
+            uiSettings = MapUiSettings(zoomControlsEnabled = false),
             onMapLongClick = { latLng ->
                 mapViewModel.addMarker(latLng)
                 // Centra la cámara en el marcador.
@@ -182,9 +181,6 @@ fun MapScreen(mapViewModel: MapViewModel){
                     }
                 }
             },
-            /**
-             * Lanzamos la ubicación actual del usuario
-             * */
             onMyLocationButtonClick = {
                 Toast.makeText(context, "Ubicación actual", Toast.LENGTH_SHORT).show()
                 val ubiActual = LatLng(location.value!!.latitude, location.value!!.longitude)
@@ -197,35 +193,26 @@ fun MapScreen(mapViewModel: MapViewModel){
                 }
                 true
             },
-            //Se lanza cuando pulsamos en el punto azul de mi localización en tiempo real.
             onMyLocationClick = {
                 longitude = TextFieldValue(it.longitude.toString())
                 latitude = TextFieldValue(it.latitude.toString())
                 Toast.makeText(context, "Estoy aquí", Toast.LENGTH_SHORT).show()
             }
         ) {
-
+            /**     USO DE MARCADORES Y LOCALIZACIÓN     */
             //En la ubicación actual
             location.value?.let {
-
-                //Marca una línea de trayecto entre el punto de ubicación donde te encuentres y donde pinches en el mapa.
-//                Polyline(
-//                    points = listOf(mapViewModel.cameraPosition.value.target, mapViewModel.home),
-//                    color = Color.Blue,
-//                    width = 9f
-//                )
 
                 //Dibuja un círculo alrededor del punto azul de la ubicación.
                 Circle(
                     center = LatLng(it.latitude, it.longitude),
-                    radius = 50.0, //Ajusta el tamaño del radio del círculo (en metros). el círculo rodea lo posición actual.
+                    radius = 25.0,
                     strokeColor = Color.Blue,
                     strokeWidth = 3f,
                     fillColor = Color.Blue.copy(alpha = 0.1f)
                 )
             }
 
-            /**     USO DE MARCADORES Y LOCALIZACIÓN     */
             //Calculamos la distancia entre la ubicación del usuario y el marcador.
             location.value?.let { loc ->
                 val userLocation = Location("")
@@ -252,20 +239,6 @@ fun MapScreen(mapViewModel: MapViewModel){
                     }
                 )
             }
-
-            //Usando Marker.
-//            markers.forEach { marker ->
-//                Marker(
-//                    state = MarkerState(position = marker.position),
-//                    title = marker.title,
-//                    snippet = marker.snippet,
-//                    onClick = {
-//                        viewModel.removeMarker(marker)
-//                        Toast.makeText(context, "Marcador eliminado", Toast.LENGTH_SHORT).show()
-//                        true //Retorna true para consumir el evento y evitar abrir la info window.
-//                    }
-//                )
-//            }
             /**     -------------------------------      */
         }
     }
