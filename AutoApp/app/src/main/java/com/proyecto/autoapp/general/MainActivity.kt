@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.ViewUsPasajero) {
+                NavHost(navController, Rutas.ViewInicial) {
                     composable(Rutas.ViewInicial) {
                         ViewInicial(navController, loginVM)
                     }
