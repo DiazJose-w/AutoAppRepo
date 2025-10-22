@@ -5,8 +5,11 @@ import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,13 +19,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -41,7 +47,10 @@ import com.proyecto.autoapp.inicio.login.LoginVM
 fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
 
-    /**     Disparadores para entrar con cuenta google     */
+    val ThumbUpPurple = Color(0xFF180038)
+    val ThumbUpMustard = Color(0xFFE09810)
+
+    /** Disparadores para entrar con cuenta google */
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -51,16 +60,8 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
             val idToken = account?.idToken
             if (idToken != null) {
                 loginVM.loginWithGoogle(idToken)
-                /**     CREAR PÁGINA DE INICIO Y NAVEGAR DESDE AQUÍ
-                 *  Recuerda cerrar sesión con:
-                 *
-                 *                          loginVM.signOut(context)
-                                                navController.navigate(Rutas.ViewInicial){
-                                                   popUpTo(Rutas.Login){inclusive = true}
-                                            }
-                 * */
                 Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
-                navController.navigate(Rutas.Registro) // Esta la tengo de ejemplo, para poder cerrar sesión después
+                navController.navigate(Rutas.Registro)
             } else {
                 Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
             }
@@ -75,84 +76,104 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
         googleSignInLauncher.launch(googleSignInClient.signInIntent)
     }
-    /***/
+    /** ----------------------------------------------- */
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        containerColor = ThumbUpPurple
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
+                .background(ThumbUpPurple)
         ) {
+            Image(
+                painter = painterResource(R.mipmap.camino_central),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .alpha(0.15f),
+                contentScale = ContentScale.FillWidth
+            )
+
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.45f),
-                verticalArrangement = Arrangement.Top,
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(48.dp))
-
-                Image(
-                    painter = painterResource(R.drawable.ic_launcher_background),
-                    contentDescription = "Logo",
+                Column(
                     modifier = Modifier
-                        .size(160.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                Text(
-                    text = "ThumbUp",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = {
-                        navController.navigate(Rutas.Login)
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.55f),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("¿Tienes cuenta?")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                Button(
-                    onClick = {
-                        navController.navigate(Rutas.Registro)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Regístrate")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                Button(
-                    onClick = {
-                        launchGoogleSignIn()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF303F9F)
+                    Image(
+                        painter = painterResource(R.mipmap.logo_thumbup),
+                        contentDescription = "Logo",
+                        modifier = Modifier
+                            .size(350.dp),
+                        contentScale = ContentScale.Fit
                     )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Entrar con Google")
+                    Button(
+                        onClick = {
+                            navController.navigate(Rutas.Login)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ThumbUpMustard,
+                            contentColor = ThumbUpPurple
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("¿Tienes cuenta?")
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            navController.navigate(Rutas.Registro)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = ThumbUpMustard
+                        ),
+                        border = BorderStroke(2.dp, ThumbUpMustard),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Regístrate")
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            launchGoogleSignIn()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = ThumbUpMustard
+                        ),
+                        border = BorderStroke(2.dp, ThumbUpMustard),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Entrar con Google")
+                    }
                 }
             }
         }
     }
+
 }
