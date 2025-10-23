@@ -1,6 +1,7 @@
 package com.proyecto.autoapp.inicio.login.ViewsLogin
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,13 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,10 +21,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.proyecto.autoapp.general.Rutas
@@ -41,44 +41,74 @@ fun Login(navController: NavController, loginVM: LoginVM) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val isLoading by loginVM.isLoading.collectAsState()
+    val isLoading by loginVM.isLoading.collectAsState(initial = false)
 
+    val ThumbUpPurple = Color(0xFF180038)
+    val ThumbUpMustard = Color(0xFFF2C94C)
 
-    Scaffold (
+    Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopBarGeneral(
                 "Login",
                 onAccion = {
                     when (it) {
-                        1 -> {
-                            navController.popBackStack()
-                        }
+                        1 -> navController.popBackStack()
                     }
                 }
             )
         }
-    ){ padding ->
+    ) { padding ->
         Box(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .background(ThumbUpPurple),
             contentAlignment = Alignment.Center
         ) {
+            Image(
+                painter = painterResource(com.proyecto.autoapp.R.mipmap.camino_central),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .alpha(0.15f),
+                contentScale = ContentScale.FillWidth
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(
+                    text = "Bienvenido a ThumbUp",
+                    color = ThumbUpMustard,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(24.dp))
+
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Correo") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = ThumbUpMustard,
+                        unfocusedIndicatorColor = Color.White.copy(alpha = 1f),
+                        focusedLabelColor = ThumbUpMustard,
+                        unfocusedLabelColor = Color.White.copy(alpha = 1f),
+                        cursorColor = ThumbUpMustard,
+                        focusedTextColor = Color(0xFF111111),
+                        unfocusedTextColor = Color(0xFF111111)
+                    )
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = password,
@@ -86,54 +116,73 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                     label = { Text("Password") },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = ThumbUpMustard,
+                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.6f),
+                        focusedLabelColor = ThumbUpMustard,
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.8f),
+                        cursorColor = ThumbUpMustard,
+                        focusedTextColor = Color(0xFF111111),
+                        unfocusedTextColor = Color(0xFF111111)
+                    )
                 )
 
-                Spacer(Modifier.height(30.dp))
+                Spacer(Modifier.height(16.dp))
 
                 TextButton(
-                    onClick = {
-                        navController.navigate(Rutas.TokenSMS)
-                    }
+                    onClick = { navController.navigate(Rutas.TokenSMS) }
                 ) {
-                    Text("Reestablecer contraseña")
+                    Text(
+                        "Recuperar contraseña",
+                        color = ThumbUpMustard,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
-                Spacer(Modifier.height(30.dp))
+                Spacer(Modifier.height(24.dp))
 
                 Button(
                     onClick = {
                         if (email.isBlank() || password.isBlank()) {
-                            Toast.makeText( context,"No debe haber campos vacíos", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "No debe haber campos vacíos", Toast.LENGTH_SHORT).show()
                         } else {
-                            loginVM.login(email, password){
-                                if(it){
+                            loginVM.login(email, password) { ok ->
+                                if (ok) {
                                     /** Pasamos a la página principal */
-                                }else{
-                                    Toast.makeText( context,"Login incorrecto", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Login incorrecto", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF303F9F)
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
                     )
-                ) { Text("Iniciar sesión") }
+                ) {
+                    Text("Iniciar sesión", fontWeight = FontWeight.SemiBold)
+                }
             }
 
             if (isLoading) {
                 Dialog(onDismissRequest = { }) {
                     Box(
                         modifier = Modifier
-                            .size(100.dp)
-                            .background(Color.White, shape = RoundedCornerShape(10.dp)),
+                            .size(110.dp)
+                            .background(Color.White, shape = RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = ThumbUpMustard)
                     }
                 }
             }
         }
     }
+
 }

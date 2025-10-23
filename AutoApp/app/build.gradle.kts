@@ -58,6 +58,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // Librería Material3
+    implementation(libs.material3)
+
     // Librería Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

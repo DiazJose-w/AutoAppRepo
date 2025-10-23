@@ -16,14 +16,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+private val ThumbUpPurple = Color(0xFF180038)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBarGeneral (titulo: String, onAccion: (Int) -> Unit){
+fun TopBarGeneral(titulo: String, onAccion: (Int) -> Unit) {
     TopAppBar(
-            colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFF303F9F),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = ThumbUpPurple,
             titleContentColor = Color.White
         ),
         title = {
@@ -31,7 +36,12 @@ fun TopBarGeneral (titulo: String, onAccion: (Int) -> Unit){
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(titulo)
+                Text(
+                    text = titulo,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center
+                )
             }
         },
         actions = {
@@ -41,9 +51,7 @@ fun TopBarGeneral (titulo: String, onAccion: (Int) -> Unit){
                 tint = Color.White,
                 modifier = Modifier
                     .width(24.dp)
-                    .clickable {
-                        onAccion(1)
-                    }
+                    .clickable { onAccion(1) }
             )
             Spacer(modifier = Modifier.width(12.dp))
         }
