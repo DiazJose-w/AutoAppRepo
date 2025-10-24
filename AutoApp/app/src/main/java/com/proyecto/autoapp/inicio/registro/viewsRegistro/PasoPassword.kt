@@ -1,5 +1,6 @@
 package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +33,7 @@ fun PasoPassword(password: String, onPasswordChange: (String) -> Unit, onBack: (
     var pass by rememberSaveable { mutableStateOf("") }
 
     Column(Modifier.padding(16.dp)) {
+        TitulosRegistro("Contraseña")
         OutlinedTextField(
             value = password,
             onValueChange = { onPasswordChange(it); error = null },
@@ -70,18 +72,20 @@ fun PasoPassword(password: String, onPasswordChange: (String) -> Unit, onBack: (
         Spacer(Modifier.height(24.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onBack) { Text("Atrás") }
-            Button(
+            ThumbUpPrimaryButton(
+                text = "Siguiente",
+                enabled = pass.isNotBlank() && password.isNotBlank(),
                 onClick = {
-                    error = when {
-                        password.length < 8 -> "La contraseña debe tener al menos 8 caracteres"
-                        !password.any { it.isDigit() } -> "Incluye al menos un número"
-                        password != pass -> "Deben coincidir las contraseñas"
-                        else -> null
-                    }
-                    if (error == null) onNext()
-                }
+                        error = when{
+                            password.length < 8 -> "La contraseña debe tener al menos 8 caracteres"
+                            !password.any { it.isDigit() } -> "Incluye al menos un número"
+                            password != pass -> "Deben coincidir las contraseñas"
+                            else -> null
+                        }
+                        if (error == null) onNext()
+                },
+                modifier = Modifier
             )
-            { Text("Siguiente") }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }

@@ -21,15 +21,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val ThumbUpPurple = Color(0xFF180038)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarGeneral(titulo: String, onAccion: (Int) -> Unit) {
+    val ThumbUpPurple = Color(0xFF180038)
+    val ThumbUpMustard = Color(0xFFE09810)
+
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = ThumbUpPurple,
-            titleContentColor = Color.White
+            titleContentColor = ThumbUpMustard
         ),
         title = {
             Box(

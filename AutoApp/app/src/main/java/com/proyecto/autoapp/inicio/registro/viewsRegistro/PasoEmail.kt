@@ -1,5 +1,6 @@
 package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,101 +41,99 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
     var errorToken by remember { mutableStateOf<String?>(null) }
     var tokenRequested by rememberSaveable { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            TitulosRegistro("Email")
+    Column(Modifier.padding(16.dp)) {
+        TitulosRegistro("Email")
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = {
-                    onEmailChange(it)
-                    errorEmail = null
-                    if (errorConfirm != null && confirmEmail == it) errorConfirm = null
-                    if (showTokenField) {
-                        // resetear token si cambia el email
-                        showTokenField = false
-                        tokenRequested = false
-                        token = ""
-                        errorToken = null
-                    }
-                },
-                label = { Text("Correo electrónico") },
-                singleLine = true,
-                isError = errorEmail != null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = confirmEmail,
-                onValueChange = {
-                    onConfirmEmailChange(it)
-                    errorConfirm = null
-                    if (showTokenField) {
-                        // resetear token si cambia la confirmación
-                        showTokenField = false
-                        tokenRequested = false
-                        token = ""
-                        errorToken = null
-                    }
-                },
-                label = { Text("Confirmar correo") },
-                singleLine = true,
-                isError = errorConfirm != null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-            )
-
-            errorEmail?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            errorConfirm?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-
-            if (showTokenField) {
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = token,
-                    onValueChange = {
-                        token = it
-                        errorToken = null
-                    },
-                    label = { Text("Código de verificación") },
-                    singleLine = true,
-                    isError = errorToken != null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                errorToken?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Hemos enviado un código a $email. Revísalo y escríbelo aquí.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = {
-                        onRequestToken(email)
-                        Toast.makeText(context, "Código reenviado", Toast.LENGTH_SHORT).show()
-                    }) {
-                        Text("Reenviar código")
-                    }
+        OutlinedTextField(
+            value = email,
+            onValueChange = {
+                onEmailChange(it)
+                errorEmail = null
+                if (errorConfirm != null && confirmEmail == it) errorConfirm = null
+                if (showTokenField) {
+                    // resetear token si cambia el email
+                    showTokenField = false
+                    tokenRequested = false
+                    token = ""
+                    errorToken = null
                 }
-            }
+            },
+            label = { Text("Correo electrónico") },
+            singleLine = true,
+            isError = errorEmail != null,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        )
 
-            Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(12.dp))
 
+        OutlinedTextField(
+            value = confirmEmail,
+            onValueChange = {
+                onConfirmEmailChange(it)
+                errorConfirm = null
+                if (showTokenField) {
+                    // resetear token si cambia la confirmación
+                    showTokenField = false
+                    tokenRequested = false
+                    token = ""
+                    errorToken = null
+                }
+            },
+            label = { Text("Confirmar correo") },
+            singleLine = true,
+            isError = errorConfirm != null,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        )
+
+        errorEmail?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        errorConfirm?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
+        if (showTokenField) {
+            Spacer(Modifier.height(16.dp))
+            OutlinedTextField(
+                value = token,
+                onValueChange = {
+                    token = it
+                    errorToken = null
+                },
+                label = { Text("Código de verificación") },
+                singleLine = true,
+                isError = errorToken != null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            errorToken?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Hemos enviado un código a $email. Revísalo y escríbelo aquí.",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Spacer(Modifier.height(8.dp))
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onBack) { Text("Atrás") }
+                TextButton(onClick = {
+                    onRequestToken(email)
+                    Toast.makeText(context, "Código reenviado", Toast.LENGTH_SHORT).show()
+                }) {
+                    Text("Reenviar código")
+                }
+            }
+        }
 
-                Button(onClick = {
+        Spacer(Modifier.height(24.dp))
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            TextButton(onClick = onBack) { Text("Atrás") }
+            ThumbUpPrimaryButton(
+                text = "Finalizar registro",
+                enabled = email.isNotBlank(),
+                onClick = {
                     // 1) Validar emails
                     errorEmail = when {
                         email.isBlank() -> "El email es obligatorio"
@@ -174,10 +173,9 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
                             }
                         }
                     }
-                }) {
-                    Text(if (showTokenField) "Verificar y continuar" else "Solicitar token")
-                }
-            }
+                },
+                modifier = Modifier
+            )
         }
     }
 }

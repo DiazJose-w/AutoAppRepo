@@ -32,6 +32,7 @@ fun PasoEdad(
     var error by remember { mutableStateOf<String?>(null) }
 
     Column(Modifier.padding(16.dp)) {
+        TitulosRegistro("Edad")
         OutlinedTextField(
             value = edad,
             onValueChange = {
@@ -48,20 +49,16 @@ fun PasoEdad(
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onBack) { Text("Atrás") }
-            Button(
+            ThumbUpPrimaryButton(
+                text = "Siguiente",
+                enabled = edad.isNotBlank(),
                 onClick = {
-                    error = when {
-                        edad.isBlank() -> "La edad es obligatoria"
-                        edad.toIntOrNull() == null -> "Introduce una edad válida"
-                        !edadUsuario(edad.toInt()) -> "Edad no válida"
-                        else -> null
-                    }
-                    if (error == null) onNext()
-                }
+                    error = null
+                    onNext()
+                },
+                modifier = Modifier
             )
-            { Text("Siguiente") }
         }
-
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }
