@@ -1,5 +1,8 @@
 package com.proyecto.autoapp.viewUsuario
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,13 +24,16 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,27 +44,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.proyecto.autoapp.general.Maps.MapScreen
 import com.proyecto.autoapp.general.Maps.MapViewModel
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 
+val ThumbUpPurple = Color(0xFF180038)
+val ThumbUpMustard = Color(0xFFE09810)
+
 @Composable
-fun ViewUsuario(mapViewModel: MapViewModel) {
+fun ViewInicialUsuario(mapViewModel: MapViewModel) {
     var inicio by remember { mutableStateOf("")  }
     var destino by remember { mutableStateOf("")  }
     var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.Pendiente) }
 
+
+
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(ThumbUpPurple),
+        containerColor = ThumbUpPurple
     ) { innerPadding ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(ThumbUpPurple)
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -101,14 +119,21 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
             }
 
             Spacer(Modifier.height(8.dp))
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.4f),
+                    .fillMaxHeight(0.4f)
+                    .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
+                elevation = CardDefaults.cardElevation(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
             ) {
-                Box(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(16.dp))
+                ) {
                     MapScreen(mapViewModel)
                 }
             }
@@ -119,9 +144,10 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
-                    .shadow(8.dp, RoundedCornerShape(16.dp)),
+                    .shadow(8.dp, RoundedCornerShape(16.dp))
+                    .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = Color(0xFF1A1A1A)
                 ),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(6.dp)
@@ -136,17 +162,45 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
                     OutlinedTextField(
                         value = inicio,
                         onValueChange = { inicio = it },
-                        label = { Text("Punto de inicio") },
+                        label = { Text("Punto de inicio", color = ThumbUpMustard) },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ThumbUpMustard,
+                            unfocusedBorderColor = ThumbUpMustard.copy(alpha = 0.4f),
+                            cursorColor = ThumbUpMustard,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedLabelColor = ThumbUpMustard,
+                            unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
 
                     OutlinedTextField(
                         value = destino,
                         onValueChange = { destino = it },
-                        label = { Text("Destino") },
+                        label = { Text("Destino", color = ThumbUpMustard) },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ThumbUpMustard,
+                            unfocusedBorderColor = ThumbUpMustard.copy(alpha = 0.4f),
+                            cursorColor = ThumbUpMustard,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedLabelColor = ThumbUpMustard,
+                            unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
                     )
                 }
             }
@@ -162,9 +216,17 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ThumbUpMustard,
+                    contentColor = Color(0xFF1A1A1A)
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
-                Text("Realizar petición")
+                Text(
+                    "Realizar petición",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
             }
 
             Spacer(Modifier.height(12.dp))
@@ -178,7 +240,7 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
                     Text(
                         text = "Esperando confirmación",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
 
@@ -212,6 +274,7 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
             }
 
             Spacer(modifier = Modifier.weight(1f))
+
             Button(
                 onClick = {
                     /**
@@ -220,10 +283,19 @@ fun ViewUsuario(mapViewModel: MapViewModel) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(54.dp)
+                    .border(1.5.dp, ThumbUpMustard, RoundedCornerShape(14.dp)),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = ThumbUpMustard
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Text("Modo conductor")
+                Text(
+                    "Modo conductor",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
             }
         }
     }
@@ -247,10 +319,13 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(16.dp)),
+            .shadow(8.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, ThumbUpMustard,
+                RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(6.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
     ) {
         Column(
             Modifier
@@ -258,25 +333,36 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
                 .padding(16.dp)
         ) {
 
-            // Conductor + valoración
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(viaje.conductor, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        viaje.conductor,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = ThumbUpMustard
+                        )
                         Spacer(Modifier.width(4.dp))
-                        Text("${viaje.valoracion}")
+                        Text(
+                            "${viaje.valoracion}",
+                            color = ThumbUpMustard,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            // Vehículo y plazas
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 EtiquetaDato(Icons.Default.DirectionsCar, "${viaje.vehiculo} · ${viaje.color}")
                 EtiquetaDato(Icons.Default.EventSeat, "Plazas: ${viaje.plazasDisponibles}")
@@ -284,7 +370,6 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
 
             Spacer(Modifier.height(12.dp))
 
-            // Distancia / Duración / Horas
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 EtiquetaDato(Icons.Default.Info, viaje.distancia)
                 EtiquetaDato(Icons.Default.AccessTime, viaje.duracion)
@@ -293,7 +378,6 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
 
             Spacer(Modifier.height(12.dp))
 
-            // Puntos del viaje
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilaPunto("Recogida", viaje.puntoRecogida)
                 FilaPunto("Destino", viaje.puntoDestino)
@@ -301,7 +385,6 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
 
             Spacer(Modifier.height(16.dp))
 
-            // Botones de acción
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -310,20 +393,49 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
                 OutlinedButton(
                     onClick = onContactar,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) { Text("Contactar") }
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = ThumbUpMustard
+                    ),
+                    border = BorderStroke(1.dp, ThumbUpMustard)
+                ) {
+                    Text(
+                        "Contactar",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = ThumbUpMustard
+                    )
+                }
 
                 Button(
                     onClick = onVerRuta,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) { Text("Ver ruta") }
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Text(
+                        "Ver ruta",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
             }
 
             TextButton(
                 onClick = onCancelar,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) { Text("Cancelar petición") }
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ThumbUpMustard
+                )
+            ) {
+                Text(
+                    "Cancelar petición",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = ThumbUpMustard
+                )
+            }
         }
     }
 }
@@ -332,17 +444,43 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
 private fun EtiquetaDato(icono: ImageVector, etiqueta: String) {
     AssistChip(
         onClick = { },
-        label = { Text(etiqueta) },
+        label = {
+            Text(
+                etiqueta,
+                color = ThumbUpMustard,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+            )
+        },
         leadingIcon = {
-            Icon(icono, contentDescription = null, modifier = Modifier.size(18.dp))
-        }
+            Icon(
+                icono,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = ThumbUpMustard
+            )
+        },
+        shape = RoundedCornerShape(10.dp),
+        border = BorderStroke(1.dp, ThumbUpMustard),
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = Color.Transparent,
+            labelColor = ThumbUpMustard,
+            leadingIconContentColor = ThumbUpMustard
+        )
     )
 }
 
 @Composable
 private fun FilaPunto(titulo: String, texto: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("$titulo: ", style = MaterialTheme.typography.labelMedium)
-        Text(texto, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "$titulo: ",
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = ThumbUpMustard
+        )
+        Text(
+            texto,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White
+        )
     }
 }

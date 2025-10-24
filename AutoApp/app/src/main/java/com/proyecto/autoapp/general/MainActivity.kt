@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.proyecto.autoapp.general.Maps.MapViewModel
 import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS
@@ -14,20 +15,25 @@ import com.proyecto.autoapp.inicio.registro.viewsRegistro.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
+import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         var loginVM = LoginVM()
         var registroVM = RegistroVM()
+        var mapViewModel = MapViewModel()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.ViewInicial) {
+                NavHost(navController, Rutas.ViewUsuario) {
                     composable(Rutas.ViewInicial) {
                         ViewInicial(navController, loginVM)
+                    }
+                    composable(Rutas.ViewUsuario){
+                        ViewInicialUsuario(mapViewModel)
                     }
                     composable(Rutas.Login) {
                         Login(navController, loginVM)

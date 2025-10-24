@@ -10,5 +10,5 @@ object Rutas {
     var TokenSMS = "tokenSMS"
 
     /**     RUTAS PARA PAGINAS DE INICIO DE USUARIO     */
-    var ViewUsPasajero = "viewUsPasajero"
+    var ViewUsuario = "viewUsuario"
 }

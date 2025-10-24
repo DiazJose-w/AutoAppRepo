@@ -62,9 +62,6 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
     var cont by rememberSaveable { mutableIntStateOf(1) }
 
     Scaffold(
-        topBar = {
-
-        },
         containerColor = ThumbUpPurple
     ) { padding ->
         Box(
