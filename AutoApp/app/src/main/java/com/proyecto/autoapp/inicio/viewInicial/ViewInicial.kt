@@ -40,7 +40,6 @@ import com.proyecto.autoapp.inicio.login.LoginVM
 @Composable
 fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
-
     val ThumbUpPurple = Color(0xFF180038)
     val ThumbUpMustard = Color(0xFFE09810)
 
@@ -109,29 +108,6 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                         painter = painterResource(R.mipmap.logo_thumbup),
                         contentDescription = "Logo",
                         modifier = Modifier
-                            .size(160.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = {
-                        navController.navigate(Rutas.Login)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Image(
-                        painter = painterResource(R.mipmap.logo_thumbup),
-                        contentDescription = "Logo",
-                        modifier = Modifier
                             .size(350.dp),
                         contentScale = ContentScale.Fit
                     )
@@ -192,5 +168,4 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
             }
         }
     }
-
 }
