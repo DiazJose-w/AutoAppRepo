@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.proyecto.autoapp.general.Maps.MapScreen
 import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS
@@ -38,9 +37,6 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Rutas.TokenSMS){
                         TokenSMS(navController, loginVM)
-                    }
-                    composable(Rutas.MapScreen){
-                        MapScreen()
                     }
                 }
             }

@@ -18,12 +18,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -68,11 +70,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
         googleSignInLauncher.launch(googleSignInClient.signInIntent)
     }
-<<<<<<< HEAD
     /** ----------------------------------------------- */
-=======
-    /**  -----------------------------------------------   */
->>>>>>> feature/ViewInicialUsuario
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -102,24 +100,20 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
             ) {
                 Column(
                     modifier = Modifier
-<<<<<<< HEAD
                         .fillMaxWidth()
                         .fillMaxHeight(0.55f),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
-=======
-                        .size(160.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                Text(
-                    text = "ThumbsUp",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                ) {
+                    Image(
+                        painter = painterResource(R.mipmap.logo_thumbup),
+                        contentDescription = "Logo",
+                        modifier = Modifier
+                            .size(160.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
             Column(
@@ -133,7 +127,6 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                         navController.navigate(Rutas.Login)
                     },
                     modifier = Modifier.fillMaxWidth()
->>>>>>> feature/ViewInicialUsuario
                 ) {
                     Image(
                         painter = painterResource(R.mipmap.logo_thumbup),
