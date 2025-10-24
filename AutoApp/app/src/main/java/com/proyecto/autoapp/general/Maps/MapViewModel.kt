@@ -33,29 +33,21 @@ class MapViewModel : ViewModel() {
     private val _selectedCoordinates = MutableStateFlow<LatLng?>(null)
     val selectedCoordinates: StateFlow<LatLng?> = _selectedCoordinates
 
-    // Add a marker
+    /**
+     * Funciones para el punto de interés
+     * */
     fun addMarker(latLng: LatLng, title: String = "Título del marcador", snippet: String = "Contenido del marcador") {
         viewModelScope.launch {
             _markers.value += MapMarker(position = latLng, title = title, snippet = snippet)
         }
     }
 
-    // Remove a marker
     fun removeMarker(marker: MapMarker) {
-//        viewModelScope.launch { //Esto no lo pongo con corrutinas porque no sigo hasta que no se borre. Hace un efecto no deseado en caso contrario.
         _markers.value -= marker
-//        }
     }
 
     /**
-     * Va a home pero siempre a la misma distancia de zoomm: 17f.
-     */
-//    fun irAHome() {
-//        _cameraPosition.value = CameraPosition.fromLatLngZoom(home, 17f)
-//    }
-
-    /**
-     * Va a home pero mantiene la posición de la cámara sin cambiar el zoom / tilt? / bearing? actuales.
+     * Va a la posición que el usuario indique desde la app como Home.
      */
     fun irAHome() {
         val currentPosition = _cameraPosition.value //Obtenemos el zoom actual.
@@ -68,32 +60,24 @@ class MapViewModel : ViewModel() {
 //            .build()
     }
 
-
     /**
      * Mantiene en zoom a 15 de distancia la posición de la cámara.
      */
-//    fun updateCameraPosition(latLng: LatLng, zoom: Float = 15f) {
-//        viewModelScope.launch {
-//            _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom)
-//        }
-//    }
+    fun updateCameraPosition(latLng: LatLng, zoom: Float = 15f) {
+        viewModelScope.launch {
+            _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom)
+        }
+    }
 
     /**
-     * Actualiza la posición de la cámara sin cambiar el zoom / tilt? / bearing?.
+     * Actualiza la posición de la cámara a la ubicación del usuario.
      */
     fun updateCameraPosition(latLng: LatLng, zoom: Float? = null, tilt: Float? = null, bearing: Float? = null) {
         viewModelScope.launch {
             val currentPosition = _cameraPosition.value
-            _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom ?: currentPosition.zoom) //Mantenemos el zoom actual.
-//            _cameraPosition.value = CameraPosition.Builder()
-//                .target(latLng)
-//                .zoom(zoom ?: currentPosition.zoom)
-//                .tilt(tilt ?: currentPosition.tilt)
-//                .bearing(bearing ?: currentPosition.bearing)
-//                .build()
+            _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom ?: currentPosition.zoom)
         }
     }
-
 
     // Select coordinates
     fun selectCoordinates(latLng: LatLng) {

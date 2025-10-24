@@ -8,17 +8,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,6 +37,13 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerInfoWindow
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
+import androidx.activity.result.IntentSenderRequest
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
@@ -53,6 +54,11 @@ fun MapScreen(mapViewModel: MapViewModel){
 
     val selectedCoordinates by mapViewModel.selectedCoordinates.collectAsState()
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    val settingsClient = LocationServices.getSettingsClient(context)
+    val resolutionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) {  }
 
     var longitude by remember { mutableStateOf(TextFieldValue("")) }
     var latitude by remember { mutableStateOf(TextFieldValue("")) }
@@ -70,8 +76,7 @@ fun MapScreen(mapViewModel: MapViewModel){
     val location = remember { mutableStateOf<Location?>(null) }
     val cameraPositionState = rememberCameraPositionState{position = cameraPosition}
 
-
-
+            /**     PERMISOS UBICACIÓN     */
     //Solicitamos permisos de ubicación al iniciar.
     LaunchedEffect(Unit) {
         if (!locationPermissionGranted) {
@@ -79,33 +84,39 @@ fun MapScreen(mapViewModel: MapViewModel){
         }
     }
 
-
-    //Obtenemos la ubicación actual si está permitida.
+    //Obtenemos la ubicación actual si esta está ya en caché.
     LaunchedEffect(locationPermissionGranted) {
         if (locationPermissionGranted) {
+            // 1. Comprobar que la ubicación del sistema está encendida
+            val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000).build()
+            val settingsRequest = LocationSettingsRequest.Builder()
+                .addLocationRequest(req).build()
+
+            settingsClient.checkLocationSettings(settingsRequest)
+                .addOnFailureListener { ex ->
+                    if (ex is ResolvableApiException) {
+                        resolutionLauncher.launch(
+                            IntentSenderRequest.Builder(ex.resolution.intentSender).build()
+                        )
+                    }
+                }
+
+            // 2. Obtener lastLocation de forma segura
             if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
+                    context, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return@LaunchedEffect
-            }
-            fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-                location.value = loc
+                try {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                        location.value = loc
+                    }
+                } catch (_: SecurityException) {  }
             }
         }
     }
-
 
     //Si tenemos la ubicación, mover la cámara a la ubicación del usuario.
     // Garantizamos que la cámara se centre automáticamente en la ubicación del usuario cuando se obtenga o actualice.
@@ -130,24 +141,18 @@ fun MapScreen(mapViewModel: MapViewModel){
     LaunchedEffect(cameraPosition) {
         cameraPositionState.position = cameraPosition
     }
-
+            /** -------------------------- */
 
     Column(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier
-                .systemBarsPadding()
-                .fillMaxWidth()
-                .height(300.dp)
-            //.width(200.dp)
-//                .weight(1f)
-            ,
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp)),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = true),
-            uiSettings = MapUiSettings(myLocationButtonEnabled = true),
+            properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = locationPermissionGranted),
+            uiSettings = MapUiSettings(zoomControlsEnabled = false),
             onMapLongClick = { latLng ->
                 mapViewModel.addMarker(latLng)
-                longitude = TextFieldValue(latLng.longitude.toString())
-                latitude = TextFieldValue(latLng.latitude.toString())
                 // Centra la cámara en el marcador.
                 mapViewModel.updateCameraPosition(latLng)
             },
@@ -167,45 +172,41 @@ fun MapScreen(mapViewModel: MapViewModel){
             onMapLoaded = {
                 cameraPositionState.position = mapViewModel.cameraPosition.value
                 if (locationPermissionGranted) {
-                    if (locationPermissionGranted) {
-                        // Si el permiso es concedido, activa el punto azul
-                        location.value?.let { loc ->
-                            //Aquí no es necesario hacer nada extra para mostrar el punto azul,
-                            //solo asegurarte de que la ubicación está permitida.
-                            //Esto es para dibujar un círculo en la posición actual del usuario.
-                            circleCenter.value = LatLng(loc.latitude, loc.longitude)
-                        }
+                    // Si el permiso es concedido, activa el punto azul
+                    location.value?.let { loc ->
+                        //Aquí no es necesario hacer nada extra para mostrar el punto azul,
+                        //solo asegurarte de que la ubicación está permitida.
+                        //Esto es para dibujar un círculo en la posición actual del usuario.
+                        circleCenter.value = LatLng(loc.latitude, loc.longitude)
                     }
                 }
             },
-            //Estp se lanza cuando pulsamos en la diana de arriba.
             onMyLocationButtonClick = {
-                Toast.makeText(context, "Volviendo a casa", Toast.LENGTH_SHORT).show()
-                mapViewModel.irAHome()
-                Log.d(TAG, "Cámara actualizada: $cameraPosition")
+                Toast.makeText(context, "Ubicación actual", Toast.LENGTH_SHORT).show()
+                val ubiActual = LatLng(location.value!!.latitude, location.value!!.longitude)
+
+                if (location.value != null) {
+                    mapViewModel.updateCameraPosition(ubiActual, 17f)
+                    Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Tiene valores")
+                } else {
+                    Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Es un valor nulo")
+                }
                 true
             },
-            //Se lanza cuando pulsamos en el punto azul de mi localización en tiempo real.
             onMyLocationClick = {
                 longitude = TextFieldValue(it.longitude.toString())
                 latitude = TextFieldValue(it.latitude.toString())
                 Toast.makeText(context, "Estoy aquí", Toast.LENGTH_SHORT).show()
             }
         ) {
-
+            /**     USO DE MARCADORES Y LOCALIZACIÓN     */
             //En la ubicación actual
             location.value?.let {
-
-//                Polyline(
-//                    points = listOf(viewModel.cameraPosition.value.target, viewModel.home),
-//                    color = Color.Blue,
-//                    width = 9f
-//                )
 
                 //Dibuja un círculo alrededor del punto azul de la ubicación.
                 Circle(
                     center = LatLng(it.latitude, it.longitude),
-                    radius = 50.0, //Ajusta el tamaño del radio del círculo (en metros). el círculo rodea lo posición actual.
+                    radius = 25.0,
                     strokeColor = Color.Blue,
                     strokeWidth = 3f,
                     fillColor = Color.Blue.copy(alpha = 0.1f)
@@ -238,43 +239,7 @@ fun MapScreen(mapViewModel: MapViewModel){
                     }
                 )
             }
-
-            //Usando Marker.
-//            markers.forEach { marker ->
-//                Marker(
-//                    state = MarkerState(position = marker.position),
-//                    title = marker.title,
-//                    snippet = marker.snippet,
-//                    onClick = {
-//                        viewModel.removeMarker(marker)
-//                        Toast.makeText(context, "Marcador eliminado", Toast.LENGTH_SHORT).show()
-//                        true //Retorna true para consumir el evento y evitar abrir la info window.
-//                    }
-//                )
-//            }
-
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            OutlinedTextField(
-                value = latitude,
-                onValueChange = { latitude = it },
-                label = { Text("Latitude") },
-                modifier = Modifier.weight(1f).padding(end = 8.dp)
-            )
-            OutlinedTextField(
-                value = longitude,
-                onValueChange = { longitude = it },
-                label = { Text("Longitude") },
-                modifier = Modifier.weight(1f).padding(start = 8.dp)
-            )
+            /**     -------------------------------      */
         }
     }
 }

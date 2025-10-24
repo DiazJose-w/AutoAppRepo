@@ -3,19 +3,14 @@ package com.proyecto.autoapp.inicio.registro
 import com.google.firebase.functions.FirebaseFunctions
 import android.util.Log
 import com.google.firebase.Firebase
-import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.functions
 import com.proyecto.autoapp.general.Coleccion
-import com.proyecto.autoapp.inicio.modelo.enumClass.RolUsuario
-import com.proyecto.autoapp.inicio.modelo.usuarios.Usuario
+import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
+import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.tasks.await
-import java.util.concurrent.TimeUnit
 
 class RegistroVM() {
     private val TAG = "jose"

@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.inicio.modelo.enumClass
+package com.proyecto.autoapp.general.modelo.enumClass
 
 enum class PerfilCustomer(var valor: Int) {
     CONDUCTOR(2),

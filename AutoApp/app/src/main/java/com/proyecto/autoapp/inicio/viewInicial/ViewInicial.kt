@@ -68,7 +68,11 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
         googleSignInLauncher.launch(googleSignInClient.signInIntent)
     }
+<<<<<<< HEAD
     /** ----------------------------------------------- */
+=======
+    /**  -----------------------------------------------   */
+>>>>>>> feature/ViewInicialUsuario
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -98,10 +102,38 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
             ) {
                 Column(
                     modifier = Modifier
+<<<<<<< HEAD
                         .fillMaxWidth()
                         .fillMaxHeight(0.55f),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
+=======
+                        .size(160.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Text(
+                    text = "ThumbsUp",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Button(
+                    onClick = {
+                        navController.navigate(Rutas.Login)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+>>>>>>> feature/ViewInicialUsuario
                 ) {
                     Image(
                         painter = painterResource(R.mipmap.logo_thumbup),
