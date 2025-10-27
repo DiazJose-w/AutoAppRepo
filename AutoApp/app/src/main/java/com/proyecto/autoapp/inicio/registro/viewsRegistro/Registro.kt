@@ -5,7 +5,6 @@ import android.widget.Toast
 import com.proyecto.autoapp.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,27 +25,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
 import com.proyecto.autoapp.general.Rutas
-import com.proyecto.autoapp.general.TopBarGeneral
 import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.RegistroVM
-
-private val ThumbUpPurple = Color(0xFF1D0F2E)
-private val ThumbUpMustard = Color(0xFFF1C232)
+import com.proyecto.autoapp.ui.theme.ThumbUpCard
+import com.proyecto.autoapp.ui.theme.ThumbUpMustard
+import com.proyecto.autoapp.ui.theme.ThumbUpPurple
 
 @Composable
 fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: LoginVM) {
@@ -105,14 +100,9 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                 )
 
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 90.dp)
-                        .clip(RoundedCornerShape(16.dp)),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0x1AFFFFFF)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
                 ) {
                     Column(
                         modifier = Modifier
@@ -120,8 +110,6 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val user: Usuario
-
                         when (cont) {
                             1 -> PasoNombreApl(
                                 nombre = nombre,
@@ -213,46 +201,12 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
 
 /**
  * Funciones:
- * - Titulo para cada campo del registro
  * - Expresión regular para el email
  * - Comprobación de campos de registro
  * - Método comprobar edad del usuario
  * - Expresión regular para seguridad de contraseña
  * - Función para formato E164
  */
-@Composable
-fun TitulosRegistro(texto: String) {
-    Text(
-        text = texto,
-        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-        color = ThumbUpMustard,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
-}
-
-/* =========================
-   Helpers visuales ThumbUp
-   ========================= */
-
-@Composable
-fun ThumbUpPrimaryButton(text: String, enabled: Boolean = true, onClick: () -> Unit, modifier: Modifier = Modifier ) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = ThumbUpMustard,
-            contentColor = Color(0xFF1A1A1A),
-            disabledContainerColor = ThumbUpMustard.copy(alpha = 0.5f),
-            disabledContentColor = Color(0xFF1A1A1A).copy(alpha = 0.7f)
-        )
-    ) {
-        Text(text, fontWeight = FontWeight.SemiBold)
-    }
-}
 
 // Composable para la imagen según paso del registro
 fun imagenRegistro(){

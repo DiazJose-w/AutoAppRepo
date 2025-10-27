@@ -16,12 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,16 +29,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import com.proyecto.autoapp.general.TopBarGeneral
+import com.proyecto.autoapp.ui.theme.TopBarGeneral
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.viewsRegistro.formatE164
+import com.proyecto.autoapp.ui.theme.*
 
 @Composable
 fun TokenSMS(navController: NavController, loginVM: LoginVM){
     var context = LocalContext.current
-
-    val ThumbUpPurple = Color(0xFF180038)
-    val ThumbUpMustard = Color(0xFFF2C94C)
 
     // Estados para teléfono y código
     var phone by remember { mutableStateOf("") }

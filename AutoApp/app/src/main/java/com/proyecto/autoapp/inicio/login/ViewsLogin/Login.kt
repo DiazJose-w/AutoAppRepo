@@ -33,8 +33,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.proyecto.autoapp.general.Rutas
-import com.proyecto.autoapp.general.TopBarGeneral
+import com.proyecto.autoapp.ui.theme.TopBarGeneral
 import com.proyecto.autoapp.inicio.login.LoginVM
+import com.proyecto.autoapp.ui.theme.*
 
 @Composable
 fun Login(navController: NavController, loginVM: LoginVM) {
@@ -42,9 +43,6 @@ fun Login(navController: NavController, loginVM: LoginVM) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val isLoading by loginVM.isLoading.collectAsState(initial = false)
-
-    val ThumbUpPurple = Color(0xFF180038)
-    val ThumbUpMustard = Color(0xFFF2C94C)
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -79,80 +77,79 @@ fun Login(navController: NavController, loginVM: LoginVM) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Título
                 Text(
                     text = "Bienvenido a ThumbUp",
                     color = ThumbUpMustard,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(Modifier.height(24.dp))
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Correo") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = ThumbUpMustard,
-                        unfocusedIndicatorColor = Color.White.copy(alpha = 1f),
-                        focusedLabelColor = ThumbUpMustard,
-                        unfocusedLabelColor = Color.White.copy(alpha = 1f),
-                        cursorColor = ThumbUpMustard,
-                        focusedTextColor = Color(0xFF111111),
-                        unfocusedTextColor = Color(0xFF111111)
-                    )
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = ThumbUpMustard,
-                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.6f),
-                        focusedLabelColor = ThumbUpMustard,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.8f),
-                        cursorColor = ThumbUpMustard,
-                        focusedTextColor = Color(0xFF111111),
-                        unfocusedTextColor = Color(0xFF111111)
-                    )
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                TextButton(
-                    onClick = { navController.navigate(Rutas.TokenSMS) }
+                // Card del formulario de login
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
                 ) {
-                    Text(
-                        "Recuperar contraseña",
-                        color = ThumbUpMustard,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 20.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text("Correo") },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ThumbUpTextFieldColors()
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = { Text("Password") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ThumbUpTextFieldColors()
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(24.dp))
 
+                // Botón login
                 Button(
                     onClick = {
                         if (email.isBlank() || password.isBlank()) {
-                            Toast.makeText(context, "No debe haber campos vacíos", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "No debe haber campos vacíos",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } else {
                             loginVM.login(email, password) { ok ->
                                 if (ok) {
-                                    /** Pasamos a la página principal */
+                                    navController.navigate(Rutas.ViewUsuario)
                                 } else {
-                                    Toast.makeText(context, "Login incorrecto", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Login incorrecto",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                         }
@@ -166,7 +163,10 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
-                    Text("Iniciar sesión", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Iniciar sesión",
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
 
@@ -184,5 +184,4 @@ fun Login(navController: NavController, loginVM: LoginVM) {
             }
         }
     }
-
 }

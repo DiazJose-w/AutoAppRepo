@@ -1,7 +1,6 @@
 package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.proyecto.autoapp.ui.theme.ThumbUpPrimaryButton
+import com.proyecto.autoapp.ui.theme.ThumbUpTextFieldColors
+import com.proyecto.autoapp.ui.theme.TitulosRegistro
 
 @Composable
 fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: String, onConfirmEmailChange: (String) -> Unit,
@@ -55,7 +57,8 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
             label = { Text("Correo electrónico") },
             singleLine = true,
             isError = errorEmail != null,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            colors = ThumbUpTextFieldColors()
         )
 
         Spacer(Modifier.height(12.dp))
@@ -76,7 +79,8 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
             label = { Text("Confirmar correo") },
             singleLine = true,
             isError = errorConfirm != null,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            colors = ThumbUpTextFieldColors()
         )
 
         errorEmail?.let { Text(it, color = MaterialTheme.colorScheme.error) }

@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -25,12 +24,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.inicio.login.LoginVM
+import com.proyecto.autoapp.ui.theme.*
 
 @Composable
 fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
-    val ThumbUpPurple = Color(0xFF180038)
-    val ThumbUpMustard = Color(0xFFE09810)
 
     /** Disparadores para entrar con cuenta google */
     val googleSignInLauncher = rememberLauncherForActivityResult(
