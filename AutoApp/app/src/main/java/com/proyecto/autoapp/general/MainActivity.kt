@@ -15,20 +15,24 @@ import com.proyecto.autoapp.inicio.registro.viewsRegistro.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
+import com.proyecto.autoapp.viewUsuario.PerfilRoute
+import com.proyecto.autoapp.viewUsuario.PerfilScreen
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
+import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         var loginVM = LoginVM()
         var registroVM = RegistroVM()
         var mapViewModel = MapViewModel()
+        var perfilVM = PerfilVM()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.ViewInicial) {
+                NavHost(navController, Rutas.Perfil) {
                     /**
                      * Views inicial APP
                      * */
@@ -52,7 +56,7 @@ class MainActivity : ComponentActivity() {
                         ViewInicialUsuario(mapViewModel)
                     }
                     composable (Rutas.Perfil){
-
+                        PerfilRoute(perfilVM, navController)
                     }
                 }
             }

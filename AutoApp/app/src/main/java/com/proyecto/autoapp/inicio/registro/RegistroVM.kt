@@ -47,14 +47,14 @@ class RegistroVM() {
                            RolUsuario.CUSTOMER,
                            false
                        )
-                        Log.e(TAG, "[RegisterVM] Usuario preparado:")
-                        Log.e(TAG, " - id..........: ${usuario.id}")
-                        Log.e(TAG, " - nombre......: ${usuario.nombre}")
-                        Log.e(TAG, " - apellidos...: ${usuario.apellidos}")
-                        Log.e(TAG, " - email.......: ${usuario.email}")
-                        Log.e(TAG, " - edad........: ${usuario.edad}")
-                        Log.e(TAG, " - rol.........: ${usuario.rol}")
-                        Log.e(TAG, " - nuevo.......: ${usuario.nuevo}")
+//                        Log.e(TAG, "[RegisterVM] Usuario preparado:")
+//                        Log.e(TAG, " - id..........: ${usuario.id}")
+//                        Log.e(TAG, " - nombre......: ${usuario.nombre}")
+//                        Log.e(TAG, " - apellidos...: ${usuario.apellidos}")
+//                        Log.e(TAG, " - email.......: ${usuario.email}")
+//                        Log.e(TAG, " - edad........: ${usuario.edad}")
+//                        Log.e(TAG, " - rol.........: ${usuario.rol}")
+//                        Log.e(TAG, " - nuevo.......: ${usuario.nuevo}")
 
                         // Mapeo de la colección
                         val datosUsuario = mapOf(
