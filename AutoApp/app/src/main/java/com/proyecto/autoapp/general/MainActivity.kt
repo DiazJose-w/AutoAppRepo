@@ -16,7 +16,6 @@ import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
 import com.proyecto.autoapp.viewUsuario.PerfilRoute
-import com.proyecto.autoapp.viewUsuario.PerfilScreen
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 

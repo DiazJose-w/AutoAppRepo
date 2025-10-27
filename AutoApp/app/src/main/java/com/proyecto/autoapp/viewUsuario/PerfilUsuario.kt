@@ -25,21 +25,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -57,37 +43,10 @@ import androidx.navigation.NavController
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
-// =====================================================
-// CLASE QUE SE LLAMA DESDE MAINACTIVITY
-// =====================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
     val uiState by perfilVM.uiState.collectAsState()
-
-    PerfilScreen(
-        state = uiState,
-        onNombreChange = { perfilVM.onNombreChange(it) },
-        onApellidosChange = { perfilVM.onApellidosChange(it) },
-        onEdadChange = { perfilVM.onEdadChange(it) },
-        onAddOrChangeFotoPerfil = { perfilVM.onCambiarFotoPerfil() },
-        onManageGaleriaFotos = { perfilVM.onAbrirGaleria() },
-        onPasajeroToggle = { perfilVM.onPasajeroToggle(it) },
-        onConductorToggle = { perfilVM.onConductorToggle(it) },
-        onGuardarClick = { perfilVM.onGuardarCambios() },
-        onBackClick = {
-            perfilVM.onBackPressed(navController)
-        }
-    )
-}
-
-// =====================================================
-// PANTALLA VISUAL PURA
-// =====================================================
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApellidosChange: (String) -> Unit, onEdadChange: (String) -> Unit,
-    onAddOrChangeFotoPerfil: () -> Unit, onManageGaleriaFotos: () -> Unit, onPasajeroToggle: (Boolean) -> Unit, onConductorToggle: (Boolean) -> Unit,
-    onGuardarClick: () -> Unit, onBackClick: () -> Unit, modifier: Modifier = Modifier) {
 
     // Colores base ThumbsUp (hardcodeados, luego migran a Theme)
     val ThumbUpPurple = Color(0xFF2B1D3E)
@@ -99,7 +58,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
     val ThumbUpDanger = Color(0xFFFF4D4D)
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = ThumbUpPurple,
         topBar = {
             TopAppBar(
@@ -111,7 +70,9 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { onBackClick() }) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver",
@@ -134,12 +95,16 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                     .padding(horizontal = 24.dp, vertical = 30.dp)
             ) {
                 Button(
-                    onClick = onGuardarClick,
+                    onClick = {
+                        /**
+                         * Implementar la lógica de guardado de cambios. Llamar aquí al viewModel
+                         * */
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(14.dp),
-                    enabled = state.isSaveEnabled,
+                    enabled = uiState.isSaveEnabled,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ThumbUpMustard,
                         contentColor = ThumbUpSurfaceDark,
@@ -166,9 +131,17 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 
             // 1. FOTOS / AVATAR
             PerfilFotoSection(
-                fotoPerfilUrl = state.fotoPerfilUrl,
-                onChangeFotoPerfil = onAddOrChangeFotoPerfil,
-                onManageGaleria = onManageGaleriaFotos,
+                fotoPerfilUrl = uiState.fotoPerfilUrl,
+                onChangeFotoPerfil = {
+                    /**
+                     * Implementar lógica cambio de foto de perfil
+                     * */
+                },
+                onManageGaleria = {
+                    /**
+                     * Implementar lógica cambio añadir imágenes a la galería
+                     * */
+                },
                 ThumbUpCard = ThumbUpCard,
                 ThumbUpTextPrimary = ThumbUpTextPrimary,
                 ThumbUpTextSecondary = ThumbUpTextSecondary,
@@ -189,8 +162,10 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                 ) {
 
                     OutlinedTextField(
-                        value = state.nombre,
-                        onValueChange = onNombreChange,
+                        value = uiState.nombre,
+                        onValueChange = {
+
+                        },
                         label = { Text("Nombre", color = ThumbUpTextSecondary) },
                         singleLine = true,
                         textStyle = TextStyle(color = ThumbUpTextPrimary),
@@ -200,8 +175,10 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                     )
 
                     OutlinedTextField(
-                        value = state.apellidos,
-                        onValueChange = onApellidosChange,
+                        value = uiState.apellidos,
+                        onValueChange = {
+
+                        },
                         label = { Text("Apellidos", color = ThumbUpTextSecondary) },
                         singleLine = true,
                         textStyle = TextStyle(color = ThumbUpTextPrimary),
@@ -212,8 +189,10 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
-                            value = state.edad,
-                            onValueChange = onEdadChange,
+                            value = uiState.edad,
+                            onValueChange = {
+
+                            },
                             label = { Text("Edad", color = ThumbUpTextSecondary) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
@@ -225,7 +204,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                             shape = RoundedCornerShape(12.dp)
                         )
 
-                        if (state.showEdadWarningConductor) {
+                        if (uiState.showEdadWarningConductor) {
                             Text(
                                 text = "Para ser conductor debes ser mayor de edad.",
                                 color = ThumbUpDanger,
@@ -239,7 +218,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                      * Como no puede modificarse, hacer que muestre el email del usuario concreto.
                      * */
                     OutlinedTextField(
-                        value = state.email,
+                        value = uiState.email,
                         onValueChange = { },
                         label = { Text("Email", color = ThumbUpTextSecondary) },
                         singleLine = true,
@@ -278,7 +257,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (state.isPasajeroSelected)
+                                if (uiState.isPasajeroSelected)
                                     ThumbUpMustard.copy(alpha = 0.12f)
                                 else
                                     ThumbUpSurfaceDark.copy(alpha = 0.3f)
@@ -303,8 +282,10 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                             )
                         }
                         Switch(
-                            checked = state.isPasajeroSelected,
-                            onCheckedChange = { onPasajeroToggle(it) },
+                            checked = uiState.isPasajeroSelected,
+                            onCheckedChange = { checked ->
+                                perfilVM.onPasajeroToggle(checked)
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = ThumbUpMustard,
                                 checkedTrackColor = ThumbUpMustard.copy(alpha = 0.4f)
@@ -318,7 +299,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (state.isConductorSelected)
+                                if (uiState.isConductorSelected)
                                     ThumbUpMustard.copy(alpha = 0.12f)
                                 else
                                     ThumbUpSurfaceDark.copy(alpha = 0.3f)
@@ -343,8 +324,10 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                             )
                         }
                         Switch(
-                            checked = state.isConductorSelected,
-                            onCheckedChange = { onConductorToggle(it) },
+                            checked = uiState.isConductorSelected,
+                            onCheckedChange = { checked ->
+                                perfilVM.onConductorToggle(checked)
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = ThumbUpMustard,
                                 checkedTrackColor = ThumbUpMustard.copy(alpha = 0.4f)
@@ -355,7 +338,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
             }
 
             // 4. BLOQUE INFO PASAJERO
-            if (state.isPasajeroSelected) {
+            if (uiState.isPasajeroSelected) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -377,11 +360,11 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 
                         /**
                          * Mientras el pasajero no esté activo no puede solicitar viajes
-                         * Para poder solicitarlo tiene que cumplir con unos campos activos mínimos.
+                         * Para poder estar activo tiene que cumplir con unos campos mínimos.
                          * */
                         InfoRowLabelValue(
                             label = "Estado",
-                            value = when (state.pasajeroEnabled) {
+                            value = when (uiState.pasajeroEnabled) {
                                 Estado.ACTIVO -> "Activo"
                                 Estado.BLOQUEADO -> "Bloqueado"
                                 else -> "Pendiente"
@@ -392,7 +375,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 
                         InfoRowLabelValue(
                             label = "Reputación",
-                            value = "${state.pasajeroRatingAvg} ★ (${state.pasajeroRatingCount} valoraciones)",
+                            value = "${uiState.pasajeroRatingAvg} ★ (${uiState.pasajeroRatingCount} valoraciones)",
                             textColor = ThumbUpTextPrimary,
                             subColor = ThumbUpTextSecondary
                         )
@@ -401,7 +384,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
             }
 
             // 5. BLOQUE INFO CONDUCTOR
-            if (state.isConductorSelected) {
+            if (uiState.isConductorSelected) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -423,11 +406,11 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 
                         /**
                          * Mientras el conductor no esté activo no puede solicitar viajes
-                         * Para poder solicitarlo tiene que cumplir con unos campos activos mínimos.
+                         * Para poder estarlo tiene que cumplir con unos campos mínimos.
                          * */
                         InfoRowLabelValue(
                             label = "Estado",
-                            value = when (state.conductorEnabled) {
+                            value = when (uiState.conductorEnabled) {
                                 Estado.ACTIVO -> "Activo"
                                 Estado.BLOQUEADO -> "Bloqueado"
                                 else -> "Pendiente verificación"
@@ -438,7 +421,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 
                         InfoRowLabelValue(
                             label = "Reputación",
-                            value = "${state.conductorRatingAvg} ★ (${state.conductorRatingCount} valoraciones)",
+                            value = "${uiState.conductorRatingAvg} ★ (${uiState.conductorRatingCount} valoraciones)",
                             textColor = ThumbUpTextPrimary,
                             subColor = ThumbUpTextSecondary
                         )
@@ -466,14 +449,14 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
-                                        text = if (state.licenciaSubida) "Documento enviado" else "Pendiente de subir",
+                                        text = if (uiState.licenciaSubida) "Documento enviado" else "Pendiente de subir",
                                         color = ThumbUpTextPrimary,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
-                                        text = if (state.licenciaVerificada) "Verificada" else "En revisión",
-                                        color = if (state.licenciaVerificada) ThumbUpMustard else ThumbUpTextSecondary,
+                                        text = if (uiState.licenciaVerificada) "Verificada" else "En revisión",
+                                        color = if (uiState.licenciaVerificada) ThumbUpMustard else ThumbUpTextSecondary,
                                         fontSize = 12.sp
                                     )
                                 }
@@ -487,7 +470,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                                     )
                                 ) {
                                     Text(
-                                        text = if (state.licenciaSubida) "Actualizar" else "Subir",
+                                        text = if (uiState.licenciaSubida) "Actualizar" else "Subir",
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 14.sp
                                     )
@@ -530,7 +513,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                                         .background(ThumbUpSurfaceDark),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (state.vehiculoFotoUrl != null) {
+                                    if (uiState.vehiculoFotoUrl != null) {
                                         Icon(
                                             imageVector = Icons.Default.DirectionsCar,
                                             contentDescription = null,
@@ -552,13 +535,13 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
-                                        text = if (state.vehiculoFotoUrl != null) "Foto subida" else "Sin foto",
+                                        text = if (uiState.vehiculoFotoUrl != null) "Foto subida" else "Sin foto",
                                         color = ThumbUpTextPrimary,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
-                                        text = state.vehiculoDescripcion.ifBlank {
+                                        text = uiState.vehiculoDescripcion.ifBlank {
                                             "Marca / modelo / color / matrícula"
                                         },
                                         color = ThumbUpTextSecondary,
@@ -577,7 +560,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
                                     )
                                 ) {
                                     Text(
-                                        text = if (state.vehiculoFotoUrl != null) "Actualizar" else "Subir",
+                                        text = if (uiState.vehiculoFotoUrl != null) "Actualizar" else "Subir",
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 14.sp
                                     )
@@ -594,45 +577,7 @@ fun PerfilScreen(state: PerfilUiState, onNombreChange: (String) -> Unit, onApell
 }
 
 // =====================================================
-// Data class para la mostrar la view por defecto. Nada para la base de datos
-// =====================================================
-data class PerfilUiState(
-    val nombre: String = "",
-    val apellidos: String = "",
-    val edad: String = "",
-    val email: String = "",
-
-    val fotoPerfilUrl: String? = null,
-    val tieneMasFotos: Boolean = false,
-
-    val isPasajeroSelected: Boolean = false,
-    val isConductorSelected: Boolean = false,
-
-    // Pasajero
-    val pasajeroEnabled: Estado = Estado.PENDIENTE,
-    val pasajeroRatingAvg: Double = 0.0,
-    val pasajeroRatingCount: Long = 0,
-
-    // Conductor
-    val conductorEnabled: Estado = Estado.PENDIENTE,
-    val conductorRatingAvg: Double = 0.0,
-    val conductorRatingCount: Long = 0,
-
-    // Licencia / verificación
-    val licenciaSubida: Boolean = false,
-    val licenciaVerificada: Boolean = false,
-
-    // Vehículo
-    val vehiculoFotoUrl: String? = null,
-    val vehiculoDescripcion: String = "",
-
-    // UI
-    val isSaveEnabled: Boolean = true,
-    val showEdadWarningConductor: Boolean = false
-)
-
-// =====================================================
-// Componentes para la vista de perfil.
+// Componentes para la vista de perfil. EN UN FUTURO UNIFICARLO EN UNA CLASE COMÚN DE ESTILOS
 // =====================================================
 
 @Composable
@@ -739,7 +684,7 @@ private fun PerfilFotoSection(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> 
     }
 }
 
-// Fila etiqueta/valor
+// Filas estado reputación del usuario
 @Composable
 private fun InfoRowLabelValue(label: String, value: String, textColor: Color, subColor: Color) {
     Row(

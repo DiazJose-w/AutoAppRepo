@@ -1,7 +1,6 @@
 package com.proyecto.autoapp.viewUsuario.perfilVM
 
-import androidx.navigation.NavController
-import com.proyecto.autoapp.viewUsuario.PerfilUiState
+import com.proyecto.autoapp.general.modelo.dataClass.PerfilUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -62,6 +61,7 @@ class PerfilVM {
         }
     }
 
+    // Método que avisa el estado del switch
     fun onConductorToggle(checked: Boolean) {
         _uiState.update { curr ->
             val edadNum = curr.edad.toIntOrNull() ?: 0
@@ -78,13 +78,5 @@ class PerfilVM {
     fun onGuardarCambios() {
         // Aquí puedes subir datos a Firestore o backend
         _uiState.update { it.copy(isSaveEnabled = false) }
-    }
-
-    // --------- ATRÁS ---------
-
-    fun onBackPressed(navController: NavController) {
-        // Si hay cambios sin guardar (_uiState.value.isSaveEnabled)
-        // podrías mostrar diálogo, o simplemente navegar atrás:
-        // navController.popBackStack()
     }
 }
