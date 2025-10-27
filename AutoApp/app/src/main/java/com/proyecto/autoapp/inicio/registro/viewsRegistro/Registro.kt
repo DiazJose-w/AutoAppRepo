@@ -1,5 +1,7 @@
 package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
+import android.util.Log
+import android.widget.Toast
 import com.proyecto.autoapp.R
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,7 +39,9 @@ import androidx.navigation.NavController
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
+import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.TopBarGeneral
+import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 
@@ -47,6 +51,7 @@ private val ThumbUpMustard = Color(0xFFF1C232)
 @Composable
 fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: LoginVM) {
     val context = LocalContext.current
+    var TAG = "Jose"
     val isLoading by registroVM.isLoading.collectAsState()
 
     // Variables de registro
@@ -115,6 +120,8 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        val user: Usuario
+
                         when (cont) {
                             1 -> PasoNombreApl(
                                 nombre = nombre,
@@ -152,15 +159,30 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                     // 2) Envíalo por correo (tu implementación real aquí)
                                     // registroVM.enviarTokenEmail(correo, nuevoToken)
                                     /** EN ESTE PASO ES DONDE DEBO ENVIAR EL TOKEN DE VERIFICACIÓN
-                                     *  SI EL TOKEN COINCIDE, PASAR A LA SIGUIENTE PÁGINA QUE SERÍA LA PÁGINA DE INICIO DE LA APP
+                                     *  SI EL TOKEN COINCIDE, PASAR A LA SIGUIENTE PÁGINA.
+                                     *  ESA PÁGINA ES LA VIEW DEL PERFIL DE LA PERSONA USUARIA PARA QUE CONTINÚE SI QUIERE VERIFICANDO
+                                     *  SU IDENTIDAD COMO PERSONA USUARIA
                                      */
                                 },
                                 onVerifyToken = { introducido ->
                                     tokenServidor != null && tokenServidor == introducido
                                 },
-                                onFinish = {
-                                    // Mantienes tu lógica (de momento no cambias el paso)
+                                onFinish = { ok ->
                                     cont = 4
+                                    Log.e(TAG, "Valor del cont: $cont")
+                                    Log.e(TAG, "Estado variable ok: $ok")
+                                    if(ok){
+                                        registroVM.registroWhitEmail (nombre, apellidos, edad, password, email){
+                                            if(it){
+                                                Log.e(TAG, "Estado it: $it")
+                                                navController.navigate(Rutas.Perfil)
+                                            }else{
+                                                Toast.makeText(context, "Error en el registro", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }else{
+                                        Toast.makeText(context, "Algo ocurre", Toast.LENGTH_SHORT).show()
+                                    }
                                 },
                                 onBack = { cont = 2 }
                             )

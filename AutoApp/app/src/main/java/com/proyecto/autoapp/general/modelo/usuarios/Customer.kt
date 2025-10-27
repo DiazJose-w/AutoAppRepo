@@ -12,4 +12,4 @@ class Customer (
     password: String?,
     fotoUrl: String?,
     perfil: PerfilCustomer?
-): Usuario(id, nombre, apellidos, email, edad, password, fotoUrl, RolUsuario.CUSTOMER)
+): Usuario(id, nombre, apellidos, email, edad, password, fotoUrl, RolUsuario.CUSTOMER, false)

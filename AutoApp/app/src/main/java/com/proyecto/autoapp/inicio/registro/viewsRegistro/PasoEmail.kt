@@ -10,13 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,15 +18,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: String, onConfirmEmailChange: (String) -> Unit,
-    onRequestToken: (String) -> Unit, onVerifyToken: (String) -> Boolean, onFinish: () -> Unit, onBack: () -> Unit) {
+              onRequestToken: (String) -> Unit, onVerifyToken: (String) -> Boolean, onFinish: (Boolean) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
+    var TAG = "Jose"
     var errorEmail by remember { mutableStateOf<String?>(null) }
     var errorConfirm by remember { mutableStateOf<String?>(null) }
 
@@ -71,13 +65,13 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
             onValueChange = {
                 onConfirmEmailChange(it)
                 errorConfirm = null
-                if (showTokenField) {
-                    // resetear token si cambia la confirmación
-                    showTokenField = false
-                    tokenRequested = false
-                    token = ""
-                    errorToken = null
-                }
+//                if (showTokenField) {
+//                    // resetear token si cambia la confirmación
+//                    showTokenField = false
+//                    tokenRequested = false
+//                    token = ""
+//                    errorToken = null
+//                }
             },
             label = { Text("Confirmar correo") },
             singleLine = true,
@@ -88,40 +82,40 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
         errorEmail?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         errorConfirm?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-        if (showTokenField) {
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(
-                value = token,
-                onValueChange = {
-                    token = it
-                    errorToken = null
-                },
-                label = { Text("Código de verificación") },
-                singleLine = true,
-                isError = errorToken != null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            errorToken?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Hemos enviado un código a $email. Revísalo y escríbelo aquí.",
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            Spacer(Modifier.height(8.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = {
-                    onRequestToken(email)
-                    Toast.makeText(context, "Código reenviado", Toast.LENGTH_SHORT).show()
-                }) {
-                    Text("Reenviar código")
-                }
-            }
-        }
+//        if (showTokenField) {
+//            Spacer(Modifier.height(16.dp))
+//            OutlinedTextField(
+//                value = token,
+//                onValueChange = {
+//                    token = it
+//                    errorToken = null
+//                },
+//                label = { Text("Código de verificación") },
+//                singleLine = true,
+//                isError = errorToken != null,
+//                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+//            )
+//            errorToken?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+//
+//            Spacer(Modifier.height(8.dp))
+//            Text(
+//                text = "Hemos enviado un código a $email. Revísalo y escríbelo aquí.",
+//                style = MaterialTheme.typography.bodySmall
+//            )
+//
+//            Spacer(Modifier.height(8.dp))
+//            Row(
+//                Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.End
+//            ) {
+//                TextButton(onClick = {
+//                    onRequestToken(email)
+//                    Toast.makeText(context, "Código reenviado", Toast.LENGTH_SHORT).show()
+//                }) {
+//                    Text("Reenviar código")
+//                }
+//            }
+//        }
 
         Spacer(Modifier.height(24.dp))
 
@@ -147,31 +141,36 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
                     }
 
                     if (errorEmail == null && errorConfirm == null) {
-                        if (!showTokenField) {
-                            // 2) Emails OK -> mostrar campo token y enviar código
-                            showTokenField = true
-                            token = ""
-                            errorToken = null
-                            if (!tokenRequested) {
-                                onRequestToken(email)
-                                tokenRequested = true
-                            }
-                        } else {
-                            // 3) Ya visible: verificar token
-                            when {
-                                token.isBlank() -> {
-                                    errorToken = "Introduce el código de verificación"
-                                }
-                                !onVerifyToken(token) -> {
-                                    errorToken = "Código incorrecto"
-                                }
-                                else -> {
-                                    // Token válido
-                                    errorToken = null
-                                    onFinish()
-                                }
-                            }
-                        }
+                        Log.e(TAG, "Entrando en onFinish")
+                        onFinish(true)
+                        /**
+                         * Hasta que no vincule brevo no implementar la comprobación del token.
+                         * */
+//                        if (!showTokenField) {
+//                            // 2) Emails OK -> mostrar campo token y enviar código
+//                            showTokenField = true
+//                            token = ""
+//                            errorToken = null
+//                            if (!tokenRequested) {
+//                                onRequestToken(email)
+//                                tokenRequested = true
+//                            }
+//                        } else {
+////                             //3) Ya visible: verificar token
+////                            when {
+////                                token.isBlank() -> {
+////                                    errorToken = "Introduce el código de verificación"
+////                                }
+////                                !onVerifyToken(token) -> {
+////                                    errorToken = "Código incorrecto"
+////                                }
+////                                else -> {
+////                                    // Token válido
+////                                    errorToken = null
+////                                    onFinish()
+////                                }
+////                            }
+//                        }
                     }
                 },
                 modifier = Modifier

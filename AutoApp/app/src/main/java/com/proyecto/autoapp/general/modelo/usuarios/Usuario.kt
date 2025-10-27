@@ -10,5 +10,6 @@ open class Usuario (
     var edad: Int?,
     val password: String?,
     val fotoUrl: String?,
-    val rol: RolUsuario?
+    val rol: RolUsuario?,
+    val nuevo: Boolean
 )

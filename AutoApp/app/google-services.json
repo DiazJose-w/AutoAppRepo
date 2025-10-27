@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "531263559562",
-    "project_id": "proyectofinciclo-eedd6",
-    "storage_bucket": "proyectofinciclo-eedd6.firebasestorage.app"
+    "project_number": "415322105923",
+    "project_id": "thumbsupbbdd",
+    "storage_bucket": "thumbsupbbdd.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:531263559562:android:94e68d1d64db09b2885a73",
+        "mobilesdk_app_id": "1:415322105923:android:2d99a3eb838b08ae260cf6",
         "android_client_info": {
           "package_name": "com.proyecto.autoapp"
         }
       },
       "oauth_client": [
         {
-          "client_id": "531263559562-g9lq865spsh5k98ct63iu2phfc5a7u6d.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.proyecto.autoapp",
-            "certificate_hash": "420a3a39744b3d4d015f150ef8199988e70ad844"
-          }
-        },
-        {
-          "client_id": "531263559562-mm0tco4rpvb140bh9vos6jeqne0cb0qr.apps.googleusercontent.com",
+          "client_id": "415322105923-c5mhganvimdnkigq5v991eneah2bqj9c.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAvdHKJF_xLB1eVfGDgNE8NCZrMqE4wHsM"
+          "current_key": "AIzaSyA545wXwhCCFt1H93FSM6MG5dLICeO9l2o"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "531263559562-mm0tco4rpvb140bh9vos6jeqne0cb0qr.apps.googleusercontent.com",
+              "client_id": "415322105923-126p9r6uko7hpkj5ugmukhpg5a76co4q.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

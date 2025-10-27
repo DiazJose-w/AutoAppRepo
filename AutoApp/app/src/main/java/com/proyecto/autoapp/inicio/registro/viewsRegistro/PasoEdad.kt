@@ -23,12 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PasoEdad(
-    edad: String,
-    onEdadChange: (String) -> Unit,
-    onNext: () -> Unit,
-    onBack: () -> Unit
-) {
+fun PasoEdad(edad: String, onEdadChange: (String) -> Unit, onNext: () -> Unit, onBack: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
 
     Column(Modifier.padding(16.dp)) {

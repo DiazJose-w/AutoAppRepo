@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">AutoApp</string>
+    <string name="app_name">ThumbsUp</string>
+    <string name="default_web_client_id">
+    415322105923-c5mhganvimdnkigq5v991eneah2bqj9c.apps.googleusercontent.com
+    </string>
+
 </resources>

@@ -11,4 +11,5 @@ object Rutas {
 
     /**     RUTAS PARA PAGINAS DE INICIO DE USUARIO     */
     var ViewUsuario = "viewUsuario"
+    var Perfil = "perfil"
 }

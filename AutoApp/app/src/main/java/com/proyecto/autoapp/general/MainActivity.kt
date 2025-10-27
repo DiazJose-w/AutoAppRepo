@@ -28,12 +28,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.ViewUsuario) {
+                NavHost(navController, Rutas.ViewInicial) {
+                    /**
+                     * Views inicial APP
+                     * */
                     composable(Rutas.ViewInicial) {
                         ViewInicial(navController, loginVM)
-                    }
-                    composable(Rutas.ViewUsuario){
-                        ViewInicialUsuario(mapViewModel)
                     }
                     composable(Rutas.Login) {
                         Login(navController, loginVM)
@@ -43,6 +43,16 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(Rutas.TokenSMS){
                         TokenSMS(navController, loginVM)
+                    }
+
+                    /**
+                     * Views inicio usuario
+                     * */
+                    composable(Rutas.ViewUsuario){
+                        ViewInicialUsuario(mapViewModel)
+                    }
+                    composable (Rutas.Perfil){
+
                     }
                 }
             }
