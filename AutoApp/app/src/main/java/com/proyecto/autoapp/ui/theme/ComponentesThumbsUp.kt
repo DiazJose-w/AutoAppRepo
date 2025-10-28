@@ -2,34 +2,26 @@ package com.proyecto.autoapp.ui.theme
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +64,7 @@ fun TopBarGeneral(titulo: String, onAccion: (Int) -> Unit) {
 
 @Composable
 fun PerfilFotoSection(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> Unit, onManageGaleria: () -> Unit,
-                               ThumbUpCard: Color, ThumbUpTextPrimary: Color, ThumbUpTextSecondary: Color, ThumbUpMustard: Color) {
+                      ThumbUpCard: Color, ThumbUpTextPrimary: Color, ThumbUpTextSecondary: Color, ThumbUpMustard: Color) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -241,4 +233,179 @@ fun TitulosRegistro(texto: String) {
         color = ThumbUpMustard,
         modifier = Modifier.padding(bottom = 8.dp)
     )
+}
+
+/**
+ * Panel que mostrará la información del viaje
+ * */
+@Composable
+fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -> Unit = {}, onCancelar: () -> Unit = {}) {
+    Spacer(Modifier.height(16.dp))
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, ThumbUpMustard,
+                RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        viaje.conductor,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = ThumbUpMustard
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "${viaje.valoracion}",
+                            color = ThumbUpMustard,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                EtiquetaDato(Icons.Default.DirectionsCar, "${viaje.vehiculo} · ${viaje.color}")
+                EtiquetaDato(Icons.Default.EventSeat, "Plazas: ${viaje.plazasDisponibles}")
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                EtiquetaDato(Icons.Default.Info, viaje.distancia)
+                EtiquetaDato(Icons.Default.AccessTime, viaje.duracion)
+                EtiquetaDato(Icons.Default.Schedule, "Sale ${viaje.horaRecogida}")
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                FilaPunto("Recogida", viaje.puntoRecogida)
+                FilaPunto("Destino", viaje.puntoDestino)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = onContactar,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = ThumbUpMustard
+                    ),
+                    border = BorderStroke(1.dp, ThumbUpMustard)
+                ) {
+                    Text(
+                        "Contactar",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = ThumbUpMustard
+                    )
+                }
+
+                Button(
+                    onClick = onVerRuta,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Text(
+                        "Ver ruta",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            }
+
+            TextButton(
+                onClick = onCancelar,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ThumbUpMustard
+                )
+            ) {
+                Text(
+                    "Cancelar petición",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = ThumbUpMustard
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EtiquetaDato(icono: ImageVector, etiqueta: String) {
+    AssistChip(
+        onClick = { },
+        label = {
+            Text(
+                etiqueta,
+                color = ThumbUpMustard,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+            )
+        },
+        leadingIcon = {
+            Icon(
+                icono,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = ThumbUpMustard
+            )
+        },
+        shape = RoundedCornerShape(10.dp),
+        border = BorderStroke(1.dp, ThumbUpMustard),
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = Color.Transparent,
+            labelColor = ThumbUpMustard,
+            leadingIconContentColor = ThumbUpMustard
+        )
+    )
+}
+
+@Composable
+private fun FilaPunto(titulo: String, texto: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "$titulo: ",
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = ThumbUpMustard
+        )
+        Text(
+            texto,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White
+        )
+    }
 }
