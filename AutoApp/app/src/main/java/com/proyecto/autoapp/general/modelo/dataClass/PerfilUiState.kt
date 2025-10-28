@@ -35,6 +35,12 @@ data class PerfilUiState(
     // Vehículo
     val vehiculoFotoUrl: String? = null,
     val vehiculoDescripcion: String = "",
+    val showVehiculoEditor: Boolean = false,
+    val vehiculoModelo: String = "",
+    val vehiculoMatricula: String = "",
+    val vehiculoAnio: String = "",
+    val vehiculoColor: String = "",
+    val vehiculosGuardados: List<String> = emptyList(),
 
     // UI
     val isSaveEnabled: Boolean = true,

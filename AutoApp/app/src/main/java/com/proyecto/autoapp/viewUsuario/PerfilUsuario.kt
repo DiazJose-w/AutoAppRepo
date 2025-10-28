@@ -14,6 +14,9 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +34,13 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 @Composable
 fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
     val uiState by perfilVM.uiState.collectAsState()
+    var showVehiculoEditor by remember { mutableStateOf(false) }
+
+    // Datos del vehículo.
+    var modelo by remember { mutableStateOf("") }
+    var matricula by remember { mutableStateOf("") }
+    var anio by remember { mutableStateOf("") }
+    var color by remember { mutableStateOf("") }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -518,7 +528,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                  * donde se va a añadir la información del coche modelo, matrícula, color y año
                                  * donde tendrá además su propio botón para añadir el coche a la base de datos
                                  * de la persona.
-                                 * */
+                                 */
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -540,7 +550,19 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
 
                                 Button(
                                     onClick = {
-
+                                        /**
+                                         * Este botón ya NO sube directamente la foto.
+                                         *
+                                         * Ahora sirve para DESPLEGAR un bloque adicional en esta misma pantalla
+                                         * donde se van a rellenar los datos del coche (modelo, matrícula, año, color),
+                                         * se podrá subir la foto del vehículo desde allí,
+                                         * y habrá un botón para guardar ese coche en la base de datos
+                                         * de la persona usuaria.
+                                         *
+                                         * El bloque se controla con una bandera tipo uiState.showVehiculoEditor
+                                         * en el viewModel.
+                                         */
+                                        showVehiculoEditor = !showVehiculoEditor
                                     },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -549,18 +571,212 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                     )
                                 ) {
                                     Text(
-                                        text = if (uiState.vehiculoFotoUrl != null) "Actualizar" else "Subir",
+                                        text = "Añadir",
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 14.sp
                                     )
                                 }
                             }
+
+                            /**
+                             * BLOQUE DESPLEGABLE DEL VEHÍCULO
+                             * Aquí es donde realmente se añaden los datos del coche.
+                             *
+                             * IMPORTANTE:
+                             *  - Los campos SIEMPRE aparecen vacíos para añadir vehículos nuevos.
+                             *  - Debajo de este editor, aparecerá el listado de coches ya añadidos
+                             *    y vinculados a la persona usuaria.
+                             */
+                            if (uiState.showVehiculoEditor) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = ThumbUpSurfaceDark.copy(alpha = 0.4f)
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+
+                                        // MODELO
+                                        OutlinedTextField(
+                                            value = uiState.vehiculoModelo,
+                                            onValueChange = {
+
+                                            },
+                                            label = {
+                                                Text(
+                                                    "Modelo",
+                                                    color = ThumbUpTextSecondary
+                                                )
+                                            },
+                                            singleLine = true,
+                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
+                                            colors = ThumbUpTextFieldColors(),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        // MATRÍCULA
+                                        OutlinedTextField(
+                                            value = uiState.vehiculoMatricula,
+                                            onValueChange = {
+
+                                            },
+                                            label = {
+                                                Text(
+                                                    "Matrícula",
+                                                    color = ThumbUpTextSecondary
+                                                )
+                                            },
+                                            singleLine = true,
+                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
+                                            colors = ThumbUpTextFieldColors(),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        // AÑO
+                                        OutlinedTextField(
+                                            value = uiState.vehiculoAnio,
+                                            onValueChange = {
+
+                                            },
+                                            label = { Text("Año", color = ThumbUpTextSecondary) },
+                                            singleLine = true,
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = KeyboardType.Number
+                                            ),
+                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
+                                            colors = ThumbUpTextFieldColors(),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        // COLOR
+                                        OutlinedTextField(
+                                            value = uiState.vehiculoColor,
+                                            onValueChange = {
+
+                                            },
+                                            label = { Text("Color", color = ThumbUpTextSecondary) },
+                                            singleLine = true,
+                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
+                                            colors = ThumbUpTextFieldColors(),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+
+                                        // SUBIR FOTO DEL VEHÍCULO
+                                        Button(
+                                            onClick = {
+                                                /**
+                                                 * Aquí sí se abriría el selector de imagen/foto del coche.
+                                                 * Esto asociará la imagen al vehículo que se está creando.
+                                                 */
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = ThumbUpMustard,
+                                                contentColor = ThumbUpSurfaceDark
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Subir foto del vehículo",
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 14.sp
+                                            )
+                                        }
+
+                                        // BOTÓN GUARDAR VEHÍCULO
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            Button(
+                                                onClick = {
+                                                    showVehiculoEditor = false
+                                                    /**
+                                                     * Guardar este vehículo en la base de datos
+                                                     * de la persona usuaria.
+                                                     *
+                                                     * Después de guardar:
+                                                     *  - Se vacían los campos
+                                                     *  - Se podría cerrar el desplegable
+                                                     *  - Se actualiza la lista de vehículos guardados
+                                                     *
+                                                     *  Implementar el viewModel
+                                                     */
+                                                },
+                                                shape = RoundedCornerShape(10.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = ThumbUpMustard,
+                                                    contentColor = ThumbUpSurfaceDark
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = "Guardar vehículo",
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 14.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // LISTADO DE VEHÍCULOS YA VINCULADOS AL USUARIO, SI LOS HUBIERA
+                            if (uiState.vehiculosGuardados.isNotEmpty()) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "Tus vehículos",
+                                        color = ThumbUpTextPrimary,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 14.sp
+                                    )
+
+                                    uiState.vehiculosGuardados.forEach { coche ->
+                                        // coche sería algo tipo "Seat Ibiza • 1234-ABC • Rojo • 2015"
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(ThumbUpSurfaceDark.copy(alpha = 0.4f))
+                                                .padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.DirectionsCar,
+                                                contentDescription = null,
+                                                tint = ThumbUpMustard,
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .padding(end = 8.dp)
+                                            )
+
+                                            Text(
+                                                text = coche,
+                                                color = ThumbUpTextPrimary,
+                                                fontSize = 14.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(64.dp))
+
+                Spacer(modifier = Modifier.height(64.dp))
+            }
         }
     }
 }
