@@ -21,7 +21,10 @@ import java.util.concurrent.TimeUnit
 
 class LoginVM {
     var TAG = "Jose"
+    var usuario = Coleccion.Usuario
     private val auth = FirebaseAuth.getInstance()
+
+    private var usuarioActualCache: Map<String, Any>? = null
 
     val isLoading = MutableStateFlow(false)
     val loginSuccess = MutableStateFlow(false)
@@ -35,7 +38,6 @@ class LoginVM {
     fun login(correo: String, pass: String, onResult: (Boolean) -> Unit){
         isLoading.value = true
         errorMessage.value = null
-        loginSuccess.value = false
 
         auth.signInWithEmailAndPassword(correo, pass)
             .addOnCompleteListener { task ->
@@ -72,23 +74,72 @@ class LoginVM {
     }
 
     /** Login con Google */
-    fun loginWithGoogle(idToken: String) {
+    fun loginWithGoogle(idToken: String,onResult: (Boolean) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
-        loginSuccess.value = false
 
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 isLoading.value = false
+
                 if (task.isSuccessful) {
-                    loginSuccess.value = true
-                    loginGoogleSuccess.value = true
+                    val userAuth = auth.currentUser
+
+                    if (userAuth != null) {
+                        val uid = userAuth.uid
+                        val firestore = FirebaseFirestore.getInstance()
+                        val usuarioDocRef = firestore.collection(usuario).document(uid)
+
+                        usuarioDocRef.get()
+                            .addOnSuccessListener { snapshot ->
+                                if (snapshot.exists()) {
+                                    // Usuario ya existente en la base de datos
+                                    usuarioActualCache = snapshot.data
+                                    val esNuevo = snapshot.getBoolean("nuevo") ?: false
+                                    if (esNuevo) {
+                                        usuarioDocRef.update("nuevo", false)
+                                    }
+                                    onResult(true)
+                                } else {
+                                    // Usuario nuevo -> se crea documento en Firestore
+                                    val nuevoUsuario = hashMapOf(
+                                        "id" to uid,
+                                        "nombre" to (userAuth.displayName ?: ""),
+                                        "apellidos" to "",
+                                        "edad" to 0,
+                                        "email" to (userAuth.email ?: ""),
+                                        "password" to "",
+                                        "rolUsuario" to "CUSTOMER",
+                                        "nuevo" to true
+                                    )
+
+                                    usuarioDocRef.set(nuevoUsuario)
+                                        .addOnSuccessListener {
+                                            usuarioActualCache = nuevoUsuario
+                                            onResult(true)
+                                        }
+                                        .addOnFailureListener { e ->
+                                            errorMessage.value = e.message
+                                            onResult(false)
+                                        }
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                errorMessage.value = e.message
+                                onResult(false)
+                            }
+                    } else {
+                        errorMessage.value = "No se pudo obtener el usuario autenticado"
+                        onResult(false)
+                    }
                 } else {
-                    errorMessage.value = task.exception?.message ?: "Error desconocido"
+                    errorMessage.value = task.exception?.message ?: "Error desconocido en login"
+                    onResult(false)
                 }
             }
     }
+
 
     fun signOut(context: Context) {
         Log.d(TAG, "signOut() llamado ${loginGoogleSuccess.value}")

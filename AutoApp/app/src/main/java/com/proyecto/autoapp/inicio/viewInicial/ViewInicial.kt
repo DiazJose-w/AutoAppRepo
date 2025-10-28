@@ -2,6 +2,7 @@ package com.proyecto.autoapp.inicio.viewInicial
 
 import com.proyecto.autoapp.R
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,34 +29,52 @@ import com.proyecto.autoapp.ui.theme.*
 
 @Composable
 fun ViewInicial(navController: NavController, loginVM: LoginVM) {
+    var TAG="Jose"
     var context = LocalContext.current
 
-    /** Disparadores para entrar con cuenta google */
+// Launcher que recibe el resultado del intent de Google
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            val account = task.result
-            val idToken = account?.idToken
-            if (idToken != null) {
-                loginVM.loginWithGoogle(idToken)
-                Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
-                navController.navigate(Rutas.Registro)
-            } else {
-                Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
+            try {
+                val account = task.result
+                val idToken = account?.idToken
+
+                if (idToken != null) {
+                    loginVM.loginWithGoogle(idToken) { ok ->
+                        if (ok) {
+                            Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
+                            navController.navigate(Rutas.ViewUsuario)
+                        } else {
+                            Toast.makeText(context, "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error iniciando con Google", Toast.LENGTH_SHORT).show()
             }
+        } else {
+            Toast.makeText(context, "Inicio cancelado", Toast.LENGTH_SHORT).show()
         }
     }
 
+    // Esta función la llamas desde tu botón "Inicia con Google"
     fun launchGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
-        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+        googleSignInClient.signOut()
+            .addOnCompleteListener {
+                googleSignInLauncher.launch(googleSignInClient.signInIntent)
+            }
     }
+
     /** ----------------------------------------------- */
 
     Scaffold(
