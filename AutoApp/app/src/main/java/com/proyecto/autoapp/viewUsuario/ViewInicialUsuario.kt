@@ -1,12 +1,7 @@
 package com.proyecto.autoapp.viewUsuario
 
-import android.app.AlertDialog
-import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -27,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.navOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.Maps.MapScreen

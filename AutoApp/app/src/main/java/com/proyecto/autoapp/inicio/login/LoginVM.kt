@@ -8,14 +8,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
-import com.proyecto.autoapp.inicio.registro.RegistroVM
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.TimeUnit
 
@@ -24,7 +22,7 @@ class LoginVM {
     var usuario = Coleccion.Usuario
     private val auth = FirebaseAuth.getInstance()
 
-    private var usuarioActualCache: Map<String, Any>? = null
+    private var usuarioLogeado: Map<String, Any>? = null
 
     val isLoading = MutableStateFlow(false)
     val loginSuccess = MutableStateFlow(false)
@@ -35,25 +33,49 @@ class LoginVM {
     val codeSent = MutableStateFlow(false)
 
     /** Login con correo y contraseña.*/
-    fun login(correo: String, pass: String, onResult: (Boolean) -> Unit){
+    fun login(correo: String, pass: String, onResult: (Boolean) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
 
         auth.signInWithEmailAndPassword(correo, pass)
             .addOnCompleteListener { task ->
                 isLoading.value = false
-                if (task.isSuccessful) {
-                    val usuario = task.result?.user
 
+                if (task.isSuccessful) {
+                    val usuarioAuth = task.result?.user
+
+                    if (usuarioAuth != null) {
+                        val uid = usuarioAuth.uid
+                        val firestore = FirebaseFirestore.getInstance()
+                        val usuarioDocRef = firestore.collection(usuario).document(uid)
+
+                        usuarioDocRef.get()
+                            .addOnSuccessListener { snapshot ->
+                                if (snapshot.exists()) {
+                                    usuarioLogeado = snapshot.data
+                                    onResult(true)
+                                } else {
+                                    onResult(false)
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                errorMessage.value = e.message
+                                onResult(false)
+                            }
+                    } else {
+                        errorMessage.value = "Error al obtener el usuario"
+                        onResult(false)
+                    }
                 } else {
+                    errorMessage.value = task.exception?.message ?: "Error desconocido en el inicio de sesión"
                     onResult(false)
-                    errorMessage.value = task.exception?.message ?: "Error desconocido"
                 }
             }
     }
 
+
     fun signOut(context: Context, onResult: (Boolean) -> Unit) {
-        usuarioActualCache = null
+        usuarioLogeado = null
 
         // No usamos revokeAccess() porque no queremos volver a pedir permisos cada vez.
         try {
@@ -108,7 +130,7 @@ class LoginVM {
                             .addOnSuccessListener { snapshot ->
                                 if (snapshot.exists()) {
                                     // Usuario ya existente en la base de datos
-                                    usuarioActualCache = snapshot.data
+                                    usuarioLogeado = snapshot.data
                                     val esNuevo = snapshot.getBoolean("nuevo") ?: false
                                     if (esNuevo) {
                                         usuarioDocRef.update("nuevo", false)
@@ -129,7 +151,7 @@ class LoginVM {
 
                                     usuarioDocRef.set(nuevoUsuario)
                                         .addOnSuccessListener {
-                                            usuarioActualCache = nuevoUsuario
+                                            usuarioLogeado = nuevoUsuario
                                             onResult(true)
                                         }
                                         .addOnFailureListener { e ->

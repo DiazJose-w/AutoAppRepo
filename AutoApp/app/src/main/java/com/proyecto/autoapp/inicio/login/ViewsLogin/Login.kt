@@ -36,6 +36,7 @@ import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.ui.theme.TopBarGeneral
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
+import kotlin.math.log
 
 @Composable
 fun Login(navController: NavController, loginVM: LoginVM) {
@@ -135,21 +136,14 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                 Button(
                     onClick = {
                         if (email.isBlank() || password.isBlank()) {
-                            Toast.makeText(
-                                context,
-                                "No debe haber campos vacíos",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(context, "No debe haber campos vacíos",Toast.LENGTH_SHORT).show()
                         } else {
                             loginVM.login(email, password) { ok ->
                                 if (ok) {
                                     navController.navigate(Rutas.ViewUsuario)
+                                    Toast.makeText(context, "Bienvenido a ThumbsUp" ,Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Login incorrecto",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    Toast.makeText(context, "Comprueba usuario o contraseña" ,Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
