@@ -1,24 +1,14 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.app.AlertDialog
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,26 +21,97 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.navOptions
+import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.Maps.MapScreen
 import com.proyecto.autoapp.general.Maps.MapViewModel
+import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
-import com.proyecto.autoapp.ui.theme.PanelInfoViaje
-import com.proyecto.autoapp.ui.theme.ThumbUpMustard
-import com.proyecto.autoapp.ui.theme.ThumbUpPrimaryButton
-import com.proyecto.autoapp.ui.theme.ThumbUpPurple
-import com.proyecto.autoapp.ui.theme.ThumbUpTextFieldColors
+import com.proyecto.autoapp.inicio.login.LoginVM
+import com.proyecto.autoapp.ui.theme.*
 
 @Composable
-fun ViewInicialUsuario(mapViewModel: MapViewModel) {
+fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController) {
+    var context = LocalContext.current
     var inicio by remember { mutableStateOf("") }
     var destino by remember { mutableStateOf("") }
     var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.Pendiente) }
+
+    //variables de diálogos de interacción
+    var showDialog by remember { mutableStateOf(false) }
+
+    // Métodos de diálogos de interacción
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+            title = {
+                Text(
+                    text = "Fin de sesión",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    text = "¿Deseas cerrar la sesión actual?",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialog = false
+                        loginVM.signOut(context) { result ->
+                            if (result) {
+                                FirebaseAuth.getInstance().signOut()
+                                navController.navigate(Rutas.ViewInicial) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                                Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Error cerrando sesión", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    )
+                ) {
+                    Text("Sí", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showDialog = false },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbUpMustard
+                    )
+                ) {
+                    Text("No", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                }
+            },
+            modifier = Modifier
+                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+        )
+    }
 
     Scaffold(
         modifier = Modifier
@@ -65,8 +126,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel) {
                 .fillMaxSize()
                 .background(ThumbUpPurple)
         ) {
-
-            // Fondo camino semitransparente, anclado abajo
             Image(
                 painter = painterResource(R.mipmap.camino_central),
                 contentDescription = null,
@@ -115,9 +174,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel) {
                              * */
                         },
                         onLogout = {
-                            /**
-                             * Cerrar sesión. Mirar del proyecto de paquetería.
-                             * */
+                            showDialog = true
                         }
                     )
                 }

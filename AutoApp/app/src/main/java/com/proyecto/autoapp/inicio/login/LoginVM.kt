@@ -52,26 +52,39 @@ class LoginVM {
             }
     }
 
-    fun logout(onComplete: (Boolean) -> Unit) {
-        val usuario = auth.currentUser
-        if (usuario != null) {
-            val userId = usuario.uid
+    fun signOut(context: Context, onResult: (Boolean) -> Unit) {
+        usuarioActualCache = null
 
-            val db = FirebaseFirestore.getInstance()
-            db.collection(Coleccion.Usuario)
-                .document(userId)
-                .get()
-                .addOnSuccessListener {
+        // No usamos revokeAccess() porque no queremos volver a pedir permisos cada vez.
+        try {
+            val googleSignInClient = GoogleSignIn.getClient(
+                context,
+                GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(context.getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+            )
+
+            googleSignInClient.signOut()
+                .addOnCompleteListener {
                     auth.signOut()
-                    onComplete(true)
+                    onResult(true)
                 }
-                .addOnFailureListener {
-                    onComplete(false)
+                .addOnFailureListener { e ->
+                    auth.signOut()
+                    errorMessage.value = e.message
+                    onResult(false)
                 }
-        } else {
-            onComplete(false)
+
+        } catch (e: Exception) {
+            try {
+                auth.signOut()
+            } catch (_: Exception) { }
+            errorMessage.value = e.message
+            onResult(true)
         }
     }
+
 
     /** Login con Google */
     fun loginWithGoogle(idToken: String,onResult: (Boolean) -> Unit) {
@@ -139,7 +152,6 @@ class LoginVM {
                 }
             }
     }
-
 
     fun signOut(context: Context) {
         Log.d(TAG, "signOut() llamado ${loginGoogleSuccess.value}")

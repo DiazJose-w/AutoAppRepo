@@ -18,6 +18,7 @@ import com.proyecto.autoapp.ui.theme.AutoAppTheme
 import com.proyecto.autoapp.viewUsuario.PerfilRoute
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
+import kotlin.math.log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
                      * Views inicio usuario
                      * */
                     composable(Rutas.ViewUsuario){
-                        ViewInicialUsuario(mapViewModel)
+                        ViewInicialUsuario(mapViewModel, loginVM, navController)
                     }
                     composable (Rutas.Perfil){
                         PerfilRoute(perfilVM, navController)
