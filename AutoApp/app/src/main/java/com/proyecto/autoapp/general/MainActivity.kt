@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.ViewInicial) {
+                NavHost(navController, Rutas.Perfil) {
                     /**
                      * Views inicial APP
                      * */
@@ -48,7 +48,6 @@ class MainActivity : ComponentActivity() {
                     composable(Rutas.TokenSMS){
                         TokenSMS(navController, loginVM)
                     }
-
                     /**
                      * Views inicio usuario
                      * */

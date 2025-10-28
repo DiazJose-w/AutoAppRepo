@@ -505,19 +505,26 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                     } else {
                                         Icon(
                                             imageVector = Icons.Default.DirectionsCar,
-                                            contentDescription = "Subir vehículo",
+                                            contentDescription = "Añadir vehículo",
                                             tint = ThumbUpTextSecondary,
                                             modifier = Modifier.size(32.dp)
                                         )
                                     }
                                 }
 
+                                /**
+                                 * Modificar todo el apartado del vehículo.
+                                 * No se sube la foto, sino que se abre otro desplegable donde se ve otro bloque
+                                 * donde se va a añadir la información del coche modelo, matrícula, color y año
+                                 * donde tendrá además su propio botón para añadir el coche a la base de datos
+                                 * de la persona.
+                                 * */
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
-                                        text = if (uiState.vehiculoFotoUrl != null) "Foto subida" else "Sin foto",
+                                        text = if (uiState.vehiculoFotoUrl != null) "añadir vehículo" else "Sin foto",
                                         color = ThumbUpTextPrimary,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium

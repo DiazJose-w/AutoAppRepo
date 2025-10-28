@@ -83,7 +83,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
             ) {
                 // Título
                 Text(
-                    text = "Bienvenido a ThumbUp",
+                    text = "Bienvenido a ThumbsUp",
                     color = ThumbUpMustard,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
