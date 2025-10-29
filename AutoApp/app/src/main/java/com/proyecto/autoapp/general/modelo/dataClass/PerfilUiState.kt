@@ -1,6 +1,7 @@
 package com.proyecto.autoapp.general.modelo.dataClass
 
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
+import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 
 
 // =====================================================
@@ -35,15 +36,15 @@ data class PerfilUiState(
     // Vehículo
     val vehiculoFotoUrl: String? = null,
     val vehiculoDescripcion: String = "",
-    val showVehiculoEditor: Boolean = false,
     val vehiculoModelo: String = "",
     val vehiculoMatricula: String = "",
     val vehiculoAnio: String = "",
     val vehiculoColor: String = "",
-    val vehiculosGuardados: List<String> = emptyList(),
+    val vehiculosGuardados: List<Vehiculo> = emptyList(),
 
     // UI
     val isSaveEnabled: Boolean = true,
-    val showEdadWarningConductor: Boolean = false
+    val showEdadWarningConductor: Boolean = false,
+    val showVehiculoEditor: Boolean = false
 )
 

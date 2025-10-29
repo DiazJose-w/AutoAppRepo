@@ -34,7 +34,6 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 @Composable
 fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
     val uiState by perfilVM.uiState.collectAsState()
-    var showVehiculoEditor by remember { mutableStateOf(false) }
 
     // Datos del vehículo.
     var modelo by remember { mutableStateOf("") }
@@ -562,7 +561,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                          * El bloque se controla con una bandera tipo uiState.showVehiculoEditor
                                          * en el viewModel.
                                          */
-                                        showVehiculoEditor = !showVehiculoEditor
+                                        perfilVM.uiState
                                     },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -700,7 +699,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                         ) {
                                             Button(
                                                 onClick = {
-                                                    showVehiculoEditor = false
+                                                    uiState.showVehiculoEditor
                                                     /**
                                                      * Guardar este vehículo en la base de datos
                                                      * de la persona usuaria.

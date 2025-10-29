@@ -19,7 +19,6 @@ class PerfilVM {
     val uiState: StateFlow<PerfilUiState> = _uiState
 
     // --------- EDITAR CAMPOS BÁSICOS ---------
-
     fun onNombreChange(nuevo: String) {
         _uiState.update { it.copy(nombre = nuevo, isSaveEnabled = true) }
     }
@@ -40,7 +39,6 @@ class PerfilVM {
     }
 
     // --------- FOTOS ---------
-
     fun onCambiarFotoPerfil() {
         // Aquí lanzarás flujo de selección de imagen de perfil
         // _uiState.update { it.copy(fotoPerfilUrl = nuevaUrl, isSaveEnabled = true) }
@@ -51,7 +49,7 @@ class PerfilVM {
     }
 
     // --------- ROLES ---------
-
+    // Método que avisa el estado del switch
     fun onPasajeroToggle(checked: Boolean) {
         _uiState.update {
             it.copy(
@@ -61,7 +59,6 @@ class PerfilVM {
         }
     }
 
-    // Método que avisa el estado del switch
     fun onConductorToggle(checked: Boolean) {
         _uiState.update { curr ->
             val edadNum = curr.edad.toIntOrNull() ?: 0
@@ -74,7 +71,6 @@ class PerfilVM {
     }
 
     // --------- GUARDAR ---------
-
     fun onGuardarCambios() {
         // Aquí puedes subir datos a Firestore o backend
         _uiState.update { it.copy(isSaveEnabled = false) }
