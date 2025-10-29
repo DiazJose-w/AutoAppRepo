@@ -41,6 +41,8 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
     var anio by remember { mutableStateOf("") }
     var color by remember { mutableStateOf("") }
 
+    perfilVM.cargarUsuario()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = ThumbUpPurple,
@@ -159,6 +161,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                         },
                         label = { Text("Nombre", color = ThumbUpTextSecondary) },
                         singleLine = true,
+                        enabled = false,
                         textStyle = TextStyle(color = ThumbUpTextPrimary),
                         colors = ThumbUpTextFieldColors(),
                         modifier = Modifier.fillMaxWidth(),
@@ -172,6 +175,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                         },
                         label = { Text("Apellidos", color = ThumbUpTextSecondary) },
                         singleLine = true,
+                        enabled = false,
                         textStyle = TextStyle(color = ThumbUpTextPrimary),
                         colors = ThumbUpTextFieldColors(),
                         modifier = Modifier.fillMaxWidth(),
@@ -182,10 +186,9 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                         OutlinedTextField(
                             value = uiState.edad,
                             onValueChange = {
-
+                                perfilVM.onEdadChange(it)
                             },
                             label = { Text("Edad", color = ThumbUpTextSecondary) },
-                            singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Number
                             ),

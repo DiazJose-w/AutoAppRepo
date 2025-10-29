@@ -145,11 +145,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 ) {
                     PerfilMenu(
                         onPerfil = {
-                            /**
-                             *  Crear ViewPerfil. Un perfil donde podrá modificar sus datos.
-                             * podrá realizar verificaciones de perfil y podrá ver el porcentaje de fiabilidad
-                             * de su perfíl y las valoraciones recibidas por otros usuarios.
-                             * */
+                            navController.navigate(Rutas.Perfil)
                         },
                         onHistorial = {
                             /**

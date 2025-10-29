@@ -27,13 +27,15 @@ class LoginVM {
 
     val isLoading = MutableStateFlow(false)
     val loginSuccess = MutableStateFlow(false)
-    val loginGoogleSuccess = MutableStateFlow(false)
     val errorMessage = MutableStateFlow<String?>(null)
 
     // Propiedad de verificación sms
     val codeSent = MutableStateFlow(false)
 
-    /** Login con correo y contraseña.*/
+    /** Login con correo y contraseña.
+     *  Login con Google.
+     *  SingOut
+     **/
     fun login(correo: String, pass: String, onResult: (Boolean) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
@@ -74,40 +76,6 @@ class LoginVM {
             }
     }
 
-    fun signOut(context: Context, onResult: (Boolean) -> Unit) {
-        usuarioLogeado = null
-
-        // No usamos revokeAccess() porque no queremos volver a pedir permisos cada vez.
-        try {
-            val googleSignInClient = GoogleSignIn.getClient(
-                context,
-                GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(context.getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build()
-            )
-
-            googleSignInClient.signOut()
-                .addOnCompleteListener {
-                    auth.signOut()
-                    onResult(true)
-                }
-                .addOnFailureListener { e ->
-                    auth.signOut()
-                    errorMessage.value = e.message
-                    onResult(false)
-                }
-
-        } catch (e: Exception) {
-            try {
-                auth.signOut()
-            } catch (_: Exception) { }
-            errorMessage.value = e.message
-            onResult(true)
-        }
-    }
-
-    /** Login con Google */
     fun loginWithGoogle(idToken: String,onResult: (Boolean) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
@@ -141,7 +109,9 @@ class LoginVM {
                                         "enabled" to false,
                                         "ratingAvg" to 0.0,
                                         "ratingCount" to 0,
-                                        "vehiculoActivoId" to null
+                                        "vehiculoActivoId" to null,
+                                        "licenciaSubida" to false,
+                                        "licenciaVerificada" to false
                                     )
 
                                     val perfilPasajeroInit = mapOf(
@@ -150,7 +120,7 @@ class LoginVM {
                                         "ratingCount" to 0
                                     )
 
-                                    // 2. Montamos el documento del usuario (igual estructura que en registro con email)
+                                    // 2. Montamos el documento del usuario
                                     val nuevoUsuario: Map<String, Any> = mapOf(
                                         "id" to uid,
                                         "nombre" to (userAuth.displayName ?: ""),
@@ -191,10 +161,11 @@ class LoginVM {
             }
     }
 
-    fun signOut(context: Context) {
-        Log.d(TAG, "signOut() llamado ${loginGoogleSuccess.value}")
-        if (loginGoogleSuccess.value) {
-            //El usuario inició sesión con Google
+    fun signOut(context: Context, onResult: (Boolean) -> Unit) {
+        usuarioLogeado = null
+
+        // No usamos revokeAccess() porque no queremos volver a pedir permisos cada vez.
+        try {
             val googleSignInClient = GoogleSignIn.getClient(
                 context,
                 GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -203,26 +174,33 @@ class LoginVM {
                     .build()
             )
 
-            googleSignInClient.revokeAccess().addOnCompleteListener { revokeTask ->
-                if (revokeTask.isSuccessful) {
-                    Log.d(TAG, "Acceso revocado correctamente")
+            googleSignInClient.signOut()
+                .addOnCompleteListener {
                     auth.signOut()
-                    Log.d(TAG, "Sesión cerrada correctamente")
-                } else {
-                    Log.e(TAG, "Error al revocar el acceso")
+                    onResult(true)
                 }
-            }
-        } else {
-            auth.signOut()
-            Log.d(TAG, "Sesión cerrada para usuario no Google")
-        }
+                .addOnFailureListener { e ->
+                    auth.signOut()
+                    errorMessage.value = e.message
+                    onResult(false)
+                }
 
-        //Actualizar el estado de las variables de UI
-        loginGoogleSuccess.value = false
-        loginSuccess.value = false
+        } catch (e: Exception) {
+            try {
+                auth.signOut()
+            } catch (_: Exception) { }
+            errorMessage.value = e.message
+            onResult(true)
+        }
     }
 
-    /**     MÉTODOS Y HERRAMIENTAS PARA LA VERIFICACIÓN MEDIANTE SMS     */
+    /**
+     * MÉTODOS Y HERRAMIENTAS PARA LA VERIFICACIÓN MEDIANTE SMS
+     *  -> 1) Enviar SMS
+     *  -> 2) Reenviar SMS
+     *  -> 3) Verificar código manual
+     *  -> 4) Entrar con el código enviado al teléfono
+     * */
     // Guardamos datos del proceso OTP
     private var verificationId: String? = null
     private var resendToken: PhoneAuthProvider.ForceResendingToken? = null
@@ -255,7 +233,6 @@ class LoginVM {
         }
     }
 
-    // 1) Enviar SMS
     fun startPhoneVerification(activity: Activity, numberPhone: String) {
         if (numberPhone.isBlank()) {
             errorMessage.value = "Introduce un teléfono válido"
@@ -274,7 +251,6 @@ class LoginVM {
         }
     }
 
-    // 2) Reenviar SMS
     fun resendCode(activity: Activity, phoneE164: String) {
         val token = resendToken ?: run { errorMessage.value = "No hay token de reenvío"; return }
         isLoading.value = true
@@ -290,7 +266,6 @@ class LoginVM {
         PhoneAuthProvider.verifyPhoneNumber(options)
     }
 
-    // 3) Verificar código manual
     fun verifyCode(code: String) {
         val id = verificationId ?: run { errorMessage.value = "Primero solicita el código"; return }
         if (code.length < 6) { errorMessage.value = "El código debe tener 6 dígitos"; return }
@@ -300,7 +275,6 @@ class LoginVM {
         signInWithPhoneAuthCredential(credential)
     }
 
-    // 4) Entrar con el código enviado al teléfono
     private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->

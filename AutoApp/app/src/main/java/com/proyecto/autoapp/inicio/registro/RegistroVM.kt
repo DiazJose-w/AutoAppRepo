@@ -51,7 +51,9 @@ class RegistroVM() {
                                 enabled = false,
                                 ratingAvg = 0.0,
                                 ratingCount = 0,
-                                vehiculoActivoId = null
+                                vehiculoActivoId = null,
+                                licenciaSubida = false,
+                                licenciaVerificada = false
                             ),
                             perfilPasajero = PerfilPasajero(
                                 enabled = false,
@@ -75,7 +77,9 @@ class RegistroVM() {
                                 "enabled" to customer.perfilConductor.enabled,
                                 "ratingAvg" to customer.perfilConductor.ratingAvg,
                                 "ratingCount" to customer.perfilConductor.ratingCount,
-                                "vehiculoActivoId" to customer.perfilConductor.vehiculoActivoId
+                                "vehiculoActivoId" to customer.perfilConductor.vehiculoActivoId,
+                                "licenciaSubida" to customer.perfilConductor.licenciaSubida,
+                                "licenciaVerificada" to customer.perfilConductor.licenciaVerificada
                             ),
                             "perfilPasajero" to mapOf(
                                 "enabled" to customer.perfilPasajero.enabled,
