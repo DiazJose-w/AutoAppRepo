@@ -761,7 +761,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                             )
 
                                             Text(
-                                                text = coche,
+                                                text = coche.modelo,
                                                 color = ThumbUpTextPrimary,
                                                 fontSize = 14.sp
                                             )

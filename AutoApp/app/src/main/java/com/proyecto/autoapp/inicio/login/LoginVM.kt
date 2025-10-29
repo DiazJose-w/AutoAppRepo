@@ -14,6 +14,7 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
+import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.TimeUnit
 
@@ -73,7 +74,6 @@ class LoginVM {
             }
     }
 
-
     fun signOut(context: Context, onResult: (Boolean) -> Unit) {
         usuarioLogeado = null
 
@@ -107,13 +107,13 @@ class LoginVM {
         }
     }
 
-
     /** Login con Google */
     fun loginWithGoogle(idToken: String,onResult: (Boolean) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
 
         val credential = GoogleAuthProvider.getCredential(idToken, null)
+
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
                 isLoading.value = false
@@ -129,7 +129,6 @@ class LoginVM {
                         usuarioDocRef.get()
                             .addOnSuccessListener { snapshot ->
                                 if (snapshot.exists()) {
-                                    // Usuario ya existente en la base de datos
                                     usuarioLogeado = snapshot.data
                                     val esNuevo = snapshot.getBoolean("nuevo") ?: false
                                     if (esNuevo) {
@@ -137,31 +136,48 @@ class LoginVM {
                                     }
                                     onResult(true)
                                 } else {
-                                    // Usuario nuevo -> se crea documento en Firestore
-                                    val nuevoUsuario = hashMapOf(
+                                    // Primero mapear los perfiles
+                                    val perfilConductorInit = mapOf(
+                                        "enabled" to false,
+                                        "ratingAvg" to 0.0,
+                                        "ratingCount" to 0,
+                                        "vehiculoActivoId" to null
+                                    )
+
+                                    val perfilPasajeroInit = mapOf(
+                                        "enabled" to false,
+                                        "ratingAvg" to 0.0,
+                                        "ratingCount" to 0
+                                    )
+
+                                    // 2. Montamos el documento del usuario (igual estructura que en registro con email)
+                                    val nuevoUsuario: Map<String, Any> = mapOf(
                                         "id" to uid,
                                         "nombre" to (userAuth.displayName ?: ""),
                                         "apellidos" to "",
-                                        "edad" to 0,
                                         "email" to (userAuth.email ?: ""),
+                                        "edad" to 0,
                                         "password" to "",
-                                        "rolUsuario" to "CUSTOMER",
-                                        "nuevo" to true
+                                        "fotoUrl" to (userAuth.photoUrl?.toString() ?: ""),
+                                        "rol" to RolUsuario.CUSTOMER.name,
+                                        "nuevo" to true,
+                                        "perfilConductor" to perfilConductorInit,
+                                        "perfilPasajero" to perfilPasajeroInit
                                     )
-
-                                    usuarioDocRef.set(nuevoUsuario)
+                                    usuarioDocRef
+                                        .set(nuevoUsuario)
                                         .addOnSuccessListener {
                                             usuarioLogeado = nuevoUsuario
                                             onResult(true)
                                         }
                                         .addOnFailureListener { e ->
-                                            errorMessage.value = e.message
+                                            errorMessage.value = e.message ?: "Error guardando usuario nuevo"
                                             onResult(false)
                                         }
                                 }
                             }
                             .addOnFailureListener { e ->
-                                errorMessage.value = e.message
+                                errorMessage.value = e.message ?: "Error leyendo usuario en Firestore"
                                 onResult(false)
                             }
                     } else {

@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                NavHost(navController, Rutas.Perfil) {
+                NavHost(navController, Rutas.ViewInicial) {
                     /**
                      * Views inicial APP
                      * */

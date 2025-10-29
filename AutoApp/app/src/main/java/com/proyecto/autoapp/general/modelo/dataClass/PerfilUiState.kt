@@ -1,11 +1,9 @@
 package com.proyecto.autoapp.general.modelo.dataClass
 
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
-import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
-
 
 // =====================================================
-// Muestra los datos en la view perfil de usuario
+// Muestra los datos en la view perfil de usuario.
 // =====================================================
 data class PerfilUiState(
     val nombre: String = "",
