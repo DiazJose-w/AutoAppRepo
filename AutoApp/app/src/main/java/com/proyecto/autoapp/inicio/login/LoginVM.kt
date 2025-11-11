@@ -17,13 +17,15 @@ import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.TimeUnit
+import kotlin.toString
 
 class LoginVM {
     var TAG = "Jose"
     var usuario = Coleccion.Usuario
     private val auth = FirebaseAuth.getInstance()
 
-    private var usuarioLogeado: Map<String, Any>? = null
+    var usuarioLogeado: Map<String, Any>? = null
+    var uidActual: String = ""
 
     val isLoading = MutableStateFlow(false)
     val loginSuccess = MutableStateFlow(false)
@@ -48,14 +50,14 @@ class LoginVM {
                     val usuarioAuth = task.result?.user
 
                     if (usuarioAuth != null) {
-                        val uid = usuarioAuth.uid
                         val firestore = FirebaseFirestore.getInstance()
-                        val usuarioDocRef = firestore.collection(usuario).document(uid)
+                        val usuarioDocRef = firestore.collection(usuario).document(usuarioAuth.uid)
 
                         usuarioDocRef.get()
-                            .addOnSuccessListener { snapshot ->
-                                if (snapshot.exists()) {
-                                    usuarioLogeado = snapshot.data
+                            .addOnSuccessListener { user ->
+                                if (user.exists()) {
+                                    uidActual = user.id
+                                    Log.e("Jose", "Uid de usuario logeado $uidActual}")
                                     onResult(true)
                                 } else {
                                     onResult(false)
@@ -95,10 +97,11 @@ class LoginVM {
                         val usuarioDocRef = firestore.collection(usuario).document(uid)
 
                         usuarioDocRef.get()
-                            .addOnSuccessListener { snapshot ->
-                                if (snapshot.exists()) {
-                                    usuarioLogeado = snapshot.data
-                                    val esNuevo = snapshot.getBoolean("nuevo") ?: false
+                            .addOnSuccessListener { user ->
+                                if (user.exists()) {
+                                    //usuarioLogeado = user.data
+                                    uidActual = user.id
+                                    val esNuevo = user.getBoolean("nuevo") ?: false
                                     if (esNuevo) {
                                         usuarioDocRef.update("nuevo", false)
                                     }
@@ -113,7 +116,6 @@ class LoginVM {
                                         "licenciaSubida" to false,
                                         "licenciaVerificada" to false
                                     )
-
                                     val perfilPasajeroInit = mapOf(
                                         "enabled" to false,
                                         "ratingAvg" to 0.0,
@@ -134,16 +136,18 @@ class LoginVM {
                                         "perfilConductor" to perfilConductorInit,
                                         "perfilPasajero" to perfilPasajeroInit
                                     )
+
                                     usuarioDocRef
                                         .set(nuevoUsuario)
                                         .addOnSuccessListener {
-                                            usuarioLogeado = nuevoUsuario
+                                            //usuarioLogeado = nuevoUsuario
                                             onResult(true)
                                         }
                                         .addOnFailureListener { e ->
                                             errorMessage.value = e.message ?: "Error guardando usuario nuevo"
                                             onResult(false)
                                         }
+                                    uidActual = usuarioDocRef.id
                                 }
                             }
                             .addOnFailureListener { e ->

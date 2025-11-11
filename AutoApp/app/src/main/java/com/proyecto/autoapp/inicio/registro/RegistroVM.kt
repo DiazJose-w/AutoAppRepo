@@ -96,7 +96,6 @@ class RegistroVM() {
                             .addOnSuccessListener {
                                 Log.e(TAG, "[RegisterVM] Usuario registrado y guardado en Firestore:")
                                 Log.e(TAG, datosUsuario.toString())
-
                                 isLoading.value = false
                                 onResult(true)
                             }
@@ -109,7 +108,6 @@ class RegistroVM() {
                             }
 
                     } else {
-                        // userId == null, cosa rara pero la controlamos
                         Log.e(TAG, "userId nulo tras createUserWithEmailAndPassword")
 
                         isLoading.value = false

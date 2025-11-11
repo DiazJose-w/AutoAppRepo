@@ -9,6 +9,7 @@ import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
+import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -20,7 +21,6 @@ class PerfilVM {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-    val usuarioActual = auth.currentUser
 
     private val _uiState = MutableStateFlow(PerfilUiState())
     val uiState: StateFlow<PerfilUiState> = _uiState
@@ -32,63 +32,61 @@ class PerfilVM {
     // =============================================================
     // GUARDAR MODIFICACIONES EN EL PERFIL
     // =============================================================
-    fun modPerfilUsuario(success: (Boolean) -> Unit) {
-            val usuarioActual = this@PerfilVM.usuarioActual?.uid
+    fun modPerfilUsuario(usuarioActual: String, success: (Boolean) -> Unit) {
+        val state = _uiState.value
 
-            if (usuarioActual != null) {
-                val state = _uiState.value
+        // Modificamos únicamente los flags `enabled` de ambas ramas
+        val updates = mapOf(
+            "perfilPasajero.enabled"  to state.isPasajeroSelected,
+            "perfilConductor.enabled" to state.isConductorSelected
+        )
 
-                // Modificamos únicamente los flags `enabled` de ambas ramas
-                val updates = mapOf(
-                    "perfilPasajero.enabled"  to state.isPasajeroSelected,
-                    "perfilConductor.enabled" to state.isConductorSelected
-                )
+        /**
+         * Debemos de hacer esta comprobación porque al entrar con la cuenta google, no nos proporciona la edad así que aparece 0.
+         * Para que no nos de error al guardar, nos aseguramos de que la primera vez que entre el usuario con cuenta google
+         * añada su edad y así ya no haya problemas más adelante de edad 0.
+         * */
+        if(uiState.value.edad.isBlank()){
+            success(false)
+        }else{
+            val edadInt = state.edad.toIntOrNull() ?: 0
 
-                if(uiState.value.edad.isBlank()){
-                    success(false)
-                }else{
-                    val edadInt = state.edad.toIntOrNull() ?: 0
+            val updates = mapOf(
+                "perfilPasajero.enabled"  to state.isPasajeroSelected,
+                "perfilConductor.enabled" to state.isConductorSelected,
+                "edad" to edadInt
+            )
 
-                    val updates = mapOf(
-                        "perfilPasajero.enabled"  to state.isPasajeroSelected,
-                        "perfilConductor.enabled" to state.isConductorSelected,
-                        "edad" to edadInt
+            db.collection(usuario)
+                .document(usuarioActual)
+                .update(updates)
+                .addOnSuccessListener {
+                    _uiState.value = state.copy(
+                        pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                        conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                        isSaveEnabled = false
                     )
-
-                    db.collection(usuario)
-                        .document(usuarioActual)
-                        .update(updates)
-                        .addOnSuccessListener {
-                            _uiState.value = state.copy(
-                                pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                                conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                                isSaveEnabled = false
-                            )
-                            success(true)
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e(TAG, "Error al actualizar perfil en Firestore", e)
-                            success(false)
-                        }
+                    success(true)
                 }
-            }else{
-                success(false)
-            }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error al actualizar perfil en Firestore", e)
+                    success(false)
+                }
+        }
     }
-
 
     // =============================================================
     // CARGAR LOS DATOS DEL USUARIO
     // =============================================================
-    fun cargarUsuario() {
-        val uid = usuarioActual?.uid ?: return
-
+    fun cargarUsuario(usuActual: String) {
+Log.e("jose", "verás como es nulo $usuActual")
         db.collection(usuario)
-            .document(uid)
+            .document(usuActual)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     try {
+                        //DATOS DEL USUARIO
                         val nombre = document.getString("nombre").orEmpty()
                         val apellidos = document.getString("apellidos").orEmpty()
                         val edad = (document.get("edad") as? Long)?.toInt() ?: 0
@@ -141,13 +139,13 @@ class PerfilVM {
                             isSaveEnabled = false
                         )
                         if (conductorEnabled) {
-                            cargarVehiculosUsuario(uid)
+                            cargarVehiculosUsuario(usuActual)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error parseando datos del usuario", e)
                     }
                 } else {
-                    Log.w(TAG, "No se encontró el documento del usuario con UID: $uid")
+                    Log.w(TAG, "No se encontró el documento del usuario con UID: $usuActual")
                 }
             }
             .addOnFailureListener { e ->
@@ -192,7 +190,6 @@ class PerfilVM {
                 Log.e(TAG, "Error cargando vehículos", e)
             }
     }
-
 
     // =============================================================
     // MÉTODOS QUE TRABAJAN LAS VARIABLES DE LA VISTA. MODIFICACIÓN INSTANTÁNEA

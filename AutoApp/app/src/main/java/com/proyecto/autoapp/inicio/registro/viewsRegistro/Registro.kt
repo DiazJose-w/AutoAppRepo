@@ -46,7 +46,6 @@ import com.proyecto.autoapp.ui.theme.ThumbUpPurple
 @Composable
 fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: LoginVM) {
     val context = LocalContext.current
-    var TAG = "Jose"
     val isLoading by registroVM.isLoading.collectAsState()
 
     // Variables de registro
@@ -157,12 +156,12 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                 },
                                 onFinish = { ok ->
                                     cont = 4
-                                    Log.e(TAG, "Valor del cont: $cont")
-                                    Log.e(TAG, "Estado variable ok: $ok")
+                                    Log.e("Jose", "Valor del cont: $cont")
+                                    Log.e("Jose", "Estado variable ok: $ok")
                                     if(ok){
                                         registroVM.registroWhitEmail (nombre, apellidos, edad, password, email){
                                             if(it){
-                                                Log.e(TAG, "Estado it: $it")
+                                                Log.e("Jose", "Estado it: ")
                                                 navController.navigate(Rutas.Perfil)
                                             }else{
                                                 Toast.makeText(context, "Error en el registro", Toast.LENGTH_SHORT).show()

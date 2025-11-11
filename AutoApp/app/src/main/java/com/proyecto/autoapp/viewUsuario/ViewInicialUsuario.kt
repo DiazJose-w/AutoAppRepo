@@ -108,7 +108,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
         )
     }
 
-    perfilVM.cargarUsuario()
+    //perfilVM.cargarUsuario()
 
     Scaffold(
         modifier = Modifier

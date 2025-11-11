@@ -1,7 +1,7 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,10 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,15 +28,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
+import com.proyecto.autoapp.general.modelo.usuarios.Usuario
+import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
-import kotlinx.coroutines.flow.update
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
+fun PerfilRoute(perfilVM: PerfilVM, navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
     val uiState by perfilVM.uiState.collectAsState()
+    var usuario = loginVM.uidActual
 
     // Datos del vehículo.
     var modelo by remember { mutableStateOf("") }
@@ -46,7 +46,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
     var anio by remember { mutableStateOf("") }
     var color by remember { mutableStateOf("") }
 
-    perfilVM.cargarUsuario()
+    perfilVM.cargarUsuario(usuario)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -75,14 +75,21 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
             ) {
                 Button(
                     onClick = {
-                        perfilVM.modPerfilUsuario { success ->
-                            if (success) {
-                                Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
-                            } else {
-                                if(uiState.edad.isBlank()){
-                                    Toast.makeText(context, "Debes añadir tu edad", Toast.LENGTH_SHORT).show()
-                                }else{
-                                    Toast.makeText(context, "Error al actualizar perfil", Toast.LENGTH_SHORT).show()
+                        val edadNum = uiState.edad.toIntOrNull()
+                        when {
+                            edadNum == null -> {
+                                Toast.makeText(context, "Debes introducir una edad válida", Toast.LENGTH_SHORT).show()
+                            }
+                            edadNum < 16 -> {
+                                Toast.makeText(context, "Debes tener al menos 16 años", Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                perfilVM.modPerfilUsuario(usuario) { success ->
+                                    if (success) {
+                                        Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Error al actualizar perfil", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
                         }
