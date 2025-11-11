@@ -35,7 +35,6 @@ data class PerfilUiState(
     val vehiculoDescripcion: String = "",
     val vehiculoModelo: String = "",
     val vehiculoMatricula: String = "",
-    val vehiculoAnio: String = "",
     val vehiculoColor: String = "",
 
     // Lista de vehículos ya guardados
@@ -43,6 +42,7 @@ data class PerfilUiState(
 
     // Control de UI
     val isSaveEnabled: Boolean = true,
+    val isSaveEnableCar: Boolean = true,
     val showEdadWarningConductor: Boolean = false,
     val showVehiculoEditor: Boolean = false
 )

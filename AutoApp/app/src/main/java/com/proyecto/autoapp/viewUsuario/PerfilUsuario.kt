@@ -1,5 +1,7 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,10 +32,12 @@ import androidx.navigation.NavController
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
+import kotlinx.coroutines.flow.update
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
+    var context = LocalContext.current
     val uiState by perfilVM.uiState.collectAsState()
 
     // Datos del vehículo.
@@ -47,7 +52,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
         modifier = Modifier.fillMaxSize(),
         containerColor = ThumbUpPurple,
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Mi perfil",
@@ -55,30 +60,11 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                         fontWeight = FontWeight.SemiBold
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        /**
-                         * No puede ser navController.popBackStack() porque
-                         * cuando terminas de registrar, si le das, vuelve al punto anterior.
-                         *
-                         * Hay que hacer que vuelva a la página principal o directamente quitarlo y añadir un botón
-                         * para ir a la página principal
-                         *
-                         * */
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = ThumbUpTextPrimary
-                        )
-                    }
-                },
-                colors = topAppBarColors(
-                    containerColor = ThumbUpPurple,
-                    navigationIconContentColor = ThumbUpTextPrimary,
-                    titleContentColor = ThumbUpTextPrimary
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = ThumbUpPurple
                 )
             )
+
         },
         bottomBar = {
             Box(
@@ -89,9 +75,17 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
             ) {
                 Button(
                     onClick = {
-                        /**
-                         * Implementar la lógica de guardado de cambios. Llamar aquí al viewModel
-                         * */
+                        perfilVM.modPerfilUsuario { success ->
+                            if (success) {
+                                Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
+                            } else {
+                                if(uiState.edad.isBlank()){
+                                    Toast.makeText(context, "Debes añadir tu edad", Toast.LENGTH_SHORT).show()
+                                }else{
+                                    Toast.makeText(context, "Error al actualizar perfil", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -352,10 +346,6 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                             fontWeight = FontWeight.SemiBold
                         )
 
-                        /**
-                         * Mientras el pasajero no esté activo no puede solicitar viajes
-                         * Para poder estar activo tiene que cumplir con unos campos mínimos.
-                         * */
                         InfoRowLabelValue(
                             label = "Estado",
                             value = when (uiState.pasajeroEnabled) {
@@ -398,10 +388,6 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                             fontWeight = FontWeight.SemiBold
                         )
 
-                        /**
-                         * Mientras el conductor no esté activo no puede solicitar viajes
-                         * Para poder estarlo tiene que cumplir con unos campos mínimos.
-                         * */
                         InfoRowLabelValue(
                             label = "Estado",
                             value = when (uiState.conductorEnabled) {
@@ -523,14 +509,6 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                         )
                                     }
                                 }
-
-                                /**
-                                 * Modificar todo el apartado del vehículo.
-                                 * No se sube la foto, sino que se abre otro desplegable donde se ve otro bloque
-                                 * donde se va a añadir la información del coche modelo, matrícula, color y año
-                                 * donde tendrá además su propio botón para añadir el coche a la base de datos
-                                 * de la persona.
-                                 */
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -552,19 +530,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
 
                                 Button(
                                     onClick = {
-                                        /**
-                                         * Este botón ya NO sube directamente la foto.
-                                         *
-                                         * Ahora sirve para DESPLEGAR un bloque adicional en esta misma pantalla
-                                         * donde se van a rellenar los datos del coche (modelo, matrícula, año, color),
-                                         * se podrá subir la foto del vehículo desde allí,
-                                         * y habrá un botón para guardar ese coche en la base de datos
-                                         * de la persona usuaria.
-                                         *
-                                         * El bloque se controla con una bandera tipo uiState.showVehiculoEditor
-                                         * en el viewModel.
-                                         */
-                                        perfilVM.uiState
+                                        perfilVM.onShowEditorVehiculo()
                                     },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -573,7 +539,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                     )
                                 ) {
                                     Text(
-                                        text = "Añadir",
+                                        text = if (uiState.showVehiculoEditor) "Cerrar" else "Añadir",
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 14.sp
                                     )
@@ -582,12 +548,6 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
 
                             /**
                              * BLOQUE DESPLEGABLE DEL VEHÍCULO
-                             * Aquí es donde realmente se añaden los datos del coche.
-                             *
-                             * IMPORTANTE:
-                             *  - Los campos SIEMPRE aparecen vacíos para añadir vehículos nuevos.
-                             *  - Debajo de este editor, aparecerá el listado de coches ya añadidos
-                             *    y vinculados a la persona usuaria.
                              */
                             if (uiState.showVehiculoEditor) {
                                 Card(
@@ -609,7 +569,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                         OutlinedTextField(
                                             value = uiState.vehiculoModelo,
                                             onValueChange = {
-
+                                                perfilVM.onModeloChange(it)
                                             },
                                             label = {
                                                 Text(
@@ -628,7 +588,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                         OutlinedTextField(
                                             value = uiState.vehiculoMatricula,
                                             onValueChange = {
-
+                                                perfilVM.onMatriculaChange(it)
                                             },
                                             label = {
                                                 Text(
@@ -643,28 +603,11 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                             shape = RoundedCornerShape(12.dp)
                                         )
 
-                                        // AÑO
-                                        OutlinedTextField(
-                                            value = uiState.vehiculoAnio,
-                                            onValueChange = {
-
-                                            },
-                                            label = { Text("Año", color = ThumbUpTextSecondary) },
-                                            singleLine = true,
-                                            keyboardOptions = KeyboardOptions(
-                                                keyboardType = KeyboardType.Number
-                                            ),
-                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
-                                            colors = ThumbUpTextFieldColors(),
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-
                                         // COLOR
                                         OutlinedTextField(
                                             value = uiState.vehiculoColor,
                                             onValueChange = {
-
+                                                perfilVM.onColorChange(it)
                                             },
                                             label = { Text("Color", color = ThumbUpTextSecondary) },
                                             singleLine = true,
@@ -677,10 +620,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                         // SUBIR FOTO DEL VEHÍCULO
                                         Button(
                                             onClick = {
-                                                /**
-                                                 * Aquí sí se abriría el selector de imagen/foto del coche.
-                                                 * Esto asociará la imagen al vehículo que se está creando.
-                                                 */
+
                                             },
                                             shape = RoundedCornerShape(10.dp),
                                             colors = ButtonDefaults.buttonColors(
@@ -702,20 +642,9 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                                         ) {
                                             Button(
                                                 onClick = {
-                                                    uiState.showVehiculoEditor
-                                                    /**
-                                                     * Guardar este vehículo en la base de datos
-                                                     * de la persona usuaria.
-                                                     *
-                                                     * Después de guardar:
-                                                     *  - Se vacían los campos
-                                                     *  - Se podría cerrar el desplegable
-                                                     *  - Se actualiza la lista de vehículos guardados
-                                                     *
-                                                     *  Implementar el viewModel
-                                                     */
                                                 },
                                                 shape = RoundedCornerShape(10.dp),
+                                                enabled = uiState.isSaveEnableCar,
                                                 colors = ButtonDefaults.buttonColors(
                                                     containerColor = ThumbUpMustard,
                                                     contentColor = ThumbUpSurfaceDark
@@ -775,8 +704,6 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController) {
                         }
                     }
                 }
-
-
                 Spacer(modifier = Modifier.height(64.dp))
             }
         }

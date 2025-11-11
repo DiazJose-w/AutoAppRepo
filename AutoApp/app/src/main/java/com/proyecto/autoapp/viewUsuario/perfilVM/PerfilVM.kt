@@ -30,6 +30,54 @@ class PerfilVM {
 
 
     // =============================================================
+    // GUARDAR MODIFICACIONES EN EL PERFIL
+    // =============================================================
+    fun modPerfilUsuario(success: (Boolean) -> Unit) {
+            val usuarioActual = this@PerfilVM.usuarioActual?.uid
+
+            if (usuarioActual != null) {
+                val state = _uiState.value
+
+                // Modificamos únicamente los flags `enabled` de ambas ramas
+                val updates = mapOf(
+                    "perfilPasajero.enabled"  to state.isPasajeroSelected,
+                    "perfilConductor.enabled" to state.isConductorSelected
+                )
+
+                if(uiState.value.edad.isBlank()){
+                    success(false)
+                }else{
+                    val edadInt = state.edad.toIntOrNull() ?: 0
+
+                    val updates = mapOf(
+                        "perfilPasajero.enabled"  to state.isPasajeroSelected,
+                        "perfilConductor.enabled" to state.isConductorSelected,
+                        "edad" to edadInt
+                    )
+
+                    db.collection(usuario)
+                        .document(usuarioActual)
+                        .update(updates)
+                        .addOnSuccessListener {
+                            _uiState.value = state.copy(
+                                pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                isSaveEnabled = false
+                            )
+                            success(true)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Error al actualizar perfil en Firestore", e)
+                            success(false)
+                        }
+                }
+            }else{
+                success(false)
+            }
+    }
+
+
+    // =============================================================
     // CARGAR LOS DATOS DEL USUARIO
     // =============================================================
     fun cargarUsuario() {
@@ -89,7 +137,6 @@ class PerfilVM {
                             conductorRatingCount = conductorRatingCount,
                             licenciaSubida = licenciaSubida,
                             licenciaVerificada = licenciaVerificada,
-                            vehiculoDescripcion = vehiculoActivoId ?: "",
                             showVehiculoEditor = false,
                             isSaveEnabled = false
                         )
@@ -122,7 +169,6 @@ class PerfilVM {
                             id = doc.id,
                             modelo = doc.getString("modelo").orEmpty(),
                             matricula = doc.getString("matricula").orEmpty(),
-                            anio = (doc.get("anio") as? Long)?.toInt() ?: 0,
                             color = doc.getString("color").orEmpty(),
                             plazas = (doc.get("plazas") as? Long)?.toInt() ?: 4,
                             fotoUrl = doc.getString("fotoUrl"),
@@ -147,6 +193,10 @@ class PerfilVM {
             }
     }
 
+
+    // =============================================================
+    // MÉTODOS QUE TRABAJAN LAS VARIABLES DE LA VISTA. MODIFICACIÓN INSTANTÁNEA
+    // =============================================================
     // Métodos para los switch
     fun onPasajeroToggle(checked: Boolean) {
         _uiState.update { curr ->
@@ -172,20 +222,51 @@ class PerfilVM {
         }
     }
 
-    // Métodos para poder modificar los datos del usuario y del vehículo
-    fun onEdadChange(nuevaEdad: String) {
-        _uiState.update { curr ->
+    // Métodos para poder modificar los datos del usuario
+    fun onEdadChange(edad: String) {
+        _uiState.update {
             // Convertimos a número si es posible
-            val edadNum = nuevaEdad.toIntOrNull() ?: 0
+            val edadNum = edad.toIntOrNull() ?: 0
 
-            curr.copy(
-                edad = nuevaEdad,
-                // Si el usuario tiene el modo conductor activado y es menor de 18 → mostramos advertencia
-                showEdadWarningConductor = curr.isConductorSelected && edadNum < 18,
-                // El botón de "Guardar cambios" se habilita porque hubo modificación
+            it.copy(
+                edad = edad,
+                showEdadWarningConductor = it.isConductorSelected && edadNum < 18,
                 isSaveEnabled = true
             )
         }
     }
 
+    fun onShowEditorVehiculo(){
+        _uiState.update {
+            it.copy(showVehiculoEditor = !it.showVehiculoEditor)
+        }
+    }
+
+    // Métodos para poder modificar los datos del vehículo
+    fun onModeloChange(modelo: String){
+        _uiState.update {
+            it.copy(
+                vehiculoModelo = modelo,
+                isSaveEnableCar = true
+            )
+        }
+    }
+
+    fun onMatriculaChange(matricula: String){
+        _uiState.update {
+            it.copy(
+                vehiculoMatricula = matricula,
+                isSaveEnableCar = true
+            )
+        }
+    }
+
+    fun onColorChange(color: String){
+        _uiState.update {
+            it.copy(
+                vehiculoColor = color,
+                isSaveEnableCar = true
+            )
+        }
+    }
 }

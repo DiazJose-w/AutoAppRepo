@@ -30,9 +30,10 @@ import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
+import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
 @Composable
-fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController) {
+fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController, perfilVM: PerfilVM) {
     var context = LocalContext.current
     var inicio by remember { mutableStateOf("") }
     var destino by remember { mutableStateOf("") }
@@ -106,6 +107,8 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 .clip(RoundedCornerShape(16.dp))
         )
     }
+
+    perfilVM.cargarUsuario()
 
     Scaffold(
         modifier = Modifier
