@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -133,6 +135,44 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 contentScale = ContentScale.FillWidth
             )
 
+            /**
+             * Con este contenedor puedo mostrar las notificaciones de los mensajes pendientes
+             * */
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                BadgedBox(
+                    badge = {
+                        val not = 0
+                        // Lo pongo >= a cero para comprobar que se muestra. Después quiera el =
+                        if (not >= 0) Badge {
+                            Text(not.coerceAtMost(99).toString())
+                        }
+                    }
+                ) {
+                    /**
+                     * Es un botón flotante
+                     * */
+                    SmallFloatingActionButton(
+                        onClick = {
+
+                            //navController.navigate(Rutas.Mensajeria)
+                        },
+                        containerColor = ThumbUpMustard,
+                        contentColor = ThumbUpSurfaceDark,
+                        shape = RoundedCornerShape(50),
+                        modifier = Modifier
+                            .shadow(8.dp, RoundedCornerShape(50))
+                            .border(1.dp, ThumbUpSurfaceDark.copy(alpha = 0.4f), RoundedCornerShape(50))
+                    ) {
+                        Icon(Icons.Filled.ChatBubble, contentDescription = "Mensajes")
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
             Column(
                 modifier = Modifier
                     .fillMaxSize()
