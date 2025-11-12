@@ -1,6 +1,5 @@
 package com.proyecto.autoapp.viewUsuario
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,16 +26,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
-import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
+/**
+ * Muestra la view de perfil del usuario.
+ * Se muestran los datos del usuario, si es conductor, pasajero o ninguna.
+ * Permite subir los datos del vehículo asociado
+ * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PerfilRoute(perfilVM: PerfilVM, navController: NavController, loginVM: LoginVM) {
+fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
+    var ruta = Rutas
     val uiState by perfilVM.uiState.collectAsState()
     var usuario = loginVM.uidActual
 
@@ -47,6 +52,52 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController, loginVM: Login
     var color by remember { mutableStateOf("") }
 
     perfilVM.cargarUsuario(usuario)
+
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                        navController.navigate(ruta.ViewUsuario)
+                    }
+                ) {
+                    Text(
+                        text= "Volver al inicio",
+                        color = ThumbUpMustard)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDialog = false
+                    } )
+                {
+                    Text(
+                        text = "Seguir editando",
+                        color = ThumbUpTextPrimary)
+                }
+            },
+            title = {
+                Text(
+                    text = "Perfil guardado",
+                    color = ThumbUpTextPrimary,
+                    fontWeight = FontWeight.SemiBold)
+            },
+            text = {
+                Text(
+                    text = "¿Quieres volver a la página principal o seguir editando tu perfil?",
+                    color = ThumbUpTextSecondary
+                )
+            },
+            containerColor = ThumbUpCard,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -87,6 +138,7 @@ fun PerfilRoute(perfilVM: PerfilVM, navController: NavController, loginVM: Login
                                 perfilVM.modPerfilUsuario(usuario) { success ->
                                     if (success) {
                                         Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
+                                        showDialog = true
                                     } else {
                                         Toast.makeText(context, "Error al actualizar perfil", Toast.LENGTH_SHORT).show()
                                     }

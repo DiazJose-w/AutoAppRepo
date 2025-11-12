@@ -27,6 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
+/**
+ * Es el menú del usuario que se expande cuando pulsas en la foto de perfil
+ * que se ve en la view inicial.
+ * */
 @Composable
 fun PerfilMenu(onPerfil: () -> Unit, onHistorial: () -> Unit, onFavoritos: () -> Unit, onConfiguracion: () -> Unit, onLogout: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }

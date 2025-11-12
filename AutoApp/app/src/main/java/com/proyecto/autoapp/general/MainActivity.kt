@@ -15,7 +15,7 @@ import com.proyecto.autoapp.inicio.registro.viewsRegistro.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
-import com.proyecto.autoapp.viewUsuario.PerfilRoute
+import com.proyecto.autoapp.viewUsuario.PerfilUsuario
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
                         ViewInicialUsuario(mapViewModel, loginVM, navController, perfilVM)
                     }
                     composable (Rutas.Perfil){
-                        PerfilRoute(perfilVM, navController, loginVM)
+                        PerfilUsuario(perfilVM, navController, loginVM)
                     }
                 }
             }
