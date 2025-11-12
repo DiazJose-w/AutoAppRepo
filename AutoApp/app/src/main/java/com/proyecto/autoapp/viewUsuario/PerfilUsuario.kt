@@ -1,6 +1,7 @@
 package com.proyecto.autoapp.viewUsuario
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -53,48 +54,59 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
     perfilVM.cargarUsuario(usuario)
 
-    var showDialog by remember { mutableStateOf(false) }
+    var showExitDialog by remember { mutableStateOf(false) }
 
-    if (showDialog) {
+    if (showExitDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDialog = false
-                        navController.navigate(ruta.ViewUsuario)
-                    }
-                ) {
-                    Text(
-                        text= "Volver al inicio",
-                        color = ThumbUpMustard)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDialog = false
-                    } )
-                {
-                    Text(
-                        text = "Seguir editando",
-                        color = ThumbUpTextPrimary)
-                }
-            },
+            onDismissRequest = { showExitDialog = false },
             title = {
                 Text(
-                    text = "Perfil guardado",
-                    color = ThumbUpTextPrimary,
-                    fontWeight = FontWeight.SemiBold)
+                    text = "Cambios sin guardar",
+                    color = ThumbUpMustard,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 20.sp
+                )
             },
             text = {
                 Text(
-                    text = "¿Quieres volver a la página principal o seguir editando tu perfil?",
-                    color = ThumbUpTextSecondary
+                    text = "Si sales ahora, los cambios no guardados se perderán. ¿Deseas salir igualmente?",
+                    color = ThumbUpTextSecondary,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp
                 )
             },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitDialog = false
+                        navController.navigate(Rutas.ViewUsuario)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = ThumbUpSurfaceDark
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Salir igualmente", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showExitDialog = false
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = ThumbUpTextPrimary
+                    ),
+                    border = BorderStroke(1.dp, ThumbUpTextSecondary.copy(alpha = 0.5f))
+                ) {
+                    Text("Cancelar", fontWeight = FontWeight.Medium)
+                }
+            },
+            shape = RoundedCornerShape(20.dp),
             containerColor = ThumbUpCard,
-            shape = RoundedCornerShape(16.dp)
+            tonalElevation = 6.dp
         )
     }
 
@@ -111,11 +123,27 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         fontWeight = FontWeight.SemiBold
                     )
                 },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            if (uiState.isSaveEnabled) {
+                                showExitDialog = true
+                            } else {
+                                navController.navigate(Rutas.ViewUsuario)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = ThumbUpMustard
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = ThumbUpPurple
                 )
             )
-
         },
         bottomBar = {
             Box(
@@ -138,7 +166,6 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 perfilVM.modPerfilUsuario(usuario) { success ->
                                     if (success) {
                                         Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
-                                        showDialog = true
                                     } else {
                                         Toast.makeText(context, "Error al actualizar perfil", Toast.LENGTH_SHORT).show()
                                     }
