@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import com.google.android.gms.tasks.CancellationTokenSource
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
@@ -102,18 +103,39 @@ fun MapScreen(mapViewModel: MapViewModel){
                 }
 
             // 2. Obtener lastLocation de forma segura
-            if (ActivityCompat.checkSelfPermission(
-                    context, Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                    context, Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 try {
-                    fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-                        location.value = loc
-                    }
-                } catch (_: SecurityException) {  }
+                    fusedLocationClient.lastLocation
+                        .addOnSuccessListener { loc ->
+                            /**
+                             *  Al recoger loc y guardarlo, desde el móvil no se rompe si no tiene memoria caché.
+                             * Así solucionamos el problema del usuario que recién se registra y quiere ubicarse en el pundo donde se encuentra
+                             * y la app se rompe.
+                             * */
+                            location.value = loc
+                            if (loc != null) {
+                                val pos = LatLng(loc.latitude, loc.longitude)
+                                mapViewModel.updateCameraPosition(pos)
+                            } else {
+                                val cts = CancellationTokenSource()
+                                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY,cts.token).addOnSuccessListener { fresh ->
+                                    location.value = fresh
+                                    if (fresh != null) {
+                                        val pos = LatLng(fresh.latitude, fresh.longitude)
+                                        mapViewModel.updateCameraPosition(pos)
+                                    } else {
+                                        Toast.makeText(context, "Algo ha sucedido. Vuelve a pulsar",Toast.LENGTH_SHORT).show()
+                                    }
+                                }.addOnFailureListener { e ->
+                                    Log.e("jose", "Algo ha ocurrido dentro del else => $e")
+                                }
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("jose", "Algo ha ocurrido al recoger lastLocation => $e")
+                        }
+                } catch (_: SecurityException) { }
             }
         }
     }
