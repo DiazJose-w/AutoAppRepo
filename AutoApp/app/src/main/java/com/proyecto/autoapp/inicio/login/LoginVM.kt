@@ -78,7 +78,7 @@ class LoginVM {
             }
     }
 
-    fun loginWithGoogle(idToken: String,onResult: (Boolean) -> Unit) {
+    fun loginWithGoogle(idToken: String, onResult: (Boolean) -> Unit, uid: (String) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
 
@@ -105,6 +105,7 @@ class LoginVM {
                                     if (esNuevo) {
                                         usuarioDocRef.update("nuevo", false)
                                     }
+                                    uid(uidActual)
                                     onResult(true)
                                 } else {
                                     // Primero mapear los perfiles
@@ -148,6 +149,7 @@ class LoginVM {
                                             onResult(false)
                                         }
                                     uidActual = usuarioDocRef.id
+                                    uid(uidActual)
                                 }
                             }
                             .addOnFailureListener { e ->

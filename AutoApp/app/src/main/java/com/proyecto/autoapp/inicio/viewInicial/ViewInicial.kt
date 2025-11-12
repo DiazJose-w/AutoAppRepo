@@ -43,17 +43,21 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                 val idToken = account?.idToken
 
                 if (idToken != null) {
-                    loginVM.loginWithGoogle(idToken) { ok ->
+                    loginVM.loginWithGoogle(idToken, { ok ->
                         if (ok) {
                             Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
                             navController.navigate(Rutas.ViewUsuario)
                         } else {
                             Toast.makeText(context, "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
                         }
+                    }) { uid ->
+                        loginVM.uidActual= uid
+                        Log.d("Jose", "UID del usuario: ${loginVM.uidActual}")
                     }
                 } else {
                     Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()
                 }
+
             } catch (e: Exception) {
                 Toast.makeText(context, "Error iniciando con Google", Toast.LENGTH_SHORT).show()
             }

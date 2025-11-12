@@ -25,7 +25,7 @@ class RegistroVM() {
     val errorMessage = MutableStateFlow<String?>(null)
 
     /**     MÉTODOS PARA EL REGISTRO DEL USUARIO     */
-    fun registroWhitEmail(nombre: String, apellidos: String, edad: String, password: String, email: String, onResult: (Boolean) -> Unit){
+    fun registroWhitEmail(nombre: String, apellidos: String, edad: String, password: String, email: String, onResult: (Boolean) -> Unit, uid: (String) -> Unit){
         Log.e(TAG, "Entrando en registroWhit")
 
         isLoading.value = true
@@ -94,7 +94,8 @@ class RegistroVM() {
                             .document(userId)
                             .set(datosUsuario)
                             .addOnSuccessListener {
-                                Log.e(TAG, "[RegisterVM] Usuario registrado y guardado en Firestore:")
+                                uid(userId)
+                                Log.e(TAG, "[RegisterVM] Usuario registrado $userId")
                                 Log.e(TAG, datosUsuario.toString())
                                 isLoading.value = false
                                 onResult(true)
@@ -108,16 +109,12 @@ class RegistroVM() {
                             }
 
                     } else {
-                        Log.e(TAG, "userId nulo tras createUserWithEmailAndPassword")
-
                         isLoading.value = false
                         errorMessage.value = "No se pudo obtener el UID del usuario"
                         onResult(false)
                     }
 
                 } else {
-                    Log.e(TAG, "Fallo en createUserWithEmailAndPassword", task.exception)
-
                     isLoading.value = false
                     errorMessage.value = task.exception?.message ?: "Error creando Auth"
                     onResult(false)

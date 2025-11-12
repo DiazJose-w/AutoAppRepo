@@ -159,13 +159,16 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                     Log.e("Jose", "Valor del cont: $cont")
                                     Log.e("Jose", "Estado variable ok: $ok")
                                     if(ok){
-                                        registroVM.registroWhitEmail (nombre, apellidos, edad, password, email){
+                                        registroVM.registroWhitEmail (nombre, apellidos, edad, password, email, {
                                             if(it){
                                                 Log.e("Jose", "Estado it: ")
                                                 navController.navigate(Rutas.Perfil)
                                             }else{
                                                 Toast.makeText(context, "Error en el registro", Toast.LENGTH_SHORT).show()
                                             }
+                                        }){ uid ->
+                                            loginVM.uidActual = uid
+                                            Log.e("jose", "Usuario registrado. UID => $uid.")
                                         }
                                     }else{
                                         Toast.makeText(context, "Algo ocurre", Toast.LENGTH_SHORT).show()
