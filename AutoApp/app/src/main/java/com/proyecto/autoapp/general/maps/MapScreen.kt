@@ -1,7 +1,6 @@
-package com.proyecto.autoapp.general.Maps
+package com.proyecto.autoapp.general.maps
 
 import android.Manifest
-import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
@@ -9,10 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,14 +36,13 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import androidx.activity.result.IntentSenderRequest
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import com.google.android.gms.tasks.CancellationTokenSource
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
+    var TAG = "jose"
     val context = LocalContext.current
 
     val markers by mapViewModel.markers.collectAsState()

@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.R
-import com.proyecto.autoapp.general.Maps.MapScreen
-import com.proyecto.autoapp.general.Maps.MapViewModel
+import com.proyecto.autoapp.general.maps.MapScreen
+import com.proyecto.autoapp.general.maps.MapViewModel
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 import com.proyecto.autoapp.inicio.login.LoginVM

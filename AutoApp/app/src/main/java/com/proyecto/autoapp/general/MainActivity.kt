@@ -4,10 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.proyecto.autoapp.general.Maps.MapViewModel
+import com.proyecto.autoapp.general.galeria.GaleriaScreen
+import com.proyecto.autoapp.general.galeria.galeriaViewModel.GaleriaViewModel
+import com.proyecto.autoapp.general.maps.MapViewModel
 import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS
@@ -18,6 +21,7 @@ import com.proyecto.autoapp.ui.theme.AutoAppTheme
 import com.proyecto.autoapp.viewUsuario.PerfilUsuario
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
+import org.checkerframework.checker.units.qual.Current
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,12 +29,14 @@ class MainActivity : ComponentActivity() {
         var registroVM = RegistroVM()
         var mapViewModel = MapViewModel()
         var perfilVM = PerfilVM()
+        var galeriaViewModel = GaleriaViewModel()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
+                var context = LocalContext.current
                 NavHost(navController, Rutas.ViewInicial) {
                     /**
                      * Views inicial APP
@@ -53,8 +59,14 @@ class MainActivity : ComponentActivity() {
                     composable(Rutas.ViewUsuario){
                         ViewInicialUsuario(mapViewModel, loginVM, navController, perfilVM)
                     }
+                    /**
+                     * Views perfil y correspondientes al perfil del usuario
+                     * */
                     composable (Rutas.Perfil){
                         PerfilUsuario(perfilVM, navController, loginVM)
+                    }
+                    composable (Rutas.Galeria){
+                        GaleriaScreen(context ,galeriaViewModel)
                     }
                 }
             }

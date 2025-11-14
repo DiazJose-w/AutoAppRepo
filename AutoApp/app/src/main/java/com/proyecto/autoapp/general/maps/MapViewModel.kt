@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.general.Maps
+package com.proyecto.autoapp.general.maps
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

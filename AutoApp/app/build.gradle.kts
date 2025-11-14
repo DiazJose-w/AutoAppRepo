@@ -37,6 +37,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // Necesario también para configurar la galería
+        buildConfig = true
     }
 }
 
@@ -57,6 +59,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.runtime.livedata)
 
     // Librería Material3
     implementation(libs.material3)
@@ -90,4 +93,7 @@ dependencies {
 
     // Librería de iconos
     implementation(libs.androidx.material.icons.extended)
+
+    // Dependencia para AsyncImage
+    implementation(libs.coil.compose)
 }

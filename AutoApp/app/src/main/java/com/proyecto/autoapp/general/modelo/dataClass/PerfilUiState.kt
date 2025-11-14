@@ -1,6 +1,9 @@
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 
+/**
+ * Clase externa para tratar los valores de los campos en la view perfil.
+ * */
 data class PerfilUiState(
     // Datos básicos del usuario
     val nombre: String = "",

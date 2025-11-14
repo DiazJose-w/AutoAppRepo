@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.general.Maps
+package com.proyecto.autoapp.general.maps
 
 import com.google.android.gms.maps.model.LatLng
 

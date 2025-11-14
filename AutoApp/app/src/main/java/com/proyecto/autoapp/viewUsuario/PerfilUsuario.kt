@@ -12,11 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +32,7 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 /**
  * Muestra la view de perfil del usuario.
  * Se muestran los datos del usuario, si es conductor, pasajero o ninguna.
- * Permite subir los datos del vehículo asociado
+ * Permite subir los datos del vehículo asociado/s
  * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +105,6 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             tonalElevation = 6.dp
         )
     }
-
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -214,6 +209,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                     /**
                      * Implementar lógica cambio añadir imágenes a la galería
                      * */
+                    navController.navigate(Rutas.Galeria)
                 },
                 ThumbUpCard = ThumbUpCard,
                 ThumbUpTextPrimary = ThumbUpTextPrimary,

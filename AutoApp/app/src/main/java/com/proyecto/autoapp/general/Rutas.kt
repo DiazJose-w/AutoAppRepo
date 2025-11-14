@@ -11,6 +11,9 @@ object Rutas {
 
     /**     RUTAS PARA PAGINAS DE INICIO DE USUARIO     */
     var ViewUsuario = "viewUsuario"
+
+    /**     RUTAS PARA PERFIL Y OPCIONES DEL USUARIO    */
     var Perfil = "perfil"
     var Mensajeria = "mensajeria"
+    var Galeria = "galeria"
 }
