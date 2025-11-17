@@ -80,40 +80,46 @@ fun FotoPerfilUsuario(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> Unit, on
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             // Avatar principal
             Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF3A3A3A)),
+                modifier = Modifier.size(96.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (fotoPerfilUrl == null) {
-                    Icon(
-                        imageVector = Icons.Default.AccountCircle,
-                        contentDescription = "Foto de perfil",
-                        tint = ThumbUpMustard,
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
-                else {
-                    AsyncImage(
-                        model = fotoPerfilUrl,
-                        contentDescription = "Foto de perfil",
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.Crop
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF3A3A3A))
+                        .clickable { onChangeFotoPerfil() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (fotoPerfilUrl.isNullOrBlank()) {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Foto de perfil",
+                            tint = ThumbUpMustard,
+                            modifier = Modifier.size(80.dp)
+                        )
+                    } else {
+                        AsyncImage(
+                            model = fotoPerfilUrl,
+                            contentDescription = "Foto de perfil",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
 
                 // Botón flotante pequeño "cambiar"
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
+                        .offset(x = 4.dp, y = 4.dp)        // un pelín hacia fuera para que no se corte
+                        .size(28.dp)
                         .clip(CircleShape)
                         .background(ThumbUpMustard)
-                        .clickable { onChangeFotoPerfil() }
-                        .padding(6.dp),
+                        .border(2.dp, Color(0xFF1A1A1A), CircleShape)
+                        .clickable { onChangeFotoPerfil() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -124,6 +130,7 @@ fun FotoPerfilUsuario(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> Unit, on
                     )
                 }
             }
+
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

@@ -1,22 +1,27 @@
 package com.proyecto.autoapp.viewUsuario.perfilVM
 
+import android.net.Uri
+import com.google.firebase.storage.FirebaseStorage
 import PerfilUiState
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
+import com.proyecto.autoapp.general.DirectorioStorage
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import java.io.File
 
 class PerfilVM {
     var TAG = "jose"
     var usuario = Coleccion.Usuario
     var vehiculo = Coleccion.Vehiculo
+    private var nuevaFotoFile: File? = null
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -34,45 +39,74 @@ class PerfilVM {
     fun modPerfilUsuario(usuarioActual: String, success: (Boolean) -> Unit) {
         val state = _uiState.value
 
-        // Modificamos únicamente los flags `enabled` de ambas ramas
-        val updates = mapOf(
-            "perfilPasajero.enabled"  to state.isPasajeroSelected,
-            "perfilConductor.enabled" to state.isConductorSelected
-        )
-
-        /**
-         * Debemos de hacer esta comprobación porque al entrar con la cuenta google, no nos proporciona la edad así que aparece 0.
-         * Para que no nos de error al guardar, nos aseguramos de que la primera vez que entre el usuario con cuenta google
-         * añada su edad y así ya no haya problemas más adelante de edad 0.
-         * */
-        if(uiState.value.edad.isBlank()){
+        // Si la edad está vacía, no seguimos
+        if (state.edad.isBlank()) {
             success(false)
-        }else{
+        } else {
             val edadInt = state.edad.toIntOrNull() ?: 0
 
-            val updates = mapOf(
+            // Campos que SIEMPRE vamos a actualizar
+            val baseUpdates = mutableMapOf<String, Any>(
                 "perfilPasajero.enabled"  to state.isPasajeroSelected,
                 "perfilConductor.enabled" to state.isConductorSelected,
                 "edad" to edadInt
             )
 
-            db.collection(usuario)
-                .document(usuarioActual)
-                .update(updates)
-                .addOnSuccessListener {
-                    _uiState.value = state.copy(
-                        pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                        conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                        isSaveEnabled = false
-                    )
-                    success(true)
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "Error al actualizar perfil en Firestore", e)
-                    success(false)
-                }
+            val file = nuevaFotoFile
+            if (file == null) {
+                db.collection(usuario)
+                    .document(usuarioActual)
+                    .update(baseUpdates as Map<String, Any>)
+                    .addOnSuccessListener {
+                        _uiState.value = state.copy(
+                            pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                            conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                            isSaveEnabled = false
+                        )
+                        success(true)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al actualizar perfil en Firestore", e)
+                        success(false)
+                    }
+            } else {
+                val rutaStorage = "${DirectorioStorage.FotoPerfil}/$usuarioActual/${file.name}"
+                val refStorage = FirebaseStorage.getInstance().reference.child(rutaStorage)
+                val fileUri = Uri.fromFile(file)
+
+                refStorage.putFile(fileUri)
+                    .continueWithTask { refStorage.downloadUrl }
+                    .addOnSuccessListener { uri ->
+                        val url = uri.toString()
+                        baseUpdates["fotoUrl"] = url
+
+                        db.collection(usuario)
+                            .document(usuarioActual)
+                            .update(baseUpdates as Map<String, Any>)
+                            .addOnSuccessListener {
+                                nuevaFotoFile = null
+
+                                _uiState.value = state.copy(
+                                    fotoPerfilUrl = url,
+                                    pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                    conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                    isSaveEnabled = false
+                                )
+                                success(true)
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "Error al actualizar perfil + foto en Firestore", e)
+                                success(false)
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error subiendo foto de perfil a Storage", e)
+                        success(false)
+                    }
+            }
         }
     }
+
 
     // =============================================================
     // CARGAR LOS DATOS DEL USUARIO
@@ -277,5 +311,22 @@ class PerfilVM {
                 isSaveEnableCar = true
             )
         }
+    }
+
+    // Métodos para poder modificar la foto de perfil
+
+    fun setNuevaFotoFile(file: File?) {
+        nuevaFotoFile = file
+    }
+
+    fun getNuevaFotoFile(): File? {
+        return nuevaFotoFile
+    }
+
+    fun onFotoPerfilSeleccionadaLocal(nuevaUri: String) {
+        _uiState.value = _uiState.value.copy(
+            fotoPerfilUrl = nuevaUri,
+            isSaveEnabled = true   // activamos el botón "Guardar cambios"
+        )
     }
 }

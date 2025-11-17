@@ -1,7 +1,13 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.net.Uri
+import android.os.Environment
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,18 +21,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
+import com.proyecto.autoapp.BuildConfig
+import com.proyecto.autoapp.general.DirectorioStorage
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
+import java.io.File
 
 /**
  * Muestra la view de perfil del usuario.
@@ -39,20 +50,154 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
     var context = LocalContext.current
     val uiState by perfilVM.uiState.collectAsState()
     var usuario = loginVM.uidActual
+    var mostrarDialogoElegirFuente by remember { mutableStateOf(false) }
+    var tempFile by remember { mutableStateOf<File?>(null) }
 
-    // Datos del vehículo.
-    var modelo by remember { mutableStateOf("") }
-    var matricula by remember { mutableStateOf("") }
-    var anio by remember { mutableStateOf("") }
-    var color by remember { mutableStateOf("") }
+    /**
+     * Permisos de los launcher de la galería y la cámada para poder trabajar con storage
+     * */
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            val file = tempFile
+            if (file != null) {
+                val uri = Uri.fromFile(file)
+
+                // Guardamos el file en el VM para usarlo luego al guardar
+                perfilVM.setNuevaFotoFile(file)
+
+                // Actualizamos la UI (se verá en el perfil y habilita "Guardar cambios")
+                perfilVM.onFotoPerfilSeleccionadaLocal(uri.toString())
+            } else {
+                Toast.makeText(context, "No se pudo acceder al archivo de la foto", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "No se tomó ninguna foto", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            val directorio = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            val file = File.createTempFile("pfp", ".jpg", directorio)
+            tempFile = file
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                BuildConfig.APPLICATION_ID + ".provider",
+                file
+            )
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val temp = File.createTempFile("GAL_", ".jpg", context.cacheDir)
+            temp.outputStream().use { outputStream ->
+                inputStream?.copyTo(outputStream)
+            }
+
+            val localUri = Uri.fromFile(temp)
+
+            perfilVM.setNuevaFotoFile(temp)
+            perfilVM.onFotoPerfilSeleccionadaLocal(localUri.toString())
+        }
+    }
+    /** =================================================== */
+
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    if (mostrarDialogoElegirFuente) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoElegirFuente = false },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+            title = {
+                Text(
+                    text = "Seleccionar origen",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "¿Cómo quieres establecer tu foto de perfil?",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        mostrarDialogoElegirFuente = false
+                        permissionLauncher.launch(android.Manifest.permission.CAMERA)
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoCamera,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color(0xFF1A1A1A)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Usar cámara",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        mostrarDialogoElegirFuente = false
+                        galleryLauncher.launch("image/*")
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbUpMustard
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = ThumbUpMustard
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Elegir de galería",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            modifier = Modifier
+                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+        )
+    }
 
     LaunchedEffect(usuario) {
         if (usuario.isNotBlank()) {
             perfilVM.cargarUsuario(usuario)
         }
     }
-
-    var showExitDialog by remember { mutableStateOf(false) }
 
     DialogoSalirThumbsUp(
         visible = showExitDialog,
@@ -162,15 +307,12 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             FotoPerfilUsuario(
                 fotoPerfilUrl = uiState.fotoPerfilUrl,
                 onChangeFotoPerfil = {
-                    /**
-                     * Implementar lógica cambio de foto de perfil
-                     * Este es el icono de foto de perfol
-                     * */
-                    Toast.makeText(context, "Confirmar que es eset botón", Toast.LENGTH_SHORT).show()
+                    mostrarDialogoElegirFuente = true
                 },
                 onManageGaleria = {
                     /**
-                     * Implementar lógica cambio añadir imágenes a la galería
+                     * Más adelante este botón debería gestionar solamente las fotos de la galería del perfil
+                     * del usuario.
                      * */
                     navController.navigate(Rutas.Galeria)
                 },
