@@ -45,6 +45,15 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 import java.io.File
 import androidx.core.net.toUri
 
+
+/***
+ *
+ *  ESTA VIEW ESTÁ MAL ESTRUCTURADA AHORA MISMO:
+ *      Lo que hace es mostrar una ventana donde se puede elegir cambiar la foto de perfil. NO.
+ *      Lo que debe de hacer es contener la gestión del perfil del usuario. Es decir, que el usuario pueda subir fotos suyas, como
+ *     si de una red social se tratara, para que usuarios afines (Funcionalidad de futuro), puedan verlas.
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navController: NavController,  loginVM: LoginVM, perfilVM: PerfilVM) {
