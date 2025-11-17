@@ -17,10 +17,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,7 +66,7 @@ fun TopBarGeneral(titulo: String, onAccion: (Int) -> Unit) {
 // =====================================================
 
 @Composable
-fun PerfilFotoSection(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> Unit, onManageGaleria: () -> Unit,
+fun FotoPerfilUsuario(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> Unit, onManageGaleria: () -> Unit,
                       ThumbUpCard: Color, ThumbUpTextPrimary: Color, ThumbUpTextSecondary: Color, ThumbUpMustard: Color) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -93,13 +96,13 @@ fun PerfilFotoSection(fotoPerfilUrl: String?, onChangeFotoPerfil: () -> Unit, on
                         tint = ThumbUpMustard,
                         modifier = Modifier.size(80.dp)
                     )
-                } else {
-                    // Aquí podrías usar AsyncImage de coil
-                    Icon(
-                        imageVector = Icons.Default.AccountCircle,
+                }
+                else {
+                    AsyncImage(
+                        model = fotoPerfilUrl,
                         contentDescription = "Foto de perfil",
-                        tint = ThumbUpMustard,
-                        modifier = Modifier.size(80.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        contentScale = ContentScale.Crop
                     )
                 }
 
@@ -406,6 +409,158 @@ private fun FilaPunto(titulo: String, texto: String) {
             texto,
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White
+        )
+    }
+}
+
+/**
+ * Dialogo de confirmación común para ThumbsUp
+ * */
+@Composable
+fun DialogoConfirmacionThumbsUp(visible: Boolean, onGuardarYSalir: () -> Unit, onSalirSinGuardar: () -> Unit, onDismiss: () -> Unit) {
+
+    if (visible) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+            title = {
+                Text(
+                    text = "Cambios sin guardar",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    text = "Has modificado imágenes y aún no han sido guardadas. ¿Quieres guardar antes de salir?",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onGuardarYSalir() },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Save,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color(0xFF1A1A1A)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Guardar y salir",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { onSalirSinGuardar() },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbUpMustard
+                    )
+                ) {
+                    Text(
+                        "Salir sin guardar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            modifier = Modifier
+                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+        )
+    }
+}@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCancelar: () -> Unit, onDismiss: () -> Unit) {
+    if (visible) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+
+            title = {
+                Text(
+                    text = "Cambios sin guardar",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+
+            text = {
+                Text(
+                    text = "Si sales ahora, los cambios no guardados se perderán. ¿Deseas salir igualmente?",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+
+            confirmButton = {
+                Button(
+                    onClick = { onSalirIgualmente() },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color(0xFF1A1A1A)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Salir igualmente",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { onCancelar() },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbUpMustard
+                    )
+                ) {
+                    Text(
+                        text = "Cancelar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+
+            modifier = Modifier
+                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
         )
     }
 }

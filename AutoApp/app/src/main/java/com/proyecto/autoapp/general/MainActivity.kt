@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                         PerfilUsuario(perfilVM, navController, loginVM)
                     }
                     composable (Rutas.Galeria){
-                        GaleriaScreen(context ,galeriaViewModel)
+                        GaleriaScreen(context ,galeriaViewModel, navController, loginVM, perfilVM)
                     }
                 }
             }

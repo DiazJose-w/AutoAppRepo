@@ -1,8 +1,10 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -26,13 +28,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 /**
  * Es el menú del usuario que se expande cuando pulsas en la foto de perfil
  * que se ve en la view inicial.
  * */
 @Composable
-fun PerfilMenu(onPerfil: () -> Unit, onHistorial: () -> Unit, onFavoritos: () -> Unit, onConfiguracion: () -> Unit, onLogout: () -> Unit) {
+fun PerfilMenu(fotoPerfil: String?, onPerfil: () -> Unit, onHistorial: () -> Unit, onFavoritos: () -> Unit, onConfiguracion: () -> Unit, onLogout: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(
@@ -47,11 +51,22 @@ fun PerfilMenu(onPerfil: () -> Unit, onHistorial: () -> Unit, onFavoritos: () ->
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), CircleShape)
         ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Abrir menú de perfil",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (!fotoPerfil.isNullOrBlank()) {
+                AsyncImage(
+                    model = fotoPerfil,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Abrir menú de perfil",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         DropdownMenu(

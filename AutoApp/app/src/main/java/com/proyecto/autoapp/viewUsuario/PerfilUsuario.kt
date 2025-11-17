@@ -1,7 +1,6 @@
 package com.proyecto.autoapp.viewUsuario
 
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -38,7 +37,6 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 @Composable
 fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: LoginVM) {
     var context = LocalContext.current
-    var ruta = Rutas
     val uiState by perfilVM.uiState.collectAsState()
     var usuario = loginVM.uidActual
 
@@ -48,63 +46,27 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
     var anio by remember { mutableStateOf("") }
     var color by remember { mutableStateOf("") }
 
-    perfilVM.cargarUsuario(usuario)
+    LaunchedEffect(usuario) {
+        if (usuario.isNotBlank()) {
+            perfilVM.cargarUsuario(usuario)
+        }
+    }
 
     var showExitDialog by remember { mutableStateOf(false) }
 
-    if (showExitDialog) {
-        AlertDialog(
-            onDismissRequest = { showExitDialog = false },
-            title = {
-                Text(
-                    text = "Cambios sin guardar",
-                    color = ThumbUpMustard,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp
-                )
-            },
-            text = {
-                Text(
-                    text = "Si sales ahora, los cambios no guardados se perderán. ¿Deseas salir igualmente?",
-                    color = ThumbUpTextSecondary,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showExitDialog = false
-                        navController.navigate(Rutas.ViewUsuario)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
-                        contentColor = ThumbUpSurfaceDark
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Salir igualmente", fontWeight = FontWeight.SemiBold)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        showExitDialog = false
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = ThumbUpTextPrimary
-                    ),
-                    border = BorderStroke(1.dp, ThumbUpTextSecondary.copy(alpha = 0.5f))
-                ) {
-                    Text("Cancelar", fontWeight = FontWeight.Medium)
-                }
-            },
-            shape = RoundedCornerShape(20.dp),
-            containerColor = ThumbUpCard,
-            tonalElevation = 6.dp
-        )
-    }
+    DialogoSalirThumbsUp(
+        visible = showExitDialog,
+        onSalirIgualmente = {
+            showExitDialog = false
+            navController.navigate(Rutas.ViewUsuario)
+        },
+        onCancelar = {
+            showExitDialog = false
+        },
+        onDismiss = {
+            showExitDialog = false
+        }
+    )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -196,14 +158,15 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-
             // 1. FOTOS / AVATAR
-            PerfilFotoSection(
+            FotoPerfilUsuario(
                 fotoPerfilUrl = uiState.fotoPerfilUrl,
                 onChangeFotoPerfil = {
                     /**
                      * Implementar lógica cambio de foto de perfil
+                     * Este es el icono de foto de perfol
                      * */
+                    Toast.makeText(context, "Confirmar que es eset botón", Toast.LENGTH_SHORT).show()
                 },
                 onManageGaleria = {
                     /**

@@ -9,7 +9,6 @@ import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
-import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -79,7 +78,7 @@ class PerfilVM {
     // CARGAR LOS DATOS DEL USUARIO
     // =============================================================
     fun cargarUsuario(usuActual: String) {
-Log.e("jose", "verás como es nulo $usuActual")
+        Log.e("jose", "verás como es nulo $usuActual")
         db.collection(usuario)
             .document(usuActual)
             .get()
@@ -150,6 +149,19 @@ Log.e("jose", "verás como es nulo $usuActual")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "Error al obtener usuario actual", e)
+            }
+    }
+
+    fun cargarFotoPerfil(usuarioActual: String, fotoPerfil: (String) -> Unit){
+        FirebaseFirestore.getInstance()
+            .collection(Coleccion.Usuario)
+            .document(usuarioActual)
+            .get()
+            .addOnSuccessListener { doc ->
+                fotoPerfil(doc.getString("fotoUrl").toString())
+            }
+            .addOnFailureListener {
+                Log.e(TAG, "Error al cargar la imagen del usuario")
             }
     }
 

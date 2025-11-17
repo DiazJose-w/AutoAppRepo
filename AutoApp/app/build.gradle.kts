@@ -69,6 +69,10 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.database)
+
+    // Storage
+    implementation(libs.firebase.storage)
+
     // Opcional: auto-detección del SMS (SMS Retriever / User Consent)
     implementation(libs.play.services.auth.api.phone)
 

@@ -1,5 +1,7 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -8,7 +10,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,7 +29,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.R
+import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.maps.MapScreen
 import com.proyecto.autoapp.general.maps.MapViewModel
 import com.proyecto.autoapp.general.Rutas
@@ -37,14 +43,29 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 @Composable
 fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController, perfilVM: PerfilVM) {
     var context = LocalContext.current
+    var TAG = "jose"
     var inicio by remember { mutableStateOf("") }
     var destino by remember { mutableStateOf("") }
     var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.Pendiente) }
 
+    // UID del usuario actual
+    val usuarioActual = loginVM.uidActual
+    var fotoPerfilUrl by remember { mutableStateOf<String?>(null) }
+
+    // Launcher que se asegura de que no haya errores si no se carga la imagen
+    LaunchedEffect(usuarioActual) {
+        if (usuarioActual.isNotBlank()) {
+            perfilVM.cargarFotoPerfil(usuarioActual){
+                fotoPerfilUrl = it
+            }
+        }else{
+            Log.e(TAG, "Hubo un problema al cargar el usuario actual")
+        }
+    }
+
     //variables de diálogos de interacción
     var showDialog by remember { mutableStateOf(false) }
 
-    // Métodos de diálogos de interacción
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -110,8 +131,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
         )
     }
 
-    //perfilVM.cargarUsuario()
-
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -166,7 +185,11 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                         shape = RoundedCornerShape(50),
                         modifier = Modifier
                             .shadow(8.dp, RoundedCornerShape(50))
-                            .border(1.dp, ThumbUpSurfaceDark.copy(alpha = 0.4f), RoundedCornerShape(50))
+                            .border(
+                                1.dp,
+                                ThumbUpSurfaceDark.copy(alpha = 0.4f),
+                                RoundedCornerShape(50)
+                            )
                     ) {
                         Icon(Icons.Filled.ChatBubble, contentDescription = "Mensajes")
                     }
@@ -187,6 +210,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     contentAlignment = Alignment.TopStart
                 ) {
                     PerfilMenu(
+                        fotoPerfil = fotoPerfilUrl,
                         onPerfil = {
                             navController.navigate(Rutas.Perfil)
                         },
