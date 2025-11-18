@@ -1,8 +1,7 @@
 <resources>
     <string name="app_name">ThumbsUp</string>
-    <string name="default_web_client_id">
-    415322105923-c5mhganvimdnkigq5v991eneah2bqj9c.apps.googleusercontent.com
-    </string>
+    <string name="default_web_client_id">415322105923-c5mhganvimdnkigq5v991eneah2bqj9c.apps.googleusercontent.com</string>
+    <string name="google_maps_key">AIzaSyA545wXwhCCFt1H93FSM6MG5dLICeO9l2o</string>
     <string name="salir_de_la_sesi_n">Salir de la sesión</string>
     <string name="fin_de_sesi_n">Fin de sesión</string>
 </resources>

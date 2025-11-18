@@ -1,9 +1,17 @@
 package com.proyecto.autoapp.general.maps
 
+
+import com.google.android.libraries.places.api.model.AutocompletePrediction
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.model.RectangularBounds
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.net.PlacesClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,6 +22,13 @@ class MapViewModel : ViewModel() {
     val home = LatLng(38.693245786259595, -4.108508457997148) //CIFP Virgen de Gracia: 38.693245786259595, -4.108508457997148
     private val _markers = MutableStateFlow<List<MapMarker>>(emptyList())
     val markers: StateFlow<List<MapMarker>> = _markers
+
+    // Variables y funciones para GooglePlace
+    private lateinit var placesClient: PlacesClient
+
+    fun setPlacesClient(client: PlacesClient) {
+        this.placesClient = client
+    }
 
 //    private val _cameraPosition = MutableStateFlow(LatLng(38.69332, -4.10860)) // CIFP Virgen de Gracia
 //    val cameraPosition: StateFlow<LatLng> = _cameraPosition
@@ -85,4 +100,6 @@ class MapViewModel : ViewModel() {
             _selectedCoordinates.value = latLng
         }
     }
+
+
 }

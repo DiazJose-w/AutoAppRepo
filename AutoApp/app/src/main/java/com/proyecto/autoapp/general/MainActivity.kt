@@ -4,17 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.galeria.GaleriaScreen
 import com.proyecto.autoapp.general.galeria.galeriaViewModel.GaleriaViewModel
 import com.proyecto.autoapp.general.maps.MapViewModel
@@ -25,7 +22,6 @@ import com.proyecto.autoapp.inicio.registro.viewsRegistro.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
-import com.proyecto.autoapp.viewUsuario.PerfilMenu
 import com.proyecto.autoapp.viewUsuario.PerfilUsuario
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.conductor.ViewConductor
@@ -33,11 +29,19 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (!Places.isInitialized()) {
+            Places.initialize(applicationContext, getString(R.string.google_maps_key))
+        }
+
+        val placesClient: PlacesClient = Places.createClient(this)
+
         var loginVM = LoginVM()
         var registroVM = RegistroVM()
         var mapViewModel = MapViewModel()
         var perfilVM = PerfilVM()
         var galeriaViewModel = GaleriaViewModel()
+
+        mapViewModel.setPlacesClient(placesClient)
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -77,7 +81,7 @@ class MainActivity : ComponentActivity() {
                         PerfilUsuario(perfilVM, navController, loginVM)
                     }
                     composable (Rutas.Galeria){
-                        GaleriaScreen(context ,galeriaViewModel, navController, loginVM, perfilVM)
+                        GaleriaScreen(this@MainActivity, galeriaViewModel, navController, loginVM, perfilVM)
                     }
                     composable(Rutas.ViewConductor) {
                         ViewConductor(mapViewModel, navController, loginVM, perfilVM)
