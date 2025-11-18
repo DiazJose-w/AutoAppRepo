@@ -29,9 +29,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.proyecto.autoapp.general.funcionesComunes.formatE164
 import com.proyecto.autoapp.ui.theme.TopBarGeneral
 import com.proyecto.autoapp.inicio.login.LoginVM
-import com.proyecto.autoapp.inicio.registro.viewsRegistro.formatE164
 import com.proyecto.autoapp.ui.theme.*
 
 @Composable

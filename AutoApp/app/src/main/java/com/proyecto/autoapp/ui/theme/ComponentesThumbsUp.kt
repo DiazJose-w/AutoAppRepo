@@ -571,3 +571,63 @@ fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCanc
         )
     }
 }
+
+@Composable
+fun CerrarSesion(showDialog: Boolean, onDismiss: () -> Unit, onConfirmCerrarSesion: () -> Unit) {
+    if (!showDialog) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(16.dp),
+        containerColor = Color(0xFF1A1A1A),
+        tonalElevation = 8.dp,
+        title = {
+            Text(
+                text = "Fin de sesión",
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
+        },
+        text = {
+            Text(
+                text = "¿Deseas cerrar la sesión actual?",
+                color = Color.White.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirmCerrarSesion() },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ThumbUpMustard,
+                    contentColor = Color(0xFF1A1A1A)
+                )
+            ) {
+                Text(
+                    "Sí",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, ThumbUpMustard),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = ThumbUpMustard
+                )
+            ) {
+                Text(
+                    "No",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
+        },
+        modifier = Modifier
+            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+    )
+}

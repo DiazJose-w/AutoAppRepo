@@ -4,6 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,11 +25,11 @@ import com.proyecto.autoapp.inicio.registro.viewsRegistro.Registro
 import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
+import com.proyecto.autoapp.viewUsuario.PerfilMenu
 import com.proyecto.autoapp.viewUsuario.PerfilUsuario
 import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.conductor.ViewConductor
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
-import org.checkerframework.checker.units.qual.Current
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,11 +44,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                var context = LocalContext.current
+                val context = LocalContext.current
                 NavHost(navController, Rutas.ViewInicial) {
+
                     /**
                      * Views inicial APP
-                     * */
+                     */
                     composable(Rutas.ViewInicial) {
                         ViewInicial(navController, loginVM)
                     }
@@ -54,23 +62,29 @@ class MainActivity : ComponentActivity() {
                     composable(Rutas.TokenSMS){
                         TokenSMS(navController, loginVM)
                     }
+
                     /**
                      * Views inicio usuario
-                     * */
+                     */
                     composable(Rutas.ViewUsuario){
                         ViewInicialUsuario(mapViewModel, loginVM, navController, perfilVM)
                     }
+
                     /**
                      * Views perfil y correspondientes al perfil del usuario
-                     * */
+                     */
                     composable (Rutas.Perfil){
                         PerfilUsuario(perfilVM, navController, loginVM)
                     }
                     composable (Rutas.Galeria){
                         GaleriaScreen(context ,galeriaViewModel, navController, loginVM, perfilVM)
                     }
+                    composable(Rutas.ViewConductor) {
+                        ViewConductor(mapViewModel, navController, loginVM, perfilVM)
+                    }
                 }
             }
         }
     }
+
 }

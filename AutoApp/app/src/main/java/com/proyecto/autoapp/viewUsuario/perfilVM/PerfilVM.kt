@@ -5,6 +5,7 @@ import com.google.firebase.storage.FirebaseStorage
 import PerfilUiState
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
@@ -12,6 +13,7 @@ import com.proyecto.autoapp.general.DirectorioStorage
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
+import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -31,6 +33,9 @@ class PerfilVM {
 
     private val _vehiculos = mutableStateListOf<Vehiculo>()
     val vehiculos: List<Vehiculo> get() = _vehiculos
+
+    private val _usuarioNuevo = mutableStateOf(false)
+    val usuarioNuevo: Boolean get() = _usuarioNuevo.value
 
 
     // =============================================================
@@ -107,6 +112,26 @@ class PerfilVM {
         }
     }
 
+    fun modEstadoConductor(usuarioActual: String, success: (Boolean) -> Unit) {
+        val updates = mapOf(
+            "perfilConductor.enabled" to true
+        )
+
+        db.collection(usuario)
+            .document(usuarioActual)
+            .update(updates)
+            .addOnSuccessListener {
+                _uiState.update {
+                    it.copy(conductorEnabled = Estado.ACTIVO)
+                }
+                success(true)
+            }
+            .addOnFailureListener { e ->
+                Log.e("PerfilVM", "Error al actualizar conductorEnabled en Firestore", e)
+                success(false)
+            }
+    }
+
 
     // =============================================================
     // CARGAR LOS DATOS DEL USUARIO
@@ -171,6 +196,10 @@ class PerfilVM {
                             showVehiculoEditor = false,
                             isSaveEnabled = false
                         )
+
+                        val nuevo = document.getBoolean("nuevo") ?: false
+                        _usuarioNuevo.value = nuevo
+
                         if (conductorEnabled) {
                             cargarVehiculosUsuario(usuActual)
                         }
@@ -199,6 +228,9 @@ class PerfilVM {
             }
     }
 
+    /**
+     * MODIFICAR ESTE CÓDIGO.
+     */
     fun cargarVehiculosUsuario(uid: String? = auth.currentUser?.uid) {
         if (uid == null) return
 

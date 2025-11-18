@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.tasks.await
 
 class RegistroVM() {
-    private val TAG = "jose"
-    private val auth = FirebaseAuth.getInstance()
+    val TAG = "Jose"
+    val auth = FirebaseAuth.getInstance()
     var usuario = Coleccion.Usuario
 
     val isLoading = MutableStateFlow(false)
@@ -26,8 +26,6 @@ class RegistroVM() {
 
     /**     MÉTODOS PARA EL REGISTRO DEL USUARIO     */
     fun registroWhitEmail(nombre: String, apellidos: String, edad: String, password: String, email: String, onResult: (Boolean) -> Unit, uid: (String) -> Unit){
-        Log.e(TAG, "Entrando en registroWhit")
-
         isLoading.value = true
         errorMessage.value = null
 
@@ -72,7 +70,7 @@ class RegistroVM() {
                             "password" to customer.password,
                             "fotoUrl" to customer.fotoUrl,
                             "rol" to RolUsuario.CUSTOMER.name,
-                            "nuevo" to customer.nuevo,
+                            "nuevo" to true, // Fuerzo que sea true. Si no, registra como falso
                             "perfilConductor" to mapOf(
                                 "enabled" to customer.perfilConductor.enabled,
                                 "ratingAvg" to customer.perfilConductor.ratingAvg,
@@ -95,8 +93,7 @@ class RegistroVM() {
                             .set(datosUsuario)
                             .addOnSuccessListener {
                                 uid(userId)
-                                Log.e(TAG, "[RegisterVM] Usuario registrado $userId")
-                                Log.e(TAG, datosUsuario.toString())
+                                Log.e(TAG, "Usuario registrado ${datosUsuario}")
                                 isLoading.value = false
                                 onResult(true)
                             }
@@ -130,7 +127,7 @@ class RegistroVM() {
             functions
                 .getHttpsCallable("requestEmailToken")
                 .call(mapOf("email" to email))
-                .await() // usa kotlinx-coroutines-play-services
+                .await()
             true
         } catch (e: Exception) {
             false

@@ -45,6 +45,7 @@ import com.proyecto.autoapp.ui.theme.ThumbUpPurple
 
 @Composable
 fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: LoginVM) {
+    var TAG = "Jose"
     val context = LocalContext.current
     val isLoading by registroVM.isLoading.collectAsState()
 
@@ -156,19 +157,16 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                 },
                                 onFinish = { ok ->
                                     cont = 4
-                                    Log.e("Jose", "Valor del cont: $cont")
-                                    Log.e("Jose", "Estado variable ok: $ok")
                                     if(ok){
                                         registroVM.registroWhitEmail (nombre, apellidos, edad, password, email, {
                                             if(it){
-                                                Log.e("Jose", "Estado it: ")
                                                 navController.navigate(Rutas.Perfil)
                                             }else{
                                                 Toast.makeText(context, "Error en el registro", Toast.LENGTH_SHORT).show()
                                             }
                                         }){ uid ->
                                             loginVM.uidActual = uid
-                                            Log.e("jose", "Usuario registrado. UID => $uid.")
+                                            Log.e(TAG, "Usuario registrado. UID => $uid")
                                         }
                                     }else{
                                         Toast.makeText(context, "Algo ocurre", Toast.LENGTH_SHORT).show()
@@ -199,48 +197,4 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
             }
         }
     }
-}
-
-/**
- * Funciones:
- * - Expresión regular para el email
- * - Comprobación de campos de registro
- * - Método comprobar edad del usuario
- * - Expresión regular para seguridad de contraseña
- * - Función para formato E164
- */
-
-// Composable para la imagen según paso del registro
-fun imagenRegistro(){
-    /**     FALTA POR IMPLEMENTAR. BUSCAR IMÁGENES PARA ELLO     */
-}
-
-// Función para castear el número de teléfono
-fun formatE164(phoneRaw: String, defaultRegion: String = "ES"): String? {
-    val util = PhoneNumberUtil.getInstance()
-
-    return try {
-        val proto = util.parse(phoneRaw, defaultRegion)
-        if (util.isValidNumber(proto)) util.format(proto, PhoneNumberFormat.E164)
-        else
-            null
-    } catch (_: NumberParseException) {
-        null
-    }
-}
-
-// Expresión para comprobar si el formato del email es correcto
-fun validarEmail(email: String): Boolean {
-    val emailPermitido = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
-    return email.matches(emailPermitido.toRegex())
-}
-
-// Función para comprobar que el usuario cumple con la edad mínima
-fun edadUsuario(edad: Int): Boolean{
-    var flag = true
-
-    if (edad < 16 || edad > 80){
-        flag = false
-    }
-    return flag
 }

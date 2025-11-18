@@ -1,6 +1,5 @@
 package com.proyecto.autoapp.viewUsuario
 
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.*
@@ -8,11 +7,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,12 +29,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.R
-import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.maps.MapScreen
 import com.proyecto.autoapp.general.maps.MapViewModel
 import com.proyecto.autoapp.general.Rutas
+import com.proyecto.autoapp.general.funcionesComunes.isEdadValida
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
@@ -44,6 +43,8 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController, perfilVM: PerfilVM) {
     var context = LocalContext.current
     var TAG = "jose"
+    val uiState by perfilVM.uiState.collectAsState()
+
     var inicio by remember { mutableStateOf("") }
     var destino by remember { mutableStateOf("") }
     var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.Pendiente) }
@@ -55,51 +56,54 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
     // Launcher que se asegura de que no haya errores si no se carga la imagen
     LaunchedEffect(usuarioActual) {
         if (usuarioActual.isNotBlank()) {
-            perfilVM.cargarFotoPerfil(usuarioActual){
-                fotoPerfilUrl = it
-            }
+            perfilVM.cargarUsuario(usuarioActual)
         }else{
             Log.e(TAG, "Hubo un problema al cargar el usuario actual")
         }
     }
 
-    //variables de diálogos de interacción
     var showDialog by remember { mutableStateOf(false) }
 
-    if (showDialog) {
+    var mostrarDialogo by remember { mutableStateOf(false) }
+
+    if (mostrarDialogo) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { mostrarDialogo = false },
             shape = RoundedCornerShape(16.dp),
             containerColor = Color(0xFF1A1A1A),
             tonalElevation = 8.dp,
+
             title = {
                 Text(
-                    text = "Fin de sesión",
+                    text = "¿Quieres activar el modo conductor?",
                     color = Color.White,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             },
+
             text = {
                 Text(
-                    text = "¿Deseas cerrar la sesión actual?",
+                    text = "Para continuar deberás registrar tu vehículo. ¿Deseas activar el modo conductor?",
                     color = Color.White.copy(alpha = 0.85f),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
+
             confirmButton = {
                 Button(
                     onClick = {
-                        showDialog = false
-                        loginVM.signOut(context) { result ->
-                            if (result) {
-                                FirebaseAuth.getInstance().signOut()
-                                navController.navigate(Rutas.ViewInicial) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                                Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                        mostrarDialogo = false
+                        perfilVM.modEstadoConductor(usuarioActual) { ok ->
+                            if (ok) {
+                                navController.navigate(Rutas.ViewConductor)
                             } else {
-                                Toast.makeText(context, "Error cerrando sesión", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Hubo algún error a la hora de añadirte como conductor",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     },
@@ -109,12 +113,25 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
-                    Text("Sí", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                    Icon(
+                        imageVector = Icons.Default.DirectionsCar,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color(0xFF1A1A1A)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Sí, activar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
                 }
             },
+
             dismissButton = {
                 OutlinedButton(
-                    onClick = { showDialog = false },
+                    onClick = { mostrarDialogo = false },
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, ThumbUpMustard),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -122,14 +139,40 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                         contentColor = ThumbUpMustard
                     )
                 ) {
-                    Text("No", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+                    Text(
+                        text = "Cancelar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
                 }
             },
+
             modifier = Modifier
                 .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
         )
     }
+
+    CerrarSesion(
+        showDialog = showDialog,
+        onDismiss = { showDialog = false },
+        onConfirmCerrarSesion = {
+            showDialog = false
+            loginVM.signOut(context) { result ->
+                if (result) {
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate(Rutas.ViewInicial) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                    Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Error cerrando sesión", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    )
 
     Scaffold(
         modifier = Modifier
@@ -210,7 +253,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     contentAlignment = Alignment.TopStart
                 ) {
                     PerfilMenu(
-                        fotoPerfil = fotoPerfilUrl,
+                        fotoPerfil = uiState.fotoPerfilUrl,
                         onPerfil = {
                             navController.navigate(Rutas.Perfil)
                         },
@@ -353,6 +396,9 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
                 Spacer(Modifier.height(12.dp))
 
+                /**
+                 * A este apartado hay que darle una vuelta. Ver que partes van al conductor y cuales no.
+                 * */
                 when (estadoSolicitud) {
                     is EstadoSolicitud.Pendiente -> {
                         /**
@@ -400,9 +446,13 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
                 Button(
                     onClick = {
-                        /**
-                         * Cambiar a vista de conductor
-                         * */
+                        if(uiState.isConductorSelected){
+                            navController.navigate(Rutas.ViewConductor)
+                        }else if(!isEdadValida(uiState.edad)){
+                            Toast.makeText(context, "No puedes ser conductor. Eres menor de edad", Toast.LENGTH_SHORT).show()
+                        }else{
+                            mostrarDialogo = true
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()

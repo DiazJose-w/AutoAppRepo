@@ -2,6 +2,7 @@ package com.proyecto.autoapp.viewUsuario
 
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import com.proyecto.autoapp.BuildConfig
-import com.proyecto.autoapp.general.DirectorioStorage
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.inicio.login.LoginVM
@@ -47,11 +47,14 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: LoginVM) {
+    var TAG = "Jose"
     var context = LocalContext.current
     val uiState by perfilVM.uiState.collectAsState()
     var usuario = loginVM.uidActual
     var mostrarDialogoElegirFuente by remember { mutableStateOf(false) }
     var tempFile by remember { mutableStateOf<File?>(null) }
+
+    val primerAcceso = perfilVM.usuarioNuevo
 
     /**
      * Permisos de los launcher de la galería y la cámada para poder trabajar con storage
@@ -196,6 +199,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
     LaunchedEffect(usuario) {
         if (usuario.isNotBlank()) {
             perfilVM.cargarUsuario(usuario)
+            Log.e(TAG, "Este es el estado del usuario al registrar $primerAcceso")
         }
     }
 
@@ -203,7 +207,14 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
         visible = showExitDialog,
         onSalirIgualmente = {
             showExitDialog = false
-            navController.navigate(Rutas.ViewUsuario)
+            if (primerAcceso) {
+                navController.navigate(Rutas.ViewUsuario) {
+                    popUpTo(Rutas.ViewInicial) { inclusive = false }
+                    launchSingleTop = true
+                }
+            } else {
+                navController.popBackStack()
+            }
         },
         onCancelar = {
             showExitDialog = false
@@ -231,7 +242,14 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                             if (uiState.isSaveEnabled) {
                                 showExitDialog = true
                             } else {
-                                navController.navigate(Rutas.ViewUsuario)
+                                if (primerAcceso) {
+                                    navController.navigate(Rutas.ViewUsuario) {
+                                        popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    navController.popBackStack()
+                                }
                             }
                         }
                     ) {

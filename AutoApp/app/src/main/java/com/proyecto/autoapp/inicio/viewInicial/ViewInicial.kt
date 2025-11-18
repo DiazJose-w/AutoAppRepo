@@ -32,7 +32,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var TAG="Jose"
     var context = LocalContext.current
 
-// Launcher que recibe el resultado del intent de Google
+    // Launcher que recibe el resultado del intent de Google
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->

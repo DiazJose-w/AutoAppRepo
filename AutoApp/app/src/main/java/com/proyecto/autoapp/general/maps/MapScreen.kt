@@ -42,7 +42,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel){
-    var TAG = "jose"
+    var TAG = "Jose"
     val context = LocalContext.current
 
     val markers by mapViewModel.markers.collectAsState()
@@ -97,7 +97,7 @@ fun MapScreen(mapViewModel: MapViewModel){
                     }
                 }
 
-            // 2. Obtener lastLocation de forma segura
+            // 2. Obtener lastLocation de forma segura. Por si aún no está en caché
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 try {
@@ -123,12 +123,12 @@ fun MapScreen(mapViewModel: MapViewModel){
                                         Toast.makeText(context, "Algo ha sucedido. Vuelve a pulsar",Toast.LENGTH_SHORT).show()
                                     }
                                 }.addOnFailureListener { e ->
-                                    Log.e("jose", "Algo ha ocurrido dentro del else => $e")
+                                    Log.e(TAG, "Algo ha ocurrido dentro del else => $e")
                                 }
                             }
                         }
                         .addOnFailureListener { e ->
-                            Log.e("jose", "Algo ha ocurrido al recoger lastLocation => $e")
+                            Log.e(TAG, "Algo ha ocurrido al recoger lastLocation => $e")
                         }
                 } catch (_: SecurityException) { }
             }
@@ -161,6 +161,7 @@ fun MapScreen(mapViewModel: MapViewModel){
             /** -------------------------- */
 
     Column(modifier = Modifier.fillMaxSize()) {
+
         GoogleMap(
             modifier = Modifier
                 .fillMaxSize()

@@ -14,5 +14,5 @@ class Customer (
     fotoUrl: String? = null,
     val perfilConductor: PerfilConductor = PerfilConductor(),
     val perfilPasajero: PerfilPasajero = PerfilPasajero(),
-    nuevo: Boolean = true
-): Usuario(id, nombre, apellidos, email, edad, password, fotoUrl, RolUsuario.CUSTOMER, false)
+    nuevo: Boolean
+): Usuario(id, nombre, apellidos, email, edad, password, fotoUrl, RolUsuario.CUSTOMER, true)

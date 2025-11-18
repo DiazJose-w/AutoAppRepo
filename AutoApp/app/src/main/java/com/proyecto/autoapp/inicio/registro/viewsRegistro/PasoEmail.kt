@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.proyecto.autoapp.general.funcionesComunes.validarEmail
 import com.proyecto.autoapp.ui.theme.ThumbUpPrimaryButton
 import com.proyecto.autoapp.ui.theme.ThumbUpTextFieldColors
 import com.proyecto.autoapp.ui.theme.TitulosRegistro

@@ -1,12 +1,11 @@
 package com.proyecto.autoapp.viewUsuario
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,14 +33,17 @@ import androidx.compose.ui.layout.ContentScale
 /**
  * Es el menú del usuario que se expande cuando pulsas en la foto de perfil
  * que se ve en la view inicial.
+ *
+ * Podría añadirlo también a la clase ComponentesThumbsUp. Aunque lo dejamos aquí por su tamaño.
+ * Así, si se quiere trabajar solamente sobre el menú, no hace falta buscarlo. Ya se tiene aquí.
  * */
 @Composable
 fun PerfilMenu(fotoPerfil: String?, onPerfil: () -> Unit, onHistorial: () -> Unit, onFavoritos: () -> Unit, onConfiguracion: () -> Unit, onLogout: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.TopStart
+        modifier = Modifier.wrapContentSize(),
+        contentAlignment = Alignment.Center
     ) {
         IconButton(
             onClick = { expanded = true },
