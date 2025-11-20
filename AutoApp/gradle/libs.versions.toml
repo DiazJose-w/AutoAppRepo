@@ -17,6 +17,7 @@ mapsCompose = "2.11.2"
 materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.3"
 places = "5.0.0"
+placesVersion = "3.5.0"
 playServicesAuth = "21.4.0"
 playServicesAuthApiPhone = "18.2.0"
 playServicesLocation = "21.3.0"
@@ -56,6 +57,7 @@ libphonenumber-android = { module = "io.michaelrocks:libphonenumber-android", ve
 maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
 material3 = { module = "androidx.compose.material3:material3" }
 places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
+places-v350 = { module = "com.google.android.libraries.places:places", version.ref = "placesVersion" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-api-phone = { module = "com.google.android.gms:play-services-auth-api-phone", version.ref = "playServicesAuthApiPhone" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }

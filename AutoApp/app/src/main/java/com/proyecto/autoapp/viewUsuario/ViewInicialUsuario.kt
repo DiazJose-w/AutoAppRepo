@@ -323,16 +323,21 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     elevation = CardDefaults.cardElevation(6.dp)
                 ) {
 
+                    /**
+                     * Campos de texto Inicio/Destino
+                     * */
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        val sugerenciasInicio = mapViewModel.sugerenciasInicio
+                        val sugerenciasDestino = mapViewModel.sugerenciasDestino
 
                         OutlinedTextField(
-                            value = inicio,
-                            onValueChange = { inicio = it },
+                            value = mapViewModel.inicioTexto,
+                            onValueChange = { mapViewModel.onInicioChange(it) },
                             label = {
                                 Text(
                                     "Punto de inicio",
@@ -351,10 +356,50 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             shape = RoundedCornerShape(12.dp),
                             colors = ThumbUpTextFieldColors()
                         )
+                        if (sugerenciasInicio.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF262626)
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(4.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                ) {
+                                    sugerenciasInicio.forEach { pred ->
+                                        TextButton(
+                                            onClick = { mapViewModel.seleccionarSugerenciaInicio(pred) },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Column(modifier = Modifier.fillMaxWidth()) {
+                                                Text(
+                                                    text = pred.getPrimaryText(null).toString(),
+                                                    color = Color.White,
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                                val secondary = pred.getSecondaryText(null).toString()
+                                                if (secondary.isNotBlank()) {
+                                                    Text(
+                                                        text = secondary,
+                                                        color = Color.LightGray,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         OutlinedTextField(
-                            value = destino,
-                            onValueChange = { destino = it },
+                            value = mapViewModel.destinoTexto,
+                            onValueChange = { mapViewModel.onDestinoChange(it) },
                             label = {
                                 Text(
                                     "Destino",
@@ -373,6 +418,45 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             shape = RoundedCornerShape(12.dp),
                             colors = ThumbUpTextFieldColors()
                         )
+
+                        if (sugerenciasDestino.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF262626)
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(4.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                    sugerenciasDestino.forEach { pred ->
+                                        TextButton(
+                                            onClick = { mapViewModel.seleccionarSugerenciaDestino(pred) },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Column(Modifier.fillMaxWidth()) {
+                                                Text(
+                                                    text = pred.getPrimaryText(null).toString(),
+                                                    color = Color.White,
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                                val secondary = pred.getSecondaryText(null).toString()
+                                                if (secondary.isNotBlank()) {
+                                                    Text(
+                                                        text = secondary,
+                                                        color = Color.LightGray,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                     }
                 }
 

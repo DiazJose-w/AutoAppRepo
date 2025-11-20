@@ -2,16 +2,20 @@ package com.proyecto.autoapp.general.maps
 
 
 import com.google.android.libraries.places.api.model.AutocompletePrediction
-import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
-import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.model.RectangularBounds
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.proyecto.autoapp.general.Coleccion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,6 +23,7 @@ import kotlin.collections.minus
 import kotlin.collections.plus
 
 class MapViewModel : ViewModel() {
+    var peticion = Coleccion.Peticion
     val home = LatLng(38.693245786259595, -4.108508457997148) //CIFP Virgen de Gracia: 38.693245786259595, -4.108508457997148
     private val _markers = MutableStateFlow<List<MapMarker>>(emptyList())
     val markers: StateFlow<List<MapMarker>> = _markers
@@ -30,11 +35,49 @@ class MapViewModel : ViewModel() {
         this.placesClient = client
     }
 
-//    private val _cameraPosition = MutableStateFlow(LatLng(38.69332, -4.10860)) // CIFP Virgen de Gracia
-//    val cameraPosition: StateFlow<LatLng> = _cameraPosition
+    // Texto de los campos de la vista inicial
+    var inicioTexto by mutableStateOf("")
+        private set
 
-    //    private val _cameraPosition = MutableStateFlow(CameraPosition.fromLatLngZoom(home, 17f)) // Posición inicial con zoom 17.
-//    val cameraPosition: StateFlow<CameraPosition> = _cameraPosition
+    var destinoTexto by mutableStateOf("")
+        private set
+
+    // Lista de sugerencias para cada campo
+    var sugerenciasInicio by mutableStateOf<List<AutocompletePrediction>>(emptyList())
+        private set
+
+    var sugerenciasDestino by mutableStateOf<List<AutocompletePrediction>>(emptyList())
+        private set
+
+    var ubicacionActual: LatLng? = null
+        private set
+
+    // Id de la localización añadida para almacenarla en Firestore. En su propia colección
+    var inicioPlaceId: String? = null
+        private set
+
+    var destinoPlaceId: String? = null
+        private set
+
+    // Coordenadas reales del lugar elegido
+    var inicioLatLng by mutableStateOf<LatLng?>(null)
+        private set
+
+    var destinoLatLng by mutableStateOf<LatLng?>(null)
+        private set
+
+
+    // Funciones para actualizar desde la UI
+    fun onInicioChange(nuevo: String) {
+        inicioTexto = nuevo
+        lanzarSugerencias(query = nuevo, esInicio = true)
+    }
+
+    fun onDestinoChange(nuevo: String) {
+        destinoTexto = nuevo
+        lanzarSugerencias(query = nuevo, esInicio = false)
+    }
+
     private val _cameraPosition = MutableStateFlow(
         CameraPosition.Builder()
             .target(home) //Coordenadas de la posición inicial
@@ -80,6 +123,7 @@ class MapViewModel : ViewModel() {
      */
     fun updateCameraPosition(latLng: LatLng, zoom: Float = 15f) {
         viewModelScope.launch {
+            ubicacionActual = latLng
             _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom)
         }
     }
@@ -90,6 +134,7 @@ class MapViewModel : ViewModel() {
     fun updateCameraPosition(latLng: LatLng, zoom: Float? = null, tilt: Float? = null, bearing: Float? = null) {
         viewModelScope.launch {
             val currentPosition = _cameraPosition.value
+            ubicacionActual = latLng
             _cameraPosition.value = CameraPosition.fromLatLngZoom(latLng, zoom ?: currentPosition.zoom)
         }
     }
@@ -101,5 +146,151 @@ class MapViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Métodos para lanzar las sugerencias de google Place
+     * */
+    private fun lanzarSugerencias(query: String, esInicio: Boolean) {
+
+        val clienteListo = ::placesClient.isInitialized
+        val textoValido = query.length >= 2
+        val ubicacion = ubicacionActual
+
+        // 1. Si algo no es válido → limpiamos sugerencias
+        if (!clienteListo || !textoValido) {
+            if (esInicio) {
+                sugerenciasInicio = emptyList()
+            } else {
+                sugerenciasDestino = emptyList()
+            }
+        }
+
+        // 2. Solo seguimos si el cliente está listo y el texto tiene longitud suficiente
+        if (clienteListo && textoValido) {
+
+            val token = AutocompleteSessionToken.newInstance()
+
+            // --- Construimos el builder de la petición ---
+            val builder = FindAutocompletePredictionsRequest.builder()
+                .setSessionToken(token)
+                .setQuery(query)
+                /**
+                 * Esto limita a España. Puede modificarse y añadir más países
+                 * .setCountries(listOf("ES", "PT", "FR"))
+                 * */
+                .setCountries(listOf("ES"))
+
+            // Si conocemos la ubicación, aplicamos un "bias" alrededor (radio ~ 20 km aprox)
+            if (ubicacion != null) {
+                val lat = ubicacion.latitude
+                val lng = ubicacion.longitude
+                val delta = 0.2
+
+                val bounds = RectangularBounds.newInstance(
+                    LatLng(lat - delta, lng - delta),
+                    LatLng(lat + delta, lng + delta)
+                )
+
+                builder.setLocationBias(bounds)
+            }
+
+            val request = builder.build()
+
+            // 3. Llamada a Places
+            placesClient.findAutocompletePredictions(request)
+                .addOnSuccessListener { response ->
+                    val lista = response.autocompletePredictions
+
+                    if (esInicio) {
+                        sugerenciasInicio = lista
+                    } else {
+                        sugerenciasDestino = lista
+                    }
+                }
+                .addOnFailureListener {
+                    if (esInicio) {
+                        sugerenciasInicio = emptyList()
+                    } else {
+                        sugerenciasDestino = emptyList()
+                    }
+                }
+        }
+    }
+
+    private fun cargarLatLngDePlace(placeId: String, esInicio: Boolean) {
+
+        val clienteListo = ::placesClient.isInitialized
+        val fields: List<Place.Field> = listOf(Place.Field.LAT_LNG)
+
+        // Si el cliente NO está listo, dejamos las coords a null
+        if (!clienteListo) {
+            if (esInicio) {
+                inicioLatLng = null
+            } else {
+                destinoLatLng = null
+            }
+        }
+
+        // Solo hacemos la petición si el cliente está listo
+        if (clienteListo) {
+
+            val request = FetchPlaceRequest
+                .builder(placeId, fields)
+                .build()
+
+            placesClient.fetchPlace(request)
+                .addOnSuccessListener { response ->
+                    val latLng = response.place.latLng
+
+                    if (esInicio) {
+                        inicioLatLng = latLng
+                    } else {
+                        destinoLatLng = latLng
+                    }
+                }
+                .addOnFailureListener {
+                    if (esInicio) {
+                        inicioLatLng = null
+                    } else {
+                        destinoLatLng = null
+                    }
+                }
+        }
+    }
+
+    fun seleccionarSugerenciaInicio(prediction: AutocompletePrediction) {
+        inicioTexto = prediction.getPrimaryText(null).toString()
+        sugerenciasInicio = emptyList()
+
+        inicioPlaceId = prediction.placeId
+        cargarLatLngDePlace(prediction.placeId, esInicio = true)
+    }
+
+    fun seleccionarSugerenciaDestino(prediction: AutocompletePrediction) {
+        destinoTexto = prediction.getPrimaryText(null).toString()
+        sugerenciasDestino = emptyList()
+
+        destinoPlaceId = prediction.placeId
+        cargarLatLngDePlace(prediction.placeId, esInicio = false)
+    }
+
+    fun hayInicioYDestinoValidos(): Boolean {
+        return inicioLatLng != null && destinoLatLng != null
+    }
+
+    fun centrarEnInicioSeleccionado(zoom: Float = 15f) {
+        val latLng = inicioLatLng
+        if (latLng != null) {
+            updateCameraPosition(latLng, zoom)
+            addMarker(latLng, title = "Punto de inicio")
+        }
+    }
+
+    fun centrarEnDestinoSeleccionado(zoom: Float = 15f) {
+        val latLng = destinoLatLng
+        if (latLng != null) {
+            updateCameraPosition(latLng, zoom)
+            addMarker(latLng, title = "Destino")
+        }
+    }
 
 }
