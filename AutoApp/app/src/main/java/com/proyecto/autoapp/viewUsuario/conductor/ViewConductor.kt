@@ -2,9 +2,12 @@ package com.proyecto.autoapp.viewUsuario.conductor
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
@@ -21,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +49,13 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     // UID del usuario actual
     val usuarioActual = loginVM.uidActual
     var fotoPerfil by remember { mutableStateOf<String?>(null) }
+
+    val peticionesPendientes = mapViewModel.peticionesPendientes
+
+    // Launcher para poder escuchar las peticiones
+    LaunchedEffect(Unit) {
+        mapViewModel.observarPeticionesPendientes(usuarioActual)
+    }
 
     // Cargar foto de perfil
     LaunchedEffect(usuarioActual) {
@@ -185,6 +196,89 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                         contentAlignment = Alignment.Center
                     ) {
                         MapScreen(mapViewModel)
+                    }
+                }
+
+                // Lista de peticiones pendientes
+                if (peticionesPendientes.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No hay viajeros en el camino",
+                            color = ThumbUpTextPrimary.copy(alpha = 0.55f),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
+                else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                    ) {
+                        Text(
+                            text = "Viajeros solicitantes...",
+                            color = ThumbUpTextPrimary,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                        )
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 260.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            itemsIndexed(peticionesPendientes) { cont, _ ->
+                                val etiquetaViajero = "Viajero ${cont + 1}"
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .shadow(8.dp, RoundedCornerShape(14.dp)),
+                                    shape = RoundedCornerShape(14.dp),
+                                    elevation = CardDefaults.cardElevation(8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF1A1A1A)
+                                    ),
+                                    border = BorderStroke(1.dp, ThumbUpMustard.copy(alpha = 0.6f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(
+                                                text = etiquetaViajero,
+                                                color = ThumbUpTextPrimary,
+                                                style = MaterialTheme.typography.bodyLarge.copy(
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            )
+                                            Text(
+                                                text = "Solicitud pendiente",
+                                                color = ThumbUpTextPrimary.copy(alpha = 0.7f),
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+
+                                        // Aquí más adelante irán los botones Aceptar / Rechazar
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

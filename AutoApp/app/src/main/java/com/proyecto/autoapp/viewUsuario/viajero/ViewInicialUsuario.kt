@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.viewUsuario
+package com.proyecto.autoapp.viewUsuario.viajero
 
 import android.util.Log
 import android.widget.Toast
@@ -37,7 +37,9 @@ import com.proyecto.autoapp.general.funcionesComunes.isEdadValida
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
+import com.proyecto.autoapp.viewUsuario.PerfilMenu
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
+import com.proyecto.autoapp.viewUsuario.viajero.EstadoSolicitud.*
 
 @Composable
 fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController, perfilVM: PerfilVM) {
@@ -47,11 +49,25 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
     var inicio by remember { mutableStateOf("") }
     var destino by remember { mutableStateOf("") }
-    var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.SinSolicitud) }
+    var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud?>(null) }
 
     // UID del usuario actual
     val usuarioActual = loginVM.uidActual
     var fotoPerfilUrl by remember { mutableStateOf<String?>(null) }
+    val miPeticionState by mapViewModel.miPeticion.collectAsState()
+
+    // Sincronizar el estado de la petición para que se cancele tambien en el conductor
+    LaunchedEffect(miPeticionState) {
+        estadoSolicitud = when {
+            miPeticionState != null -> {
+                EstadoSolicitud.Pendiente
+            }
+            else -> {
+                null
+            }
+        }
+    }
+
 
     // Launcher que se asegura de que no haya errores si no se carga la imagen
     LaunchedEffect(usuarioActual) {
@@ -463,7 +479,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 Spacer(Modifier.height(24.dp))
 
                 /**
-                 * Lanzar petición. Crear ViewModelSolicitudViajes
+                 * Botón realizar petición. Debe convertirse también en el de cancelar cuando se solicite.
                  * */
                 ThumbUpPrimaryButton(
                     text = "Realizar petición",
@@ -471,7 +487,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     onClick = {
                         mapViewModel.enviarPeticion(usuarioActual) { exito ->
                             if (exito) {
-                                estadoSolicitud = EstadoSolicitud.Pendiente
+                                estadoSolicitud = Pendiente
                                 mapViewModel.onInicioChange("")
                                 mapViewModel.onDestinoChange("")
                             } else {
@@ -485,46 +501,23 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 )
                 Spacer(Modifier.height(12.dp))
                 /**
-                 * A este apartado hay que darle una vuelta. Ver que partes van al conductor y cuales no.
+                 * Valor de la petición según su estado
                  * */
-                when (estadoSolicitud) {
-                    is EstadoSolicitud.SinSolicitud -> {
-
-                    }
-                    is EstadoSolicitud.Pendiente -> {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Esperando confirmación",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    }
-                    is EstadoSolicitud.Rechazada -> {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Petición rechazada: ${(estadoSolicitud as EstadoSolicitud.Rechazada).motivo}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    is EstadoSolicitud.Confirmada -> {
-                        PanelInfoViaje(
-                            viaje = (estadoSolicitud as EstadoSolicitud.Confirmada).viaje,
-                            onVerRuta = {
-                                /**
-                                 * Funcionalidad para el futuro.
-                                 * */
-                            },
-                            onContactar = {
-                                /**
-                                 * Esta funcionalidad abre el chat del conductor.
-                                 * */
-                            },
-                            onCancelar = {
-                                estadoSolicitud =
-                                    EstadoSolicitud.Rechazada("Cancelado por el usuario")
-                            }
-                        )
+                estadoSolicitud?.let { estado ->
+                    when (estado) {
+                        Pendiente -> {
+                            Text("Esperando confirmación...")
+                        }
+                        is Confirmada -> {
+                            PanelInfoViaje(
+                                viaje = estado.viaje,
+                                onVerRuta = { },
+                                onContactar = { },
+                                onCancelar = { }
+                            )
+                        }
+                        is EstadoSolicitud.Rechazada -> {
+                        }
                     }
                 }
 
@@ -570,7 +563,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
  * Así evitamos las clases enumeradas. Es otra manera de poder crear subtipos. Solo funcionará en esta clase
  */
 sealed interface EstadoSolicitud {
-    data object SinSolicitud : EstadoSolicitud
     data object Pendiente : EstadoSolicitud
     data class Confirmada(val viaje: ViajeUi) : EstadoSolicitud
     data class Rechazada(val motivo: String) : EstadoSolicitud

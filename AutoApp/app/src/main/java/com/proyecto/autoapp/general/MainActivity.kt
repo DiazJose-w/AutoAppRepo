@@ -23,7 +23,7 @@ import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
 import com.proyecto.autoapp.viewUsuario.PerfilUsuario
-import com.proyecto.autoapp.viewUsuario.ViewInicialUsuario
+import com.proyecto.autoapp.viewUsuario.viajero.ViewInicialUsuario
 import com.proyecto.autoapp.viewUsuario.conductor.ViewConductor
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
