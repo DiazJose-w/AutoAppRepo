@@ -47,7 +47,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
     var inicio by remember { mutableStateOf("") }
     var destino by remember { mutableStateOf("") }
-    var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.Pendiente) }
+    var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud>(EstadoSolicitud.SinSolicitud) }
 
     // UID del usuario actual
     val usuarioActual = loginVM.uidActual
@@ -469,25 +469,29 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     text = "Realizar petición",
                     enabled = true,
                     onClick = {
-                        /**
-                         * Lanzar petición. Crear ViewModelSolicitudViajes
-                         * */
+                        mapViewModel.enviarPeticion(usuarioActual) { exito ->
+                            if (exito) {
+                                estadoSolicitud = EstadoSolicitud.Pendiente
+                                mapViewModel.onInicioChange("")
+                                mapViewModel.onDestinoChange("")
+                            } else {
+                                Toast.makeText(context, "Error al enviar", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
                 )
-
                 Spacer(Modifier.height(12.dp))
-
                 /**
                  * A este apartado hay que darle una vuelta. Ver que partes van al conductor y cuales no.
                  * */
                 when (estadoSolicitud) {
+                    is EstadoSolicitud.SinSolicitud -> {
+
+                    }
                     is EstadoSolicitud.Pendiente -> {
-                        /**
-                         * Esto solo se realizará desde la vista del conductor.
-                         * */
                         Spacer(Modifier.height(8.dp))
                         Text(
                             text = "Esperando confirmación",
@@ -495,7 +499,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             color = Color.White.copy(alpha = 0.7f)
                         )
                     }
-
                     is EstadoSolicitud.Rechazada -> {
                         Spacer(Modifier.height(8.dp))
                         Text(
@@ -504,7 +507,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             color = MaterialTheme.colorScheme.error
                         )
                     }
-
                     is EstadoSolicitud.Confirmada -> {
                         PanelInfoViaje(
                             viaje = (estadoSolicitud as EstadoSolicitud.Confirmada).viaje,
@@ -527,7 +529,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
-
                 Button(
                     onClick = {
                         if(uiState.isConductorSelected){
@@ -569,6 +570,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
  * Así evitamos las clases enumeradas. Es otra manera de poder crear subtipos. Solo funcionará en esta clase
  */
 sealed interface EstadoSolicitud {
+    data object SinSolicitud : EstadoSolicitud
     data object Pendiente : EstadoSolicitud
     data class Confirmada(val viaje: ViajeUi) : EstadoSolicitud
     data class Rechazada(val motivo: String) : EstadoSolicitud

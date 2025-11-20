@@ -1,6 +1,7 @@
 package com.proyecto.autoapp.general.maps
 
 
+import android.util.Log
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
@@ -15,7 +16,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
+import com.proyecto.autoapp.general.modelo.peticiones.Peticion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,10 +27,15 @@ import kotlin.collections.minus
 import kotlin.collections.plus
 
 class MapViewModel : ViewModel() {
+    val TAG = "Jose"
+    val auth = FirebaseAuth.getInstance()
     var peticion = Coleccion.Peticion
     val home = LatLng(38.693245786259595, -4.108508457997148) //CIFP Virgen de Gracia: 38.693245786259595, -4.108508457997148
     private val _markers = MutableStateFlow<List<MapMarker>>(emptyList())
     val markers: StateFlow<List<MapMarker>> = _markers
+
+    val isLoadingPeticion = mutableStateOf(false)
+    val errorPeticion = mutableStateOf<String?>(null)
 
     // Variables y funciones para GooglePlace
     private lateinit var placesClient: PlacesClient
@@ -293,4 +302,48 @@ class MapViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Funciones para gestionar las peticiones
+     * */
+    fun enviarPeticion(uidUsuario: String, onResult: (Boolean) -> Unit) {
+        isLoadingPeticion.value = true
+        errorPeticion.value = null
+
+        val db = FirebaseFirestore.getInstance()
+
+        val idPeticion = db.collection(peticion).document().id
+
+        val datosPeticion: Map<String, Any?> = mapOf(
+            "id" to idPeticion,
+            "uidUsuario" to uidUsuario,
+
+            "inicioTexto" to inicioTexto,
+            "inicioLat" to inicioLatLng?.latitude,
+            "inicioLng" to inicioLatLng?.longitude,
+            "inicioPlaceId" to inicioPlaceId,
+
+            "destinoTexto" to destinoTexto,
+            "destinoLat" to destinoLatLng?.latitude,
+            "destinoLng" to destinoLatLng?.longitude,
+            "destinoPlaceId" to destinoPlaceId,
+
+            "estado" to "pendiente",
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        db.collection(peticion)
+            .document(idPeticion)
+            .set(datosPeticion)
+            .addOnSuccessListener {
+                Log.e(TAG, "Petición enviada correctamente: $datosPeticion")
+                isLoadingPeticion.value = false
+                onResult(true)
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "ERROR al enviar petición", e)
+                errorPeticion.value = e.message ?: "Error desconocido al guardar petición"
+                isLoadingPeticion.value = false
+                onResult(false)
+            }
+    }
 }
