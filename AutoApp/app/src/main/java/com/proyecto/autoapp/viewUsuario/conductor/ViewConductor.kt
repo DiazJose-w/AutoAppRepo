@@ -220,25 +220,25 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp)
+                            .heightIn(max = 260.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Viajeros solicitantes...",
+                            text = "Peticiones cercanas",
                             color = ThumbUpTextPrimary,
-                            style = MaterialTheme.typography.titleMedium.copy(
+                            style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.SemiBold
-                            ),
-                            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                            )
                         )
 
                         LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 260.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            itemsIndexed(peticionesPendientes) { cont, _ ->
-                                val etiquetaViajero = "Viajero ${cont + 1}"
+                            itemsIndexed(peticionesPendientes) { index, peticion ->
+
+                                val etiquetaViajero = "Viajero ${index + 1}"
+
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -250,6 +250,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                     ),
                                     border = BorderStroke(1.dp, ThumbUpMustard.copy(alpha = 0.6f))
                                 ) {
+
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -257,6 +258,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
+
                                         Column(
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
@@ -267,6 +269,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                     fontWeight = FontWeight.SemiBold
                                                 )
                                             )
+
                                             Text(
                                                 text = "Solicitud pendiente",
                                                 color = ThumbUpTextPrimary.copy(alpha = 0.7f),
@@ -274,13 +277,63 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                             )
                                         }
 
-                                        // Aquí más adelante irán los botones Aceptar / Rechazar
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // RECHAZAR EL VIAJE
+                                            OutlinedButton(
+                                                onClick = {
+                                                    mapViewModel.rechazarPeticion(peticion, usuarioActual) { ok ->
+                                                        if (!ok) {
+                                                            Toast.makeText(context, "Error al rechazar petición", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                },
+                                                border = BorderStroke(1.dp, ThumbUpMustard),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = Color.Transparent,
+                                                    contentColor = ThumbUpMustard
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Rechazar",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                            }
+                                            // ACEPTAR
+                                            Button(
+                                                onClick = {
+                                                    mapViewModel.aceptarPeticion(peticion, usuarioActual) { ok ->
+                                                        Toast.makeText(
+                                                            context,
+                                                            if (ok) "Petición aceptada" else "La petición ya fue atendida", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = ThumbUpMustard,
+                                                    contentColor = ThumbUpSurfaceDark
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Aceptar",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+
 
                 Button(
                     onClick = {

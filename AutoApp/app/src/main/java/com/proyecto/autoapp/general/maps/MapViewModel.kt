@@ -9,6 +9,7 @@ import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.model.RectangularBounds
+import com.google.firebase.firestore.FieldValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,7 +22,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
-import com.proyecto.autoapp.viewUsuario.viajero.EstadoSolicitud
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -363,26 +363,111 @@ class MapViewModel : ViewModel() {
             }
     }
 
+    fun rechazarPeticion(peticion: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("peticiones")
+            .document(peticion.id)
+            .update(
+                "conductoresQueRechazan", FieldValue.arrayUnion(uidConductor)
+            )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun aceptarPeticion(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        db.runTransaction { tx ->
+            val snap = tx.get(docRef)
+            val estadoActual = snap.getString("estado")
+            val yaAceptadaPor = snap.getString("uidConductorAcepta")
+
+            if (estadoActual != "pendiente" || !yaAceptadaPor.isNullOrEmpty()) {
+                throw Exception("La petición ya no está disponible")
+            }
+
+            tx.update(docRef, mapOf(
+                "estado" to "aceptada",
+                "uidConductorAcepta" to uidConductor,
+                "timestampAceptacion" to System.currentTimeMillis()
+            ))
+        }
+            .addOnSuccessListener {
+                programarTimeoutRespuestaViajero(pet.id)
+                onResult(true)
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error aceptando petición", e)
+                onResult(false)
+            }
+    }
+
+    fun aceptarOfertaViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection(peticion)
+            .document(pet.id)
+            .update(
+                mapOf(
+                    "estado" to "confirmadaPorViajero",
+                    "timestampConfirmacionViajero" to System.currentTimeMillis()
+                )
+            )
+            .addOnSuccessListener {
+                onResult(true)
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
+    }
+
+    fun rechazarOfertaViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+
+        val updates = mutableMapOf<String, Any>(
+            "estado" to "canceladaPorViajero"
+        )
+
+        // Si ya había un conductor asignado, lo marcamos como que también fue rechazado
+        val uidConductor = pet.uidConductorAcep
+        if (uidConductor.isNotEmpty()) {
+            updates["conductoresQueRechazan"] = FieldValue.arrayUnion(uidConductor)
+        }
+
+        db.collection(peticion)
+            .document(pet.id)
+            .update(updates)
+            .addOnSuccessListener {
+                onResult(true)
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
+    }
+
     /**
      *  Funciones para escuchar las peticiones por parte del conductor
      */
     fun observarMiPeticion(uidUsuario: String) {
         val db = FirebaseFirestore.getInstance()
 
-        // Cerramos listener anterior si lo hubiera
         listenerMiPeticion?.remove()
 
         listenerMiPeticion = db.collection(peticion)
             .whereEqualTo("uidUsuario", uidUsuario)
-            .whereEqualTo("estado", "pendiente")
             .addSnapshotListener { snap, e ->
-                if (e != null) return@addSnapshotListener
+                if (e != null) {
+                    Log.e(TAG, "Error escuchando mi petición", e)
+                    return@addSnapshotListener
+                }
 
                 if (snap != null && !snap.isEmpty) {
-                    val pet = snap.documents.first().toObject(Peticion::class.java)
-                    if (pet != null) {
-                        _miPeticion.value = pet
-                    }
+                    // Por si hubiera más de una, cogemos la más reciente
+                    val peticiones = snap.documents.mapNotNull { it.toObject(Peticion::class.java) }
+                    val peticionMasReciente = peticiones.maxByOrNull { it.timestamp }
+                    _miPeticion.value = peticionMasReciente
                 } else {
                     _miPeticion.value = null
                 }
@@ -408,7 +493,6 @@ class MapViewModel : ViewModel() {
             }
     }
 
-
     override fun onCleared() {
         super.onCleared()
         listenerPeticiones?.remove()
@@ -430,6 +514,27 @@ class MapViewModel : ViewModel() {
                             db.collection(peticion)
                                 .document(idPeticion)
                                 .update("estado", "cancelada")
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun programarTimeoutRespuestaViajero(idPeticion: String) {
+        val db = FirebaseFirestore.getInstance()
+
+        viewModelScope.launch {
+            delay(TIEMPO_MAX_PETICION_MS)
+            db.collection(peticion)
+                .document(idPeticion)
+                .get()
+                .addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        val estadoActual = doc.getString("estado")
+                        if (estadoActual == "aceptada") {
+                            db.collection(peticion)
+                                .document(idPeticion)
+                                .update("estado", "canceladaPorInaccionViajero")
                         }
                     }
                 }

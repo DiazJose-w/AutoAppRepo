@@ -3,6 +3,8 @@ package com.proyecto.autoapp.general.modelo.peticiones
 data class Peticion(
     val id: String = "",
     val uidUsuario: String = "",
+    var uidConductorAcep: String= "",
+    var uidConductorCan : List<String> = emptyList(),
     val inicioTexto: String = "",
     val inicioLat: Double? = null,
     val inicioLng: Double? = null,

@@ -246,7 +246,7 @@ fun TitulosRegistro(texto: String) {
 }
 
 /**
- * Panel que mostrará la información del viaje
+ * Panel que mostrará la información del viaje. AÑADIR MÁS ADELANTE
  * */
 @Composable
 fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -> Unit = {}, onCancelar: () -> Unit = {}) {
@@ -494,6 +494,7 @@ fun DialogoConfirmacionThumbsUp(visible: Boolean, onGuardarYSalir: () -> Unit, o
         )
     }
 }@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCancelar: () -> Unit, onDismiss: () -> Unit) {
     if (visible) {
@@ -572,6 +573,72 @@ fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCanc
     }
 }
 
+@Composable
+fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String, confirmText: String, dismissText: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    if (visible) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+            title = {
+                Text(
+                    text = title,
+                    color = ThumbUpTextPrimary,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = message,
+                    color = ThumbUpTextPrimary.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = onConfirm,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbUpMustard,
+                        contentColor = ThumbUpSurfaceDark
+                    )
+                ) {
+                    Text(
+                        text = confirmText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbUpMustard
+                    )
+                ) {
+                    Text(
+                        text = dismissText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Diálogo para cerrar sesión
+ * */
 @Composable
 fun CerrarSesion(showDialog: Boolean, onDismiss: () -> Unit, onConfirmCerrarSesion: () -> Unit) {
     if (!showDialog) return
