@@ -13,6 +13,6 @@ data class Peticion(
     val destinoLat: Double? = null,
     val destinoLng: Double? = null,
     val destinoPlaceId: String? = null,
-    val estado: String = "pendiente", // pendiente, aceptada, cancelada
+    val estado: String = "pendiente",
     val timestamp: Long = System.currentTimeMillis()
 )

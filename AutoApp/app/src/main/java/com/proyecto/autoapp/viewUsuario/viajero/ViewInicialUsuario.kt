@@ -43,6 +43,11 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 import com.proyecto.autoapp.viewUsuario.viajero.EstadoSolicitud.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import coil.compose.AsyncImage
+import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -51,9 +56,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
     val TAG = "jose"
     val uiState by perfilVM.uiState.collectAsState()
 
-    // Ya no usas estas dos, pero las dejo porque tú las tenías
-    var inicio by remember { mutableStateOf("") }
-    var destino by remember { mutableStateOf("") }
     var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud?>(null) }
 
     // UID del usuario actual
@@ -64,8 +66,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
     /**
      * Variables para los diálogos
      */
-    var showDialogAceptar by remember { mutableStateOf(false) }
-    var showDialogRechazar by remember { mutableStateOf(false) }
     var showDialogCancelarViaje by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     var mostrarDialogo by remember { mutableStateOf(false) }
@@ -504,156 +504,139 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                         }
                         is OfertaConductor -> {
                             val pet = estado.peticion
-
-                            // Aquí podrás sacar nombre/foto/rating del conductor
-                            // desde PerfilVM o desde donde quieras.
-                            val nombreConductor = "Nombre del conductor"   // TODO: sustituir
-                            // val fotoConductor: String? = ...            // TODO: cuando uses AsyncImage
+                            var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
 
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 12.dp),
+                                    .padding(top = 12.dp)
+                                    .shadow(8.dp, RoundedCornerShape(16.dp))
+                                    .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
                                 shape = RoundedCornerShape(16.dp),
-                                elevation = CardDefaults.cardElevation(8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF1A1A1A)
-                                ),
-                                border = BorderStroke(1.dp, ThumbUpMustard.copy(alpha = 0.6f))
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                                elevation = CardDefaults.cardElevation(6.dp)
                             ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
 
-                                    Text(
-                                        text = "Conductores disponibles",
-                                        color = ThumbUpTextPrimary,
-                                        style = MaterialTheme.typography.titleSmall.copy(
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    )
-
-                                    // Tarjeta del conductor (ahora 1, luego podrás convertirlo en lista)
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.weight(1f)
                                         ) {
+                                            AsyncImage(
+                                                model = uiState.fotoPerfilUrl,
+                                                contentDescription = uiState.fotoPerfilUrl,
+                                                modifier = Modifier
+                                                    .size(72.dp)
+                                                    .clip(CircleShape)
+                                                    .border(2.dp, ThumbUpMustard, CircleShape),
+                                                contentScale = ContentScale.Crop
+                                            )
+
+                                            Spacer(Modifier.height(6.dp))
+
                                             Text(
-                                                text = nombreConductor,
+                                                text = uiState.nombre,
                                                 color = Color.White,
-                                                style = MaterialTheme.typography.bodyLarge.copy(
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            )
-                                            Text(
-                                                text = "Quiere recogerte",
-                                                color = ThumbUpTextPrimary.copy(alpha = 0.8f),
-                                                style = MaterialTheme.typography.bodySmall
-                                            )
-                                        }
-
-                                        // TODO: aquí meterás la foto cuando quieras
-                                        // AsyncImage(model = fotoConductor, ...)
-                                    }
-
-                                    Spacer(Modifier.height(8.dp))
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        // Botón ACEPTAR → solo lanza callback al ViewModel
-                                        Button(
-                                            onClick = { showDialogAceptar = true },
-                                            modifier = Modifier.weight(1f),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = ThumbUpMustard,
-                                                contentColor = ThumbUpSurfaceDark
-                                            ),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ) {
-                                            Text(
-                                                "Aceptar viaje",
-                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                style = MaterialTheme.typography.titleSmall.copy(
                                                     fontWeight = FontWeight.SemiBold
                                                 )
                                             )
                                         }
 
-                                        // Botón RECHAZAR → solo lanza callback al ViewModel
-                                        OutlinedButton(
-                                            onClick = { showDialogRechazar = true },
+                                        Spacer(Modifier.width(16.dp))
+                                        Column(
                                             modifier = Modifier.weight(1f),
-                                            border = BorderStroke(1.dp, ThumbUpMustard),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = Color.Transparent,
-                                                contentColor = ThumbUpMustard
-                                            ),
-                                            shape = RoundedCornerShape(12.dp)
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            Text(
-                                                "Rechazar",
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontWeight = FontWeight.SemiBold
+                                            Button(
+                                                onClick = { accionDialogo = AccionDialogo.ACEPTAR },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = ThumbUpMustard,
+                                                    contentColor = ThumbUpSurfaceDark
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "Aceptar viaje",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
                                                 )
-                                            )
+                                            }
+
+                                            OutlinedButton(
+                                                onClick = { accionDialogo = AccionDialogo.RECHAZAR },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                border = BorderStroke(1.dp, ThumbUpMustard),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = Color.Transparent,
+                                                    contentColor = ThumbUpMustard
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    "Rechazar",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
-
-                            // Diálogo ACEPTAR
                             ThumbUpAceptarRechazarViaje(
-                                visible = showDialogAceptar,
-                                title = "Aceptar viaje",
-                                message = "El conductor quiere recogerte. ¿Quieres confirmar este viaje?",
-                                confirmText = "Aceptar",
+                                visible = accionDialogo != null,
+                                title = when (accionDialogo) {
+                                    AccionDialogo.ACEPTAR -> "Aceptar viaje"
+                                    AccionDialogo.RECHAZAR -> "Rechazar viaje"
+                                    else -> ""
+                                },
+                                message = when (accionDialogo) {
+                                    AccionDialogo.ACEPTAR ->
+                                        "El conductor quiere recogerte. ¿Quieres confirmar este viaje?"
+                                    AccionDialogo.RECHAZAR ->
+                                        "¿Seguro que deseas rechazar esta oferta del conductor?"
+                                    else -> ""
+                                },
+                                confirmText = when (accionDialogo) {
+                                    AccionDialogo.ACEPTAR -> "Aceptar"
+                                    AccionDialogo.RECHAZAR -> "Rechazar"
+                                    else -> ""
+                                },
                                 dismissText = "Cancelar",
                                 onConfirm = {
-                                    showDialogAceptar = false
-                                    // Aquí solo delegamos en el ViewModel; él ya hará lo que toque en Firestore
-                                    mapViewModel.aceptarOfertaViajero(pet) { ok ->
-                                        if (!ok) {
-                                            Toast.makeText(
-                                                context,
-                                                "No se pudo confirmar el viaje",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                    when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR -> {
+                                            mapViewModel.aceptarOfertaViajero(pet) { ok ->
+                                                if (!ok) {
+                                                    Toast.makeText(context, "No se pudo confirmar el viaje", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
                                         }
-                                        // El cambio real de estado lo actualizará observarMiPeticion()
-                                    }
-                                },
-                                onDismiss = { showDialogAceptar = false }
-                            )
-
-                            // Diálogo RECHAZAR
-                            ThumbUpAceptarRechazarViaje(
-                                visible = showDialogRechazar,
-                                title = "Rechazar viaje",
-                                message = "¿Seguro que deseas rechazar esta oferta del conductor?",
-                                confirmText = "Sí, rechazar",
-                                dismissText = "Cancelar",
-                                onConfirm = {
-                                    showDialogRechazar = false
-                                    mapViewModel.rechazarOfertaViajero(pet) { ok ->
-                                        if (!ok) {
-                                            Toast.makeText(
-                                                context,
-                                                "No se pudo rechazar la oferta",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                        AccionDialogo.RECHAZAR -> {
+                                            mapViewModel.rechazarOfertaViajero(pet) { ok ->
+                                                if (!ok) {
+                                                    Toast.makeText(context, "No se pudo rechazar la oferta", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
                                         }
-                                        // Igual que antes: el estado se refresca desde el ViewModel
+                                        else -> {}
                                     }
+                                    accionDialogo = null
                                 },
-                                onDismiss = { showDialogRechazar = false }
+                                onDismiss = { accionDialogo = null }
                             )
                         }
                         is Confirmada -> {
@@ -667,6 +650,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             ) {
                                 PanelInfoViaje(
                                     viaje = estado.viaje,
+                                    fotoPerfil = uiState.fotoPerfilUrl,
                                     onVerRuta = { /* futuro */ },
                                     onContactar = { /* futuro */ },
                                     onCancelar = { showDialogCancelarViaje = true }
@@ -694,8 +678,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
-
-                // Botón modo conductor
                 Button(
                     onClick = {
                         if (uiState.isConductorSelected) {

@@ -11,8 +11,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -34,6 +31,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.maps.MapScreen
 import com.proyecto.autoapp.general.maps.MapViewModel
+import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
+import com.proyecto.autoapp.general.modelo.peticiones.Peticion
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.PerfilMenu
@@ -51,6 +50,11 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     var fotoPerfil by remember { mutableStateOf<String?>(null) }
 
     val peticionesPendientes = mapViewModel.peticionesPendientes
+
+    var showDialogAccion by remember { mutableStateOf(false) }
+    var peticionSeleccionada by remember { mutableStateOf<Peticion?>(null) }
+    var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
+
 
     // Launcher para poder escuchar las peticiones
     LaunchedEffect(Unit) {
@@ -236,21 +240,16 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             itemsIndexed(peticionesPendientes) { index, peticion ->
-
-                                val etiquetaViajero = "Viajero ${index + 1}"
-
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .shadow(8.dp, RoundedCornerShape(14.dp)),
-                                    shape = RoundedCornerShape(14.dp),
-                                    elevation = CardDefaults.cardElevation(8.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFF1A1A1A)
-                                    ),
-                                    border = BorderStroke(1.dp, ThumbUpMustard.copy(alpha = 0.6f))
+                                        .padding(top = 12.dp)
+                                        .shadow(8.dp, RoundedCornerShape(16.dp))
+                                        .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+                                    elevation = CardDefaults.cardElevation(6.dp)
                                 ) {
-
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -258,82 +257,124 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-
                                         Column(
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
                                             Text(
-                                                text = etiquetaViajero,
+                                                text = "Viajero ${index + 1}",
                                                 color = ThumbUpTextPrimary,
                                                 style = MaterialTheme.typography.bodyLarge.copy(
                                                     fontWeight = FontWeight.SemiBold
                                                 )
                                             )
-
+                                        }
+                                        // Botón rechazar
+                                        OutlinedButton(
+                                            onClick = {
+                                                peticionSeleccionada = peticion
+                                                accionDialogo = AccionDialogo.RECHAZAR
+                                                showDialogAccion = true
+                                            },
+                                            border = BorderStroke(1.dp, ThumbUpMustard),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = Color.Transparent,
+                                                contentColor = ThumbUpMustard
+                                            ),
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier
+                                                .padding(start = 12.dp)
+                                        ) {
                                             Text(
-                                                text = "Solicitud pendiente",
-                                                color = ThumbUpTextPrimary.copy(alpha = 0.7f),
-                                                style = MaterialTheme.typography.bodySmall
+                                                text = "Rechazar",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
                                             )
                                         }
 
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
+                                        // Botón Aceptar
+                                        Button(
+                                            onClick = {
+                                                peticionSeleccionada = peticion
+                                                accionDialogo = AccionDialogo.ACEPTAR
+                                                showDialogAccion = true
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = ThumbUpMustard,
+                                                contentColor = ThumbUpSurfaceDark
+                                            ),
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier
+                                                .padding(start = 8.dp)
                                         ) {
-                                            // RECHAZAR EL VIAJE
-                                            OutlinedButton(
-                                                onClick = {
-                                                    mapViewModel.rechazarPeticion(peticion, usuarioActual) { ok ->
-                                                        if (!ok) {
-                                                            Toast.makeText(context, "Error al rechazar petición", Toast.LENGTH_SHORT).show()
-                                                        }
-                                                    }
-                                                },
-                                                border = BorderStroke(1.dp, ThumbUpMustard),
-                                                colors = ButtonDefaults.outlinedButtonColors(
-                                                    containerColor = Color.Transparent,
-                                                    contentColor = ThumbUpMustard
-                                                ),
-                                                shape = RoundedCornerShape(12.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Rechazar",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
+                                            Text(
+                                                text = "Aceptar",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontWeight = FontWeight.SemiBold
                                                 )
-                                            }
-                                            // ACEPTAR
-                                            Button(
-                                                onClick = {
-                                                    mapViewModel.aceptarPeticion(peticion, usuarioActual) { ok ->
-                                                        Toast.makeText(
-                                                            context,
-                                                            if (ok) "Petición aceptada" else "La petición ya fue atendida", Toast.LENGTH_SHORT).show()
-                                                    }
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = ThumbUpMustard,
-                                                    contentColor = ThumbUpSurfaceDark
-                                                ),
-                                                shape = RoundedCornerShape(12.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Aceptar",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                            }
+                                            )
                                         }
                                     }
                                 }
+
+
+                                ThumbUpAceptarRechazarViaje(
+                                    visible = showDialogAccion,
+                                    title = when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR -> "Aceptar petición"
+                                        AccionDialogo.RECHAZAR -> "Rechazar petición"
+                                        else -> ""
+                                    },
+                                    message = when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR ->  "¿Quieres ofrecerte para llevar a este viajero?"
+                                        AccionDialogo.RECHAZAR -> "¿Seguro que quieres rechazar a este viajero?"
+                                        else -> ""
+                                    },
+                                    confirmText = when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR -> "Sí, aceptar"
+                                        AccionDialogo.RECHAZAR -> "Sí, rechazar"
+                                        else -> ""
+                                    },
+                                    dismissText = "Cancelar",
+                                    onConfirm = {
+                                        val pet = peticionSeleccionada
+                                        val accion = accionDialogo
+
+                                        if (pet != null && accion != null) {
+                                            when (accion) {
+                                                AccionDialogo.ACEPTAR -> {
+                                                    mapViewModel.aceptarPeticionConductor(pet, usuarioActual) { ok ->
+                                                        Toast.makeText(context,
+                                                            if (ok) "Petición aceptada"
+                                                            else "La petición ya fue atendida",
+                                                            Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+
+                                                AccionDialogo.RECHAZAR -> {
+                                                    mapViewModel.rechazarPeticionConductor(pet, usuarioActual) { ok ->
+                                                        if (!ok) {
+                                                            Toast.makeText(context,"Error al rechazar petición", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        showDialogAccion = false
+                                        accionDialogo = null
+                                        peticionSeleccionada = null
+                                    },
+                                    onDismiss = {
+                                        showDialogAccion = false
+                                        accionDialogo = null
+                                        peticionSeleccionada = null
+                                    }
+                                )
                             }
                         }
                     }
                 }
-
 
                 Button(
                     onClick = {
@@ -359,5 +400,3 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
         }
     }
 }
-
-

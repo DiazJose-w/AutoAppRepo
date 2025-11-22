@@ -249,15 +249,13 @@ fun TitulosRegistro(texto: String) {
  * Panel que mostrará la información del viaje. AÑADIR MÁS ADELANTE
  * */
 @Composable
-fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -> Unit = {}, onCancelar: () -> Unit = {}) {
-    Spacer(Modifier.height(16.dp))
+fun PanelInfoViaje(viaje: ViajeUi, fotoPerfil: String?, onVerRuta: () -> Unit = {}, onContactar: () -> Unit = {}, onCancelar: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(8.dp, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, ThumbUpMustard,
-                RoundedCornerShape(16.dp)),
+            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
@@ -267,30 +265,107 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        viaje.conductor,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Star,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = ThumbUpMustard
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (!fotoPerfil.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = fotoPerfil,
+                            contentDescription = "Foto del conductor",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, ThumbUpMustard, CircleShape),
+                            contentScale = ContentScale.Crop
                         )
-                        Spacer(Modifier.width(4.dp))
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.DarkGray),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = ThumbUpMustard
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Column {
                         Text(
-                            "${viaje.valoracion}",
-                            color = ThumbUpMustard,
-                            style = MaterialTheme.typography.bodySmall
+                            viaje.conductor,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = ThumbUpMustard
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                "${viaje.valoracion}",
+                                color = ThumbUpMustard,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Button(
+                        onClick = onContactar,
+                        modifier = Modifier
+                            .height(32.dp)
+                            .widthIn(min = 110.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ThumbUpMustard,
+                            contentColor = Color(0xFF1A1A1A)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Text(
+                            "Contactar",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onCancelar,
+                        modifier = Modifier
+                            .height(30.dp)
+                            .widthIn(min = 110.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, ThumbUpMustard),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = ThumbUpMustard
+                        ),
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Text(
+                            "Cancelar",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
                         )
                     }
                 }
@@ -298,79 +373,12 @@ fun PanelInfoViaje(viaje: ViajeUi, onVerRuta: () -> Unit = {}, onContactar: () -
 
             Spacer(Modifier.height(12.dp))
 
+            // ───────────────── Datos básicos del viaje (igual que antes) ─────────────────
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 EtiquetaDato(Icons.Default.DirectionsCar, "${viaje.vehiculo} · ${viaje.color}")
-                EtiquetaDato(Icons.Default.EventSeat, "Plazas: ${viaje.plazasDisponibles}")
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                EtiquetaDato(Icons.Default.Info, viaje.distancia)
-                EtiquetaDato(Icons.Default.AccessTime, viaje.duracion)
-                EtiquetaDato(Icons.Default.Schedule, "Sale ${viaje.horaRecogida}")
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilaPunto("Recogida", viaje.puntoRecogida)
-                FilaPunto("Destino", viaje.puntoDestino)
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedButton(
-                    onClick = onContactar,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = ThumbUpMustard
-                    ),
-                    border = BorderStroke(1.dp, ThumbUpMustard)
-                ) {
-                    Text(
-                        "Contactar",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = ThumbUpMustard
-                    )
-                }
-
-                Button(
-                    onClick = onVerRuta,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
-                        contentColor = Color(0xFF1A1A1A)
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                ) {
-                    Text(
-                        "Ver ruta",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
-
-            TextButton(
-                onClick = onCancelar,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = ThumbUpMustard
-                )
-            ) {
-                Text(
-                    "Cancelar petición",
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = ThumbUpMustard
-                )
-            }
+            // Si luego quieres meter más info (puntos, hora, etc) puedes seguir aquí
         }
     }
 }

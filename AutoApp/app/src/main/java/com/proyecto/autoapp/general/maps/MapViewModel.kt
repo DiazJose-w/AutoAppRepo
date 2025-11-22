@@ -363,19 +363,25 @@ class MapViewModel : ViewModel() {
             }
     }
 
-    fun rechazarPeticion(peticion: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
+    fun rechazarPeticionConductor(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
 
-        db.collection("peticiones")
-            .document(peticion.id)
-            .update(
-                "conductoresQueRechazan", FieldValue.arrayUnion(uidConductor)
+        val docRef = db.collection(peticion).document(pet.id)
+
+        docRef.update(
+                mapOf(
+                    "conductoresQueRechazan" to FieldValue.arrayUnion(uidConductor)
+                )
             )
-            .addOnSuccessListener { onResult(true) }
-            .addOnFailureListener { onResult(false) }
+            .addOnSuccessListener {
+                onResult(true)
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
     }
 
-    fun aceptarPeticion(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
+    fun aceptarPeticionConductor(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
         val docRef = db.collection(peticion).document(pet.id)
 
@@ -384,15 +390,17 @@ class MapViewModel : ViewModel() {
             val estadoActual = snap.getString("estado")
             val yaAceptadaPor = snap.getString("uidConductorAcepta")
 
-            if (estadoActual != "pendiente" || !yaAceptadaPor.isNullOrEmpty()) {
-                throw Exception("La petición ya no está disponible")
+            // Solo actualizamos si sigue pendiente y nadie la ha aceptado aún
+            if (estadoActual == "pendiente" && yaAceptadaPor.isNullOrEmpty()) {
+                tx.update(
+                    docRef,
+                    mapOf(
+                        "estado" to "aceptada",
+                        "uidConductorAcepta" to uidConductor,
+                        "timestampAceptacion" to System.currentTimeMillis()
+                    )
+                )
             }
-
-            tx.update(docRef, mapOf(
-                "estado" to "aceptada",
-                "uidConductorAcepta" to uidConductor,
-                "timestampAceptacion" to System.currentTimeMillis()
-            ))
         }
             .addOnSuccessListener {
                 programarTimeoutRespuestaViajero(pet.id)
@@ -411,7 +419,7 @@ class MapViewModel : ViewModel() {
             .document(pet.id)
             .update(
                 mapOf(
-                    "estado" to "confirmadaPorViajero",
+                    "estado" to "aceptada",
                     "timestampConfirmacionViajero" to System.currentTimeMillis()
                 )
             )
@@ -425,27 +433,42 @@ class MapViewModel : ViewModel() {
 
     fun rechazarOfertaViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
 
-        val updates = mutableMapOf<String, Any>(
-            "estado" to "canceladaPorViajero"
-        )
+        docRef.get()
+            .addOnSuccessListener { snap ->
+                val estadoActual = snap.getString("estado")
+                val uidConductor = snap.getString("uidConductorAcepta") ?: ""
 
-        // Si ya había un conductor asignado, lo marcamos como que también fue rechazado
-        val uidConductor = pet.uidConductorAcep
-        if (uidConductor.isNotEmpty()) {
-            updates["conductoresQueRechazan"] = FieldValue.arrayUnion(uidConductor)
-        }
-
-        db.collection(peticion)
-            .document(pet.id)
-            .update(updates)
-            .addOnSuccessListener {
-                onResult(true)
+                if (estadoActual == "aceptada" && uidConductor.isNotEmpty()) {
+                    db.runTransaction { tx ->
+                        tx.update(
+                            docRef,
+                            mapOf(
+                                // La petición vuelve a estar pendiente
+                                "estado" to "pendiente",
+                                // Se limpia el conductor que estaba asignado
+                                "uidConductorAcepta" to null,
+                                // Guardamos al conductor en el log de seguridad
+                                "conductoresQueRechazan" to FieldValue.arrayUnion(uidConductor)
+                            )
+                        )
+                    }
+                        .addOnSuccessListener {
+                            onResult(true)
+                        }
+                        .addOnFailureListener {
+                            onResult(false)
+                        }
+                } else {
+                    onResult(false)
+                }
             }
             .addOnFailureListener {
                 onResult(false)
             }
     }
+
 
     /**
      *  Funciones para escuchar las peticiones por parte del conductor
@@ -479,14 +502,25 @@ class MapViewModel : ViewModel() {
         listenerPeticiones?.remove()
 
         listenerPeticiones = db.collection(peticion)
-            .whereEqualTo("estado", "pendiente")
             .addSnapshotListener { snapshot, e ->
-                if (e != null) return@addSnapshotListener
+                if (e == null && snapshot != null) {
 
-                if (snapshot != null) {
                     val visibles = snapshot.documents
                         .mapNotNull { it.toObject(Peticion::class.java) }
-                        .filter { it.uidUsuario != uidConductor }
+                        .filter { pet ->
+
+                            val esMia = pet.uidUsuario == uidConductor
+                            val estaConfirmadaPorViajero = pet.estado == "confirmadaPorViajero"
+                            val yoLaHeRechazado = pet.uidConductorCan.contains(uidConductor)
+                            val esPendiente = pet.estado == "pendiente"
+                            val esAceptadaPorOtroConductor =
+                                pet.estado == "aceptada" && pet.uidConductorCan.toString() != uidConductor
+
+                            /*
+                            *  Esta es otra manera de añadir una condición al filter. Si se cumple, se mostrará la petición
+                            * */
+                            !esMia && !estaConfirmadaPorViajero && !yoLaHeRechazado && (esPendiente || esAceptadaPorOtroConductor)
+                        }
 
                     peticionesPendientes = visibles
                 }
@@ -540,5 +574,4 @@ class MapViewModel : ViewModel() {
                 }
         }
     }
-
 }
