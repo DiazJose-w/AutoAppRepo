@@ -46,6 +46,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.shape.CircleShape
 import coil.compose.AsyncImage
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
+import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -58,13 +59,12 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
     // UID del usuario actual
     val usuarioActual = loginVM.uidActual
-    var fotoPerfilUrl by remember { mutableStateOf<String?>(null) }
     val miPeticionState by mapViewModel.miPeticion.collectAsState()
 
     /**
      * Variables para los diálogos
      */
-    var showDialogCancelarViaje by remember { mutableStateOf(false) }
+    var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var mostrarDialogo by remember { mutableStateOf(false) }
 
@@ -75,7 +75,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
             else -> when (pet.estado) {
                 "pendiente" -> Pendiente
                 "ofertaConductor" -> OfertaConductor(pet)
-                "aceptada" ->OfertaConductor(pet)
+                "aceptada" -> Confirmada(pet)
                 "confirmadaPorViajero" -> OfertaConductor(pet)
                 else -> null
             }
@@ -462,7 +462,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(18.dp))
 
                 // Botón realizar petición
                 ThumbUpPrimaryButton(
@@ -484,8 +484,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                         .height(54.dp)
                 )
 
-                Spacer(Modifier.height(12.dp))
-
+                Spacer(Modifier.height(10.dp))
                 /**
                  * Valor de la petición según su estado
                  */
@@ -499,99 +498,20 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             )
                         }
                         is OfertaConductor -> {
+                            Log.e(TAG, "estado ${estado.peticion}")
                             val pet = estado.peticion
-                            var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
+                            PanelEstadoPeticion(
+                                fotoConductor = pet.fotoConductor,
+                                nombreConductor = pet.nombreConductor,
+                                estado = EstadoPeticion.OFERTA_CONDUCTOR,
+                                contentDescription = uiState.fotoPerfilUrl,
+                                onAccionSeleccionada = { accion ->
+                                    accionDialogo = accion
+                                },
+                                onMostrarInfoViaje = { },
+                                onCancelarViaje = { }
+                            )
 
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 12.dp)
-                                    .shadow(8.dp, RoundedCornerShape(16.dp))
-                                    .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-                                elevation = CardDefaults.cardElevation(6.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            AsyncImage(
-                                                model = pet.fotoConductor,
-                                                contentDescription = uiState.fotoPerfilUrl,
-                                                modifier = Modifier
-                                                    .size(72.dp)
-                                                    .clip(CircleShape)
-                                                    .border(2.dp, ThumbUpMustard, CircleShape),
-                                                contentScale = ContentScale.Crop
-                                            )
-
-                                            Spacer(Modifier.height(6.dp))
-
-                                            Text(
-                                                text =pet.nombreConductor,
-                                                color = Color.White,
-                                                style = MaterialTheme.typography.titleSmall.copy(
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            )
-                                        }
-
-                                        Spacer(Modifier.width(16.dp))
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Button(
-                                                onClick = { accionDialogo = AccionDialogo.ACEPTAR },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = ThumbUpMustard,
-                                                    contentColor = ThumbUpSurfaceDark
-                                                ),
-                                                shape = RoundedCornerShape(12.dp)
-                                            ) {
-                                                Text(
-                                                    "Aceptar viaje",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                            }
-
-                                            OutlinedButton(
-                                                onClick = { accionDialogo = AccionDialogo.RECHAZAR },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                border = BorderStroke(1.dp, ThumbUpMustard),
-                                                colors = ButtonDefaults.outlinedButtonColors(
-                                                    containerColor = Color.Transparent,
-                                                    contentColor = ThumbUpMustard
-                                                ),
-                                                shape = RoundedCornerShape(12.dp)
-                                            ) {
-                                                Text(
-                                                    "Rechazar",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                             ThumbUpAceptarRechazarViaje(
                                 visible = accionDialogo != null,
                                 title = when (accionDialogo) {
@@ -617,15 +537,14 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                                         AccionDialogo.ACEPTAR -> {
                                             mapViewModel.aceptarOfertaViajero(pet) { ok ->
                                                 if (!ok) {
-                                                    Toast.makeText(context, "No se pudo confirmar el viaje", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context,"No se pudo confirmar el viaje",Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         }
                                         AccionDialogo.RECHAZAR -> {
-                                            Log.e(TAG, "Acabo de entrar en la petición de rechazar")
                                             mapViewModel.rechazarOfertaViajero(pet) { ok ->
                                                 if (!ok) {
-                                                    Toast.makeText(context, "No se pudo rechazar la oferta", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context,"No se pudo rechazar la oferta",Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         }
@@ -637,43 +556,21 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             )
                         }
                         is Confirmada -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = { /* futuro: ver ruta/info */ },
-                                        onLongClick = { showDialogCancelarViaje = true }
-                                    )
-                            ) {
-                                PanelInfoViaje(
-                                    viaje = estado.viaje,
-                                    fotoPerfil = uiState.fotoPerfilUrl,
-                                    onVerRuta = { /* futuro */ },
-                                    onContactar = { /* futuro */ },
-                                    onCancelar = { showDialogCancelarViaje = true }
-                                )
-                            }
+                            Log.e(TAG, "estado ${estado.peticion}")
+                            val pet = estado.peticion
 
-                            ThumbUpAceptarRechazarViaje(
-                                visible = showDialogCancelarViaje,
-                                title = "Cancelar viaje",
-                                message = "Si cancelas este viaje, quedará anulado y el conductor será notificado.",
-                                confirmText = "Sí, cancelar",
-                                dismissText = "Seguir",
-                                onConfirm = {
-                                    showDialogCancelarViaje = false
-                                    estadoSolicitud = Rechazada("Cancelado por el usuario")
-                                    // De momento solo cambiamos el estado local.
-                                    // Cuando tengas claro cómo guardar el viaje confirmado en Firestore,
-                                    // aquí podrás llamar a un método del ViewModel.
-                                },
-                                onDismiss = { showDialogCancelarViaje = false }
+                            PanelEstadoPeticion(
+                                fotoConductor = pet.fotoConductor,
+                                nombreConductor = pet.nombreConductor,
+                                estado = EstadoPeticion.ACEPTADA,
+                                contentDescription = uiState.fotoPerfilUrl,
+                                onAccionSeleccionada = { },
+                                onMostrarInfoViaje = { },
+                                onCancelarViaje = { }
                             )
                         }
-                        is Rechazada -> { }
                     }
                 }
-
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = {
@@ -719,6 +616,5 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 sealed interface EstadoSolicitud {
     data object Pendiente : EstadoSolicitud
     data class OfertaConductor(val peticion: Peticion) : EstadoSolicitud
-    data class Confirmada(val viaje: ViajeUi) : EstadoSolicitud
-    data class Rechazada(val motivo: String) : EstadoSolicitud
+    data class Confirmada(val peticion: Peticion) : EstadoSolicitud
 }

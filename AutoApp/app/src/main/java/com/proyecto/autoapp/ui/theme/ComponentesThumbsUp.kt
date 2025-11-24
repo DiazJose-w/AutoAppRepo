@@ -1,9 +1,11 @@
 package com.proyecto.autoapp.ui.theme
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,13 +20,15 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
+import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
+import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
+import com.proyecto.autoapp.general.modelo.peticiones.Peticion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -246,142 +250,154 @@ fun TitulosRegistro(texto: String) {
 }
 
 /**
- * Panel que mostrará la información del viaje. AÑADIR MÁS ADELANTE
+ * Panel que muestra la información del viaje.
  * */
 @Composable
-fun PanelInfoViaje(viaje: ViajeUi, fotoPerfil: String?, onVerRuta: () -> Unit = {}, onContactar: () -> Unit = {}, onCancelar: () -> Unit = {}) {
+@OptIn(ExperimentalFoundationApi::class)
+fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado: EstadoPeticion, onAccionSeleccionada: (AccionDialogo) -> Unit,
+    onMostrarInfoViaje: () -> Unit, onCancelarViaje: () -> Unit, modifier: Modifier = Modifier, contentDescription: String? = null) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .padding(top = 12.dp)
             .shadow(8.dp, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
+            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+            .combinedClickable(
+                onClick = { /* click normal en la card, lo dejamos vacío */ },
+                onLongClick = {
+                    // Long click en la card → cancelar viaje
+                    onCancelarViaje()
+                }
+            ),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(6.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (!fotoPerfil.isNullOrEmpty()) {
-                        AsyncImage(
-                            model = fotoPerfil,
-                            contentDescription = "Foto del conductor",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .border(1.dp, ThumbUpMustard, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.DarkGray),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = ThumbUpMustard
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.width(8.dp))
-
-                    Column {
-                        Text(
-                            viaje.conductor,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = ThumbUpMustard
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                "${viaje.valoracion}",
-                                color = ThumbUpMustard,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
+                // Columna con foto + nombre
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                    horizontalAlignment = Alignment.End
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Button(
-                        onClick = onContactar,
+                    AsyncImage(
+                        model = fotoConductor,
+                        contentDescription = contentDescription,
                         modifier = Modifier
-                            .height(32.dp)
-                            .widthIn(min = 110.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ThumbUpMustard,
-                            contentColor = Color(0xFF1A1A1A)
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
-                    ) {
-                        Text(
-                            "Contactar",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, ThumbUpMustard, CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
 
-                    OutlinedButton(
-                        onClick = onCancelar,
-                        modifier = Modifier
-                            .height(30.dp)
-                            .widthIn(min = 110.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, ThumbUpMustard),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.Transparent,
-                            contentColor = ThumbUpMustard
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
-                    ) {
-                        Text(
-                            "Cancelar",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
+                    Spacer(Modifier.height(6.dp))
+
+                    Text(
+                        text = nombreConductor,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold
                         )
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                // Columna de acciones, depende del estado
+                when (estado) {
+                    EstadoPeticion.OFERTA_CONDUCTOR -> {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onAccionSeleccionada(AccionDialogo.ACEPTAR) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ThumbUpMustard,
+                                    contentColor = ThumbUpSurfaceDark
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    "Aceptar viaje",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = { onAccionSeleccionada(AccionDialogo.RECHAZAR) },
+                                modifier = Modifier.fillMaxWidth(),
+                                border = BorderStroke(1.dp, ThumbUpMustard),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = ThumbUpMustard
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    "Rechazar",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+                        }
                     }
+                    EstadoPeticion.ACEPTADA -> {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Viaje concertado",
+                                color = ThumbUpMustard,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+
+                            Button(
+                                onClick = { onMostrarInfoViaje() },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ThumbUpMustard,
+                                    contentColor = ThumbUpSurfaceDark
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    "Ver información del viaje",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+
+                            Text(
+                                text = "Mantén pulsado para cancelar el viaje",
+                                color = Color.Gray,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                    EstadoPeticion.PENDIENTE -> { }
                 }
             }
-
-            Spacer(Modifier.height(12.dp))
-
-            // ───────────────── Datos básicos del viaje (igual que antes) ─────────────────
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                EtiquetaDato(Icons.Default.DirectionsCar, "${viaje.vehiculo} · ${viaje.color}")
-            }
-
-            // Si luego quieres meter más info (puntos, hora, etc) puedes seguir aquí
         }
     }
 }
+
 
 @Composable
 private fun EtiquetaDato(icono: ImageVector, etiqueta: String) {
@@ -410,22 +426,6 @@ private fun EtiquetaDato(icono: ImageVector, etiqueta: String) {
             leadingIconContentColor = ThumbUpMustard
         )
     )
-}
-
-@Composable
-private fun FilaPunto(titulo: String, texto: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            "$titulo: ",
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = ThumbUpMustard
-        )
-        Text(
-            texto,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White
-        )
-    }
 }
 
 /**

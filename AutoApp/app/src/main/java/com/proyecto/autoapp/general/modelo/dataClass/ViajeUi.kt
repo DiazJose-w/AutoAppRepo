@@ -3,7 +3,7 @@ package com.proyecto.autoapp.general.modelo.dataClass
 data class ViajeUi(
     val id: String = "",
     val conductor: String = "",
-    val valoracion: Double = 0.0, // Valoración promeria del conductor
+    val valoracion: Double = 0.0,
     val vehiculo: String = "",
     val color: String = "",
     val plazasDisponibles: Int = 0,

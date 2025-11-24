@@ -466,7 +466,6 @@ class MapViewModel : ViewModel() {
                             onResult(false)
                         }
                 } else {
-                    Log.e(TAG, "estado petición en else: ${pet.estado}")
                     onResult(false)
                 }
             }
@@ -495,7 +494,6 @@ class MapViewModel : ViewModel() {
                     val peticiones = snap.documents.mapNotNull { it.toObject(Peticion::class.java) }
                     val peticionMasReciente = peticiones.maxByOrNull { it.timestamp }
                     _miPeticion.value = peticionMasReciente
-                    Log.e(TAG, "miPeticion.fotoConductor = ${peticionMasReciente?.fotoConductor}")
                 } else {
                     _miPeticion.value = null
                 }
