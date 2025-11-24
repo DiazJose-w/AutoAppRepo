@@ -344,8 +344,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                     val nombreConductor = listOf(uiState.nombre, uiState.apellidos)
                                                         .filter { it.isNotBlank() }
                                                         .joinToString(" ")
-
-                                                    mapViewModel.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, fotoPerfil.toString()) { ok ->
+                                                    mapViewModel.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, uiState.fotoPerfilUrl.toString()) { ok ->
                                                         Toast.makeText(context,
                                                             if (ok) "Petición aceptada"
                                                             else "La petición ya fue atendida",

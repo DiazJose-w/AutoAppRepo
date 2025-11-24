@@ -389,7 +389,7 @@ class MapViewModel : ViewModel() {
         val db = FirebaseFirestore.getInstance()
         val docRef = db.collection(peticion).document(pet.id)
 
-        Log.e(TAG, "Foto de perfil y nombre del conductor: $fotoConductor,  $nombreDelConductor")
+        Log.e(TAG, "Foto de perfil == $fotoConductor")
         db.runTransaction { tx ->
             val snap = tx.get(docRef)
             val estadoActual = snap.getString("estado")
@@ -403,7 +403,7 @@ class MapViewModel : ViewModel() {
                         "estado" to "ofertaConductor",
                         "uidConductorAcep" to uidConductor,
                         "nombreConductor" to nombreDelConductor,
-                        "fotoConductort" to fotoConductor,
+                        "fotoConductor" to fotoConductor,
                         "timestampAceptacion" to System.currentTimeMillis()
                     )
                 )
@@ -449,11 +449,6 @@ class MapViewModel : ViewModel() {
                 val uidConductor = snap.getString("uidConductorAcep") ?: ""
 
                 if (estadoActual == "ofertaConductor" && uidConductor.isNotEmpty()) {
-                    Log.e(TAG, "Oferta rechazada por el viajero:")
-                    Log.e(TAG, "petición: ${pet.id}")
-                    Log.e(TAG, "conductor: ${pet.uidConductorCan}")
-                    Log.e(TAG, "estado petición: ${pet.estado}")
-                    Log.e(TAG, "usuario viajero: ${pet.uidUsuario}")
                     db.runTransaction { tx ->
                         tx.update(
                             docRef,
@@ -485,7 +480,6 @@ class MapViewModel : ViewModel() {
      */
     fun observarMiPeticion(uidUsuario: String) {
         val db = FirebaseFirestore.getInstance()
-
         listenerMiPeticion?.remove()
 
         listenerMiPeticion = db.collection(peticion)
@@ -501,6 +495,7 @@ class MapViewModel : ViewModel() {
                     val peticiones = snap.documents.mapNotNull { it.toObject(Peticion::class.java) }
                     val peticionMasReciente = peticiones.maxByOrNull { it.timestamp }
                     _miPeticion.value = peticionMasReciente
+                    Log.e(TAG, "miPeticion.fotoConductor = ${peticionMasReciente?.fotoConductor}")
                 } else {
                     _miPeticion.value = null
                 }
