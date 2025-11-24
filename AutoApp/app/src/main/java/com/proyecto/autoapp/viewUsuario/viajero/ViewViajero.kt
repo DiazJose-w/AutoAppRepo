@@ -43,8 +43,6 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 import com.proyecto.autoapp.viewUsuario.viajero.EstadoSolicitud.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import coil.compose.AsyncImage
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
@@ -76,16 +74,14 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
             null -> null
             else -> when (pet.estado) {
                 "pendiente" -> Pendiente
-                "aceptada" -> OfertaConductor(pet)
-                "confirmadaPorViajero" -> {
-                    // De momento seguimos mostrándolo como oferta confirmada,
-                    // más adelante lo podremos mapear a Confirmada(ViajeUi)
-                    OfertaConductor(pet)
-                }
+                "ofertaConductor" -> OfertaConductor(pet)
+                "aceptada" ->OfertaConductor(pet)
+                "confirmadaPorViajero" -> OfertaConductor(pet)
                 else -> null
             }
         }
     }
+
 
     // Cargar datos de usuario
     LaunchedEffect(usuarioActual) {
@@ -533,7 +529,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                                             modifier = Modifier.weight(1f)
                                         ) {
                                             AsyncImage(
-                                                model = uiState.fotoPerfilUrl,
+                                                model = pet.fotoConductor,
                                                 contentDescription = uiState.fotoPerfilUrl,
                                                 modifier = Modifier
                                                     .size(72.dp)
@@ -545,7 +541,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                                             Spacer(Modifier.height(6.dp))
 
                                             Text(
-                                                text = uiState.nombre,
+                                                text =pet.nombreConductor,
                                                 color = Color.White,
                                                 style = MaterialTheme.typography.titleSmall.copy(
                                                     fontWeight = FontWeight.SemiBold
@@ -626,6 +622,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                                             }
                                         }
                                         AccionDialogo.RECHAZAR -> {
+                                            Log.e(TAG, "Acabo de entrar en la petición de rechazar")
                                             mapViewModel.rechazarOfertaViajero(pet) { ok ->
                                                 if (!ok) {
                                                     Toast.makeText(context, "No se pudo rechazar la oferta", Toast.LENGTH_SHORT).show()

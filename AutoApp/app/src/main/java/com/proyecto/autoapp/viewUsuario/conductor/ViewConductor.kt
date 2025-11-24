@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     // UID del usuario actual
     val usuarioActual = loginVM.uidActual
     var fotoPerfil by remember { mutableStateOf<String?>(null) }
+    val uiState by perfilVM.uiState.collectAsState()
 
     val peticionesPendientes = mapViewModel.peticionesPendientes
 
@@ -112,8 +114,6 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
             )
         }
     ) { innerPadding ->
-
-        // 🔹 CONTENEDOR PRINCIPAL, IGUAL QUE EN ViewInicialUsuario
         Box(
             modifier = Modifier
                 .padding(innerPadding)
@@ -316,8 +316,6 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                         }
                                     }
                                 }
-
-
                                 ThumbUpAceptarRechazarViaje(
                                     visible = showDialogAccion,
                                     title = when (accionDialogo) {
@@ -343,7 +341,11 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                         if (pet != null && accion != null) {
                                             when (accion) {
                                                 AccionDialogo.ACEPTAR -> {
-                                                    mapViewModel.aceptarPeticionConductor(pet, usuarioActual) { ok ->
+                                                    val nombreConductor = listOf(uiState.nombre, uiState.apellidos)
+                                                        .filter { it.isNotBlank() }
+                                                        .joinToString(" ")
+
+                                                    mapViewModel.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, fotoPerfil.toString()) { ok ->
                                                         Toast.makeText(context,
                                                             if (ok) "Petición aceptada"
                                                             else "La petición ya fue atendida",

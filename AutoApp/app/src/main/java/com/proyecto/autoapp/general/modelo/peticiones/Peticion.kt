@@ -14,5 +14,7 @@ data class Peticion(
     val destinoLng: Double? = null,
     val destinoPlaceId: String? = null,
     val estado: String = "pendiente",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val nombreConductor: String = "",
+    val fotoConductor: String = ""
 )

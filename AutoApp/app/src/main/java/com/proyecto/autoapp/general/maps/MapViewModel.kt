@@ -365,12 +365,16 @@ class MapViewModel : ViewModel() {
 
     fun rechazarPeticionConductor(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
-
         val docRef = db.collection(peticion).document(pet.id)
 
+        /**
+         * Una vez el conductor rechaza se almacena en la lista de conductores que rechazaron llevar al viajero.
+         * Automáticamente deja de aparecer el viaje en su vista
+         * */
         docRef.update(
                 mapOf(
-                    "conductoresQueRechazan" to FieldValue.arrayUnion(uidConductor)
+                    "estado" to "pendiente",
+                    "uidConductorCan" to FieldValue.arrayUnion(uidConductor)
                 )
             )
             .addOnSuccessListener {
@@ -381,22 +385,25 @@ class MapViewModel : ViewModel() {
             }
     }
 
-    fun aceptarPeticionConductor(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
+    fun aceptarPeticionConductor(pet: Peticion, uidConductor: String, nombreDelConductor: String, fotoConductor: String, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
         val docRef = db.collection(peticion).document(pet.id)
 
+        Log.e(TAG, "Foto de perfil y nombre del conductor: $fotoConductor,  $nombreDelConductor")
         db.runTransaction { tx ->
             val snap = tx.get(docRef)
             val estadoActual = snap.getString("estado")
-            val yaAceptadaPor = snap.getString("uidConductorAcepta")
+            val yaAceptadaPor = snap.getString("uidConductorAcep")
 
             // Solo actualizamos si sigue pendiente y nadie la ha aceptado aún
             if (estadoActual == "pendiente" && yaAceptadaPor.isNullOrEmpty()) {
                 tx.update(
                     docRef,
                     mapOf(
-                        "estado" to "aceptada",
-                        "uidConductorAcepta" to uidConductor,
+                        "estado" to "ofertaConductor",
+                        "uidConductorAcep" to uidConductor,
+                        "nombreConductor" to nombreDelConductor,
+                        "fotoConductort" to fotoConductor,
                         "timestampAceptacion" to System.currentTimeMillis()
                     )
                 )
@@ -420,7 +427,8 @@ class MapViewModel : ViewModel() {
             .update(
                 mapOf(
                     "estado" to "aceptada",
-                    "timestampConfirmacionViajero" to System.currentTimeMillis()
+                    "timestampConfirmacionViajero" to System.currentTimeMillis(),
+                    "uidConductorAcep" to "uidConductorAcep"
                 )
             )
             .addOnSuccessListener {
@@ -438,19 +446,21 @@ class MapViewModel : ViewModel() {
         docRef.get()
             .addOnSuccessListener { snap ->
                 val estadoActual = snap.getString("estado")
-                val uidConductor = snap.getString("uidConductorAcepta") ?: ""
+                val uidConductor = snap.getString("uidConductorAcep") ?: ""
 
-                if (estadoActual == "aceptada" && uidConductor.isNotEmpty()) {
+                if (estadoActual == "ofertaConductor" && uidConductor.isNotEmpty()) {
+                    Log.e(TAG, "Oferta rechazada por el viajero:")
+                    Log.e(TAG, "petición: ${pet.id}")
+                    Log.e(TAG, "conductor: ${pet.uidConductorCan}")
+                    Log.e(TAG, "estado petición: ${pet.estado}")
+                    Log.e(TAG, "usuario viajero: ${pet.uidUsuario}")
                     db.runTransaction { tx ->
                         tx.update(
                             docRef,
                             mapOf(
-                                // La petición vuelve a estar pendiente
                                 "estado" to "pendiente",
-                                // Se limpia el conductor que estaba asignado
-                                "uidConductorAcepta" to null,
-                                // Guardamos al conductor en el log de seguridad
-                                "conductoresQueRechazan" to FieldValue.arrayUnion(uidConductor)
+                                "uidConductorAcep" to "",
+                                "uidConductorCan" to FieldValue.arrayUnion(uidConductor)
                             )
                         )
                     }
@@ -461,6 +471,7 @@ class MapViewModel : ViewModel() {
                             onResult(false)
                         }
                 } else {
+                    Log.e(TAG, "estado petición en else: ${pet.estado}")
                     onResult(false)
                 }
             }
@@ -468,7 +479,6 @@ class MapViewModel : ViewModel() {
                 onResult(false)
             }
     }
-
 
     /**
      *  Funciones para escuchar las peticiones por parte del conductor
@@ -497,7 +507,7 @@ class MapViewModel : ViewModel() {
             }
     }
 
-    fun observarPeticionesPendientes(uidConductor: String) {
+    fun observarPeticionesPendientes(uidConductor: String){
         val db = FirebaseFirestore.getInstance()
         listenerPeticiones?.remove()
 
@@ -507,29 +517,25 @@ class MapViewModel : ViewModel() {
 
                     val visibles = snapshot.documents
                         .mapNotNull { it.toObject(Peticion::class.java) }
+                        .onEach { pet ->
+                            Log.d(TAG, "id=${pet.id}, can=${pet.uidConductorCan}")
+                        }
                         .filter { pet ->
-
                             val esMia = pet.uidUsuario == uidConductor
-                            val estaConfirmadaPorViajero = pet.estado == "confirmadaPorViajero"
                             val yoLaHeRechazado = pet.uidConductorCan.contains(uidConductor)
                             val esPendiente = pet.estado == "pendiente"
-                            val esAceptadaPorOtroConductor =
-                                pet.estado == "aceptada" && pet.uidConductorCan.toString() != uidConductor
+                            val esAceptadaPorViajero = pet.estado == "aceptada"
+                            val esOfertaDelConductor = pet.estado == "ofertaConductor" && pet.uidConductorAcep == uidConductor
 
-                            /*
-                            *  Esta es otra manera de añadir una condición al filter. Si se cumple, se mostrará la petición
-                            * */
-                            !esMia && !estaConfirmadaPorViajero && !yoLaHeRechazado && (esPendiente || esAceptadaPorOtroConductor)
+                            Log.d(TAG,"id=${pet.id} - uidConductor=$uidConductor, can=${pet.uidConductorCan}, yoLaHeRechazado=$yoLaHeRechazado, estado=${pet.estado}")
+
+                            // Esta es una manera más rápida de ponerle condición al filtrado.
+                            !esMia && !yoLaHeRechazado && !esAceptadaPorViajero && (esPendiente || esOfertaDelConductor)
                         }
 
                     peticionesPendientes = visibles
                 }
             }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        listenerPeticiones?.remove()
     }
 
     private fun programarCancelacionPorTimeout(idPeticion: String) {
@@ -565,13 +571,18 @@ class MapViewModel : ViewModel() {
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
                         val estadoActual = doc.getString("estado")
-                        if (estadoActual == "aceptada") {
+                        if (estadoActual == "pendiente" || estadoActual == "ofertaConductor") {
                             db.collection(peticion)
                                 .document(idPeticion)
-                                .update("estado", "canceladaPorInaccionViajero")
+                                .update("estado", "cancelada")
                         }
                     }
                 }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        listenerPeticiones?.remove()
     }
 }

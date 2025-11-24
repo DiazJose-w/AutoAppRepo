@@ -30,7 +30,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/logo_thumbsup"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/logo_thumbsup"
+        android:roundIcon="@mipmap/logo_movil"
         android:supportsRtl="true"
         android:theme="@style/Theme.AutoApp"
         tools:targetApi="31">
