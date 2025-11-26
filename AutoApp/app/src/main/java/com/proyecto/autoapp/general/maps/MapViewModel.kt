@@ -32,7 +32,7 @@ import kotlin.collections.plus
 class MapViewModel : ViewModel() {
     val TAG = "Jose"
     val auth = FirebaseAuth.getInstance()
-    var peticion = Coleccion.Peticion
+    var peticion = Coleccion.PeticionViaje
     val home = LatLng(38.693245786259595, -4.108508457997148) //CIFP Virgen de Gracia: 38.693245786259595, -4.108508457997148
     private val _markers = MutableStateFlow<List<MapMarker>>(emptyList())
     val markers: StateFlow<List<MapMarker>> = _markers

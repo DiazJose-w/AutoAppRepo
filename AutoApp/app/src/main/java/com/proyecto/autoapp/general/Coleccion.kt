@@ -4,5 +4,5 @@ object Coleccion {
     var Usuario = "usuario"
     var Vehiculo = "vehiculo"
 
-    var Peticion = "peticion"
+    var PeticionViaje = "peticionViaje"
 }
