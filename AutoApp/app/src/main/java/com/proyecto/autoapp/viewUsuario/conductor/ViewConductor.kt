@@ -46,12 +46,12 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
 
-    // UID del usuario actual
     val usuarioActual = loginVM.uidActual
     var fotoPerfil by remember { mutableStateOf<String?>(null) }
     val uiState by perfilVM.uiState.collectAsState()
 
     val peticionesPendientes = mapViewModel.peticionesPendientes
+    val posicionViajero by mapViewModel.posicionViajero.collectAsState()
 
     var showDialogAccion by remember { mutableStateOf(false) }
     var peticionSeleccionada by remember { mutableStateOf<Peticion?>(null) }
@@ -60,7 +60,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
 
     // Launcher para poder escuchar las peticiones
     LaunchedEffect(Unit) {
-        mapViewModel.observarPeticionesPendientes(usuarioActual)
+        mapViewModel.observarPeticionesPendientesAceptadas(usuarioActual)
     }
 
     // Cargar foto de perfil
@@ -199,7 +199,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                             .clip(RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        MapScreen(mapViewModel)
+                        MapScreen(mapViewModel, false)
                     }
                 }
 
@@ -240,6 +240,8 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             itemsIndexed(peticionesPendientes) { index, peticion ->
+                                val esAceptadaParaMi = peticion.estado == "aceptada" && peticion.infoConductor?.uid == usuarioActual
+
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -268,51 +270,77 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                 )
                                             )
                                         }
-                                        // Botón rechazar
-                                        OutlinedButton(
-                                            onClick = {
-                                                peticionSeleccionada = peticion
-                                                accionDialogo = AccionDialogo.RECHAZAR
-                                                showDialogAccion = true
-                                            },
-                                            border = BorderStroke(1.dp, ThumbUpMustard),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = Color.Transparent,
-                                                contentColor = ThumbUpMustard
-                                            ),
-                                            shape = RoundedCornerShape(12.dp),
-                                            modifier = Modifier
-                                                .padding(start = 12.dp)
-                                        ) {
-                                            Text(
-                                                text = "Rechazar",
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            )
-                                        }
 
-                                        // Botón Aceptar
-                                        Button(
-                                            onClick = {
-                                                peticionSeleccionada = peticion
-                                                accionDialogo = AccionDialogo.ACEPTAR
-                                                showDialogAccion = true
-                                            },
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = ThumbUpMustard,
-                                                contentColor = ThumbUpSurfaceDark
-                                            ),
-                                            shape = RoundedCornerShape(12.dp),
-                                            modifier = Modifier
-                                                .padding(start = 8.dp)
-                                        ) {
-                                            Text(
-                                                text = "Aceptar",
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontWeight = FontWeight.SemiBold
+                                        if (esAceptadaParaMi) {
+                                            // BOTÓN "IR A UBICACIÓN DEL VIAJERO"
+                                            Button(
+                                                onClick = {
+                                                    val pos = posicionViajero
+                                                    if (pos != null) {
+                                                        mapViewModel.updateCameraPosition(pos, 15f)
+                                                        mapViewModel.trazarRutaHasta(pos, context)
+                                                    } else {
+                                                        Toast.makeText(context, "Aún no hay ubicación del viajero", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = ThumbUpMustard,
+                                                    contentColor = ThumbUpSurfaceDark
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Ir a por el viajero",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
                                                 )
-                                            )
+                                            }
+                                        } else {
+                                            // Botón Rechazar
+                                            OutlinedButton(
+                                                onClick = {
+                                                    peticionSeleccionada = peticion
+                                                    accionDialogo = AccionDialogo.RECHAZAR
+                                                    showDialogAccion = true
+                                                },
+                                                border = BorderStroke(1.dp, ThumbUpMustard),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    containerColor = Color.Transparent,
+                                                    contentColor = ThumbUpMustard
+                                                ),
+                                                shape = RoundedCornerShape(12.dp),
+                                                modifier = Modifier.padding(start = 12.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Rechazar",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                            }
+
+                                            // Botón Aceptar
+                                            Button(
+                                                onClick = {
+                                                    peticionSeleccionada = peticion
+                                                    accionDialogo = AccionDialogo.ACEPTAR
+                                                    showDialogAccion = true
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = ThumbUpMustard,
+                                                    contentColor = ThumbUpSurfaceDark
+                                                ),
+                                                shape = RoundedCornerShape(12.dp),
+                                                modifier = Modifier.padding(start = 8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Aceptar",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -345,16 +373,18 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                         .filter { it.isNotBlank() }
                                                         .joinToString(" ")
                                                     mapViewModel.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, uiState.fotoPerfilUrl.toString()) { ok ->
-                                                        Toast.makeText(context,
-                                                            if (ok) "Petición aceptada"
-                                                            else "La petición ya fue atendida",
-                                                            Toast.LENGTH_SHORT).show()
+                                                        if (ok) {
+                                                            mapViewModel.observarTrackingPeticion(pet.id)
+                                                            Toast.makeText(context,"Petición aceptada",Toast.LENGTH_SHORT).show()
+                                                        } else {
+                                                            Toast.makeText(context,"La petición ya fue atendida",Toast.LENGTH_SHORT).show()
+                                                        }
                                                     }
                                                 }
 
                                                 AccionDialogo.RECHAZAR -> {
                                                     mapViewModel.rechazarPeticionConductor(pet, usuarioActual) { ok ->
-                                                        if (!ok) {
+                                                        if (ok) {
                                                             Toast.makeText(context,"Error al rechazar petición", Toast.LENGTH_SHORT).show()
                                                         }
                                                     }

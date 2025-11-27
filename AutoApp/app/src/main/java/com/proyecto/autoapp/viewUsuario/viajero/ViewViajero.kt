@@ -34,7 +34,6 @@ import com.proyecto.autoapp.general.maps.MapScreen
 import com.proyecto.autoapp.general.maps.MapViewModel
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.funcionesComunes.isEdadValida
-import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
@@ -42,15 +41,13 @@ import com.proyecto.autoapp.viewUsuario.PerfilMenu
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 import com.proyecto.autoapp.viewUsuario.viajero.EstadoSolicitud.*
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.shape.CircleShape
-import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalConfiguration
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navController: NavController, perfilVM: PerfilVM) {
+fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavController,perfilVM: PerfilVM) {
     val context = LocalContext.current
     val TAG = "jose"
     val uiState by perfilVM.uiState.collectAsState()
@@ -67,6 +64,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
     var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var showDialogCancelar by remember { mutableStateOf(false) }
 
     // Sincronizar el estado de la petición con lo que venga de Firestore
     LaunchedEffect(miPeticionState) {
@@ -81,7 +79,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
             }
         }
     }
-
 
     // Cargar datos de usuario
     LaunchedEffect(usuarioActual) {
@@ -124,11 +121,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                             if (ok) {
                                 navController.navigate(Rutas.ViewConductor)
                             } else {
-                                Toast.makeText(
-                                    context,
-                                    "Hubo algún error a la hora de añadirte como conductor",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context,"Hubo algún error a la hora de añadirte como conductor",Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
@@ -204,7 +197,6 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
             .background(ThumbUpPurple),
         containerColor = ThumbUpPurple
     ) { innerPadding ->
-
         Box(
             modifier = Modifier
                 .padding(innerPadding)
@@ -220,6 +212,10 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                     .alpha(0.15f),
                 contentScale = ContentScale.FillWidth
             )
+            val configuration = LocalConfiguration.current
+            val screenHeight = configuration.screenHeightDp.dp
+            val mapHeight = screenHeight * 0.33f
+
             // Botón flotante de mensajería
             Column(
                 modifier = Modifier
@@ -264,7 +260,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Menú perfil
+                // Menú perfil (fijo arriba)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -286,171 +282,176 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
                 Spacer(Modifier.height(8.dp))
 
-                // Mapa
-                Card(
+                // Contenido scrolleable (mapa + formulario + estado)
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.30f)
-                        .border(
-                            width = 1.dp,
-                            color = ThumbUpMustard,
-                            shape = RoundedCornerShape(16.dp)
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF1A1A1A)
-                    )
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(16.dp))
-                    ) {
-                        MapScreen(mapViewModel)
-                    }
-                }
-
-                Spacer(Modifier.height(24.dp))
-
-                // Card inicio/destino + sugerencias
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(8.dp, RoundedCornerShape(16.dp))
-                        .border(
-                            1.dp,
-                            ThumbUpMustard,
-                            RoundedCornerShape(16.dp)
-                        ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF1A1A1A)
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(6.dp)
-                ) {
-
-                    Column(
+                    // Mapa
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .height(mapHeight),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF1A1A1A)
+                        )
                     ) {
-                        val sugerenciasInicio = mapViewModel.sugerenciasInicio
-                        val sugerenciasDestino = mapViewModel.sugerenciasDestino
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
+                        ) {
+                            MapScreen(mapViewModel, true)
+                        }
+                    }
 
-                        OutlinedTextField(
-                            value = mapViewModel.inicioTexto,
-                            onValueChange = { mapViewModel.onInicioChange(it) },
-                            label = {
-                                Text(
-                                    "Punto de inicio",
-                                    color = ThumbUpMustard,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                )
-                            },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color.White
+                    Spacer(Modifier.height(24.dp))
+
+                    // Card inicio/destino + sugerencias
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(8.dp, RoundedCornerShape(16.dp))
+                            .border(
+                                1.dp,
+                                ThumbUpMustard,
+                                RoundedCornerShape(16.dp)
                             ),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ThumbUpTextFieldColors()
-                        )
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF1A1A1A)
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(6.dp)
+                    ) {
 
-                        if (sugerenciasInicio.isNotEmpty()) {
-                            Card(
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            val sugerenciasInicio = mapViewModel.sugerenciasInicio
+                            val sugerenciasDestino = mapViewModel.sugerenciasDestino
+
+                            OutlinedTextField(
+                                value = mapViewModel.inicioTexto,
+                                onValueChange = { mapViewModel.onInicioChange(it) },
+                                label = {
+                                    Text(
+                                        "Punto de inicio",
+                                        color = ThumbUpMustard,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    )
+                                },
+                                singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF262626)
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color.White
                                 ),
                                 shape = RoundedCornerShape(12.dp),
-                                elevation = CardDefaults.cardElevation(4.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(vertical = 8.dp)
+                                colors = ThumbUpTextFieldColors()
+                            )
+
+                            if (sugerenciasInicio.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF262626)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    elevation = CardDefaults.cardElevation(4.dp)
                                 ) {
-                                    sugerenciasInicio.forEach { pred ->
-                                        TextButton(
-                                            onClick = { mapViewModel.seleccionarSugerenciaInicio(pred) },
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Column(modifier = Modifier.fillMaxWidth()) {
-                                                Text(
-                                                    text = pred.getPrimaryText(null).toString(),
-                                                    color = Color.White,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                                val secondary = pred.getSecondaryText(null).toString()
-                                                if (secondary.isNotBlank()) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    ) {
+                                        sugerenciasInicio.forEach { pred ->
+                                            TextButton(
+                                                onClick = { mapViewModel.seleccionarSugerenciaInicio(pred) },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Column(modifier = Modifier.fillMaxWidth()) {
                                                     Text(
-                                                        text = secondary,
-                                                        color = Color.LightGray,
-                                                        style = MaterialTheme.typography.bodySmall
+                                                        text = pred.getPrimaryText(null).toString(),
+                                                        color = Color.White,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
                                                     )
+                                                    val secondary =
+                                                        pred.getSecondaryText(null).toString()
+                                                    if (secondary.isNotBlank()) {
+                                                        Text(
+                                                            text = secondary,
+                                                            color = Color.LightGray,
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        OutlinedTextField(
-                            value = mapViewModel.destinoTexto,
-                            onValueChange = { mapViewModel.onDestinoChange(it) },
-                            label = {
-                                Text(
-                                    "Destino",
-                                    color = ThumbUpMustard,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.SemiBold
+                            OutlinedTextField(
+                                value = mapViewModel.destinoTexto,
+                                onValueChange = { mapViewModel.onDestinoChange(it) },
+                                label = {
+                                    Text(
+                                        "Destino",
+                                        color = ThumbUpMustard,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        )
                                     )
-                                )
-                            },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ThumbUpTextFieldColors()
-                        )
-
-                        if (sugerenciasDestino.isNotEmpty()) {
-                            Card(
+                                },
+                                singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF262626)
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color.White
                                 ),
                                 shape = RoundedCornerShape(12.dp),
-                                elevation = CardDefaults.cardElevation(4.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                    sugerenciasDestino.forEach { pred ->
-                                        TextButton(
-                                            onClick = { mapViewModel.seleccionarSugerenciaDestino(pred) },
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Column(Modifier.fillMaxWidth()) {
-                                                Text(
-                                                    text = pred.getPrimaryText(null).toString(),
-                                                    color = Color.White,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                                val secondary = pred.getSecondaryText(null).toString()
-                                                if (secondary.isNotBlank()) {
+                                colors = ThumbUpTextFieldColors()
+                            )
+                            if (sugerenciasDestino.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF262626)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    elevation = CardDefaults.cardElevation(4.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                        sugerenciasDestino.forEach { pred ->
+                                            TextButton(
+                                                onClick = { mapViewModel.seleccionarSugerenciaDestino(pred) },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Column(Modifier.fillMaxWidth()) {
                                                     Text(
-                                                        text = secondary,
-                                                        color = Color.LightGray,
-                                                        style = MaterialTheme.typography.bodySmall
+                                                        text = pred.getPrimaryText(null).toString(),
+                                                        color = Color.White,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
                                                     )
+                                                    val secondary =
+                                                        pred.getSecondaryText(null).toString()
+                                                    if (secondary.isNotBlank()) {
+                                                        Text(
+                                                            text = secondary,
+                                                            color = Color.LightGray,
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -458,126 +459,162 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
                                 }
                             }
                         }
-
                     }
-                }
 
-                Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(18.dp))
 
-                // Botón realizar petición
-                ThumbUpPrimaryButton(
-                    text = "Realizar petición",
-                    enabled = true,
-                    onClick = {
-                        mapViewModel.enviarPeticion(usuarioActual) { exito ->
-                            if (exito) {
-                                estadoSolicitud = Pendiente
-                                mapViewModel.onInicioChange("")
-                                mapViewModel.onDestinoChange("")
-                            } else {
-                                Toast.makeText(context, "Error al enviar", Toast.LENGTH_SHORT).show()
+                    // Botón realizar petición
+                    ThumbUpPrimaryButton(
+                        text = "Realizar petición",
+                        enabled = true,
+                        onClick = {
+                            mapViewModel.enviarPeticion(usuarioActual) { exito ->
+                                if (exito) {
+                                    estadoSolicitud = Pendiente
+                                    mapViewModel.onInicioChange("")
+                                    mapViewModel.onDestinoChange("")
+                                } else {
+                                    Toast.makeText(context,"Error al enviar",Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp)
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    /**
+                     * Valor de la petición según su estado
+                     */
+                    estadoSolicitud?.let { estado ->
+                        when (estado) {
+                            Pendiente -> {
+                                Text(
+                                    text = "Esperando conductor...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                            is OfertaConductor -> {
+                                Log.e(TAG, "estado ${estado.peticion}")
+                                val pet = estado.peticion
+                                val nombreConductor =
+                                    pet.infoConductor?.nombre ?: "Conductor"
+                                val fotoConductor = pet.infoConductor?.foto
+
+                                PanelEstadoPeticion(
+                                    fotoConductor = fotoConductor,
+                                    nombreConductor = nombreConductor,
+                                    estado = EstadoPeticion.OFERTA_CONDUCTOR,
+                                    contentDescription = uiState.fotoPerfilUrl,
+                                    onAccionSeleccionada = { accion ->
+                                        accionDialogo = accion
+                                    },
+                                    onMostrarInfoViaje = { },
+                                    onCancelarViaje = { }
+                                )
+
+                                ThumbUpAceptarRechazarViaje(
+                                    visible = accionDialogo != null,
+                                    title = when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR -> "Aceptar viaje"
+                                        AccionDialogo.RECHAZAR -> "Rechazar viaje"
+                                        else -> ""
+                                    },
+                                    message = when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR -> "El conductor quiere recogerte. ¿Quieres confirmar este viaje?"
+                                        AccionDialogo.RECHAZAR -> "¿Seguro que deseas rechazar esta oferta del conductor?"
+                                        else -> ""
+                                    },
+                                    confirmText = when (accionDialogo) {
+                                        AccionDialogo.ACEPTAR -> "Aceptar"
+                                        AccionDialogo.RECHAZAR -> "Rechazar"
+                                        else -> ""
+                                    },
+                                    dismissText = "Cancelar",
+                                    onConfirm = {
+                                        when (accionDialogo) {
+                                            AccionDialogo.ACEPTAR -> {
+                                                mapViewModel.aceptarOfertaViajero(pet) { ok ->
+                                                    if (ok) {
+                                                        estadoSolicitud = Confirmada(pet)
+                                                    } else {
+                                                        Toast.makeText(context,"No se pudo confirmar el viaje",Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                            AccionDialogo.RECHAZAR -> {
+                                                mapViewModel.rechazarOfertaViajero(pet) { ok ->
+                                                    if (!ok) {
+                                                        Toast.makeText(context,"No se pudo rechazar la oferta", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                            else -> {}
+                                        }
+                                        accionDialogo = null
+                                    },
+                                    onDismiss = { accionDialogo = null }
+                                )
+                            }
+                            is Confirmada -> {
+                                Log.e(TAG, "estado ${estado.peticion}")
+                                val pet = estado.peticion
+                                val nombreConductor = pet.infoConductor?.nombre ?: "Conductor"
+                                val fotoConductor = pet.infoConductor?.foto
+
+                                PanelEstadoPeticion(
+                                    fotoConductor = fotoConductor,
+                                    nombreConductor = nombreConductor,
+                                    estado = EstadoPeticion.ACEPTADA,
+                                    contentDescription = uiState.fotoPerfilUrl,
+                                    onAccionSeleccionada = { },
+                                    onMostrarInfoViaje = { },
+                                    onCancelarViaje = {
+                                        showDialogCancelar = true
+                                    }
+                                )
+
+                                // Diálogo de confirmación de CANCELAR viaje
+                                ThumbUpAceptarRechazarViaje(
+                                    visible = showDialogCancelar,
+                                    title = "Cancelar viaje",
+                                    message = "¿Seguro que quieres cancelar este viaje? El conductor dejará de ver tu ubicación.",
+                                    confirmText = "Cancelar viaje",
+                                    dismissText = "Volver",
+                                    onConfirm = {
+                                        mapViewModel.cancelarViajeViajero(pet) { ok ->
+                                            if (ok) {
+                                                Toast.makeText(context, "Viaje cancelado", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, "No se pudo cancelar el viaje", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                        showDialogCancelar = false
+                                    },
+                                    onDismiss = {
+                                        showDialogCancelar = false
+                                    }
+                                )
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                )
-
-                Spacer(Modifier.height(10.dp))
-                /**
-                 * Valor de la petición según su estado
-                 */
-                estadoSolicitud?.let { estado ->
-                    when (estado) {
-                        Pendiente -> {
-                            Text(
-                                text = "Esperando conductor...",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
-                        }
-                        is OfertaConductor -> {
-                            Log.e(TAG, "estado ${estado.peticion}")
-                            val pet = estado.peticion
-                            PanelEstadoPeticion(
-                                fotoConductor = pet.fotoConductor,
-                                nombreConductor = pet.nombreConductor,
-                                estado = EstadoPeticion.OFERTA_CONDUCTOR,
-                                contentDescription = uiState.fotoPerfilUrl,
-                                onAccionSeleccionada = { accion ->
-                                    accionDialogo = accion
-                                },
-                                onMostrarInfoViaje = { },
-                                onCancelarViaje = { }
-                            )
-
-                            ThumbUpAceptarRechazarViaje(
-                                visible = accionDialogo != null,
-                                title = when (accionDialogo) {
-                                    AccionDialogo.ACEPTAR -> "Aceptar viaje"
-                                    AccionDialogo.RECHAZAR -> "Rechazar viaje"
-                                    else -> ""
-                                },
-                                message = when (accionDialogo) {
-                                    AccionDialogo.ACEPTAR ->
-                                        "El conductor quiere recogerte. ¿Quieres confirmar este viaje?"
-                                    AccionDialogo.RECHAZAR ->
-                                        "¿Seguro que deseas rechazar esta oferta del conductor?"
-                                    else -> ""
-                                },
-                                confirmText = when (accionDialogo) {
-                                    AccionDialogo.ACEPTAR -> "Aceptar"
-                                    AccionDialogo.RECHAZAR -> "Rechazar"
-                                    else -> ""
-                                },
-                                dismissText = "Cancelar",
-                                onConfirm = {
-                                    when (accionDialogo) {
-                                        AccionDialogo.ACEPTAR -> {
-                                            mapViewModel.aceptarOfertaViajero(pet) { ok ->
-                                                if (!ok) {
-                                                    Toast.makeText(context,"No se pudo confirmar el viaje",Toast.LENGTH_SHORT).show()
-                                                }
-                                            }
-                                        }
-                                        AccionDialogo.RECHAZAR -> {
-                                            mapViewModel.rechazarOfertaViajero(pet) { ok ->
-                                                if (!ok) {
-                                                    Toast.makeText(context,"No se pudo rechazar la oferta",Toast.LENGTH_SHORT).show()
-                                                }
-                                            }
-                                        }
-                                        else -> {}
-                                    }
-                                    accionDialogo = null
-                                },
-                                onDismiss = { accionDialogo = null }
-                            )
-                        }
-                        is Confirmada -> {
-                            Log.e(TAG, "estado ${estado.peticion}")
-                            val pet = estado.peticion
-
-                            PanelEstadoPeticion(
-                                fotoConductor = pet.fotoConductor,
-                                nombreConductor = pet.nombreConductor,
-                                estado = EstadoPeticion.ACEPTADA,
-                                contentDescription = uiState.fotoPerfilUrl,
-                                onAccionSeleccionada = { },
-                                onMostrarInfoViaje = { },
-                                onCancelarViaje = { }
-                            )
-                        }
                     }
                 }
-                Spacer(modifier = Modifier.weight(1f))
+
+                Spacer(Modifier.height(12.dp))
+
                 Button(
                     onClick = {
                         if (uiState.isConductorSelected) {
                             navController.navigate(Rutas.ViewConductor)
                         } else if (!isEdadValida(uiState.edad)) {
-                            Toast.makeText(context,"No puedes ser conductor. Eres menor de edad",Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "No puedes ser conductor. Eres menor de edad",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } else {
                             mostrarDialogo = true
                         }
@@ -611,7 +648,7 @@ fun ViewInicialUsuario(mapViewModel: MapViewModel, loginVM: LoginVM, navControll
 
 /*
  * Así evitamos las clases enumeradas. Es otra manera de poder crear subtipos.
- * Solo funcionará en esta clase
+ * Solo para esta clase
  */
 sealed interface EstadoSolicitud {
     data object Pendiente : EstadoSolicitud

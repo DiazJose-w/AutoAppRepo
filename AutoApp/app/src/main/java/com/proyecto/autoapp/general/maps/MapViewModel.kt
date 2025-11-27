@@ -20,12 +20,19 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.content.Context
+import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import kotlin.collections.minus
 import kotlin.collections.plus
 
@@ -84,12 +91,72 @@ class MapViewModel : ViewModel() {
 
     private var listenerPeticiones: ListenerRegistration? = null
     private var listenerMiPeticion: ListenerRegistration? = null
+    private var listenerTracking: ListenerRegistration? = null
+
 
     // Tiempo máximo petición
     private val TIEMPO_MAX_PETICION_MS = 30_000L
 
     private val _miPeticion = MutableStateFlow<Peticion?>(null)
     val miPeticion: StateFlow<Peticion?> = _miPeticion
+
+    // Posición del viajero (vista por el conductor)
+    private val _posicionViajero = MutableStateFlow<LatLng?>(null)
+    val posicionViajero: StateFlow<LatLng?> = _posicionViajero
+
+    private val _ruta = MutableStateFlow<List<LatLng>>(emptyList())
+    val ruta: StateFlow<List<LatLng>> = _ruta
+
+    fun limpiarRuta() {
+        _ruta.value = emptyList()
+    }
+
+    private fun decodePolyline(encoded: String): List<LatLng> {
+        val poly = ArrayList<LatLng>()
+        var index = 0
+        val len = encoded.length
+        var lat = 0
+        var lng = 0
+
+        while (index < len) {
+            var b: Int
+            var shift = 0
+            var result = 0
+            do {
+                b = encoded[index++].code - 63
+                result = result or (b and 0x1f shl shift)
+                shift += 5
+            } while (b >= 0x20)
+            val dlat = if ((result and 1) != 0) (result shr 1).inv() else (result shr 1)
+            lat += dlat
+
+            shift = 0
+            result = 0
+            do {
+                b = encoded[index++].code - 63
+                result = result or (b and 0x1f shl shift)
+                shift += 5
+            } while (b >= 0x20)
+            val dlng = if ((result and 1) != 0) (result shr 1).inv() else (result shr 1)
+            lng += dlng
+
+            val latLng = LatLng(
+                lat / 1E5,
+                lng / 1E5
+            )
+            poly.add(latLng)
+        }
+        return poly
+    }
+
+    /**
+     * Traza una ruta desde la posición actual de la cámara hasta el destino.
+     * De momento usamos cameraPosition.target como "origen" del conductor.
+     */
+    fun trazarRutaHasta(destino: LatLng, context: Context) {
+        val origen = cameraPosition.value.target
+        obtenerRuta(origen, destino, context)
+    }
 
     // Funciones para actualizar desde la UI
     fun onInicioChange(nuevo: String) {
@@ -325,22 +392,34 @@ class MapViewModel : ViewModel() {
         errorPeticion.value = null
 
         val db = FirebaseFirestore.getInstance()
-
         val idPeticion = db.collection(peticion).document().id
+
+        // Map para el punto de inicio
+        val inicioMap = mapOf(
+            "texto" to inicioTexto,
+            "lat" to inicioLatLng?.latitude,
+            "lng" to inicioLatLng?.longitude,
+            "placeId" to inicioPlaceId
+        )
+
+        // Map para el punto de destino
+        val destinoMap = mapOf(
+            "texto" to destinoTexto,
+            "lat" to destinoLatLng?.latitude,
+            "lng" to destinoLatLng?.longitude,
+            "placeId" to destinoPlaceId
+        )
 
         val datosPeticion: Map<String, Any?> = mapOf(
             "id" to idPeticion,
             "uidUsuario" to uidUsuario,
 
-            "inicioTexto" to inicioTexto,
-            "inicioLat" to inicioLatLng?.latitude,
-            "inicioLng" to inicioLatLng?.longitude,
-            "inicioPlaceId" to inicioPlaceId,
+            // conductores que han rechazado
+            "uidConductorCan" to emptyList<String>(),
 
-            "destinoTexto" to destinoTexto,
-            "destinoLat" to destinoLatLng?.latitude,
-            "destinoLng" to destinoLatLng?.longitude,
-            "destinoPlaceId" to destinoPlaceId,
+            // bloques inicio/destino
+            "inicio" to inicioMap,
+            "destino" to destinoMap,
 
             "estado" to "pendiente",
             "timestamp" to System.currentTimeMillis()
@@ -390,20 +469,25 @@ class MapViewModel : ViewModel() {
         val docRef = db.collection(peticion).document(pet.id)
 
         Log.e(TAG, "Foto de perfil == $fotoConductor")
+
         db.runTransaction { tx ->
             val snap = tx.get(docRef)
             val estadoActual = snap.getString("estado")
-            val yaAceptadaPor = snap.getString("uidConductorAcep")
+            val infoConductorActual = snap.get("infoConductor") as? Map<*, *>
 
             // Solo actualizamos si sigue pendiente y nadie la ha aceptado aún
-            if (estadoActual == "pendiente" && yaAceptadaPor.isNullOrEmpty()) {
+            if (estadoActual == "pendiente" && infoConductorActual == null) {
+                val infoConductorMap = mapOf(
+                    "uid" to uidConductor,
+                    "nombre" to nombreDelConductor,
+                    "foto" to fotoConductor
+                )
+
                 tx.update(
                     docRef,
                     mapOf(
                         "estado" to "ofertaConductor",
-                        "uidConductorAcep" to uidConductor,
-                        "nombreConductor" to nombreDelConductor,
-                        "fotoConductor" to fotoConductor,
+                        "infoConductor" to infoConductorMap,
                         "timestampAceptacion" to System.currentTimeMillis()
                     )
                 )
@@ -427,8 +511,7 @@ class MapViewModel : ViewModel() {
             .update(
                 mapOf(
                     "estado" to "aceptada",
-                    "timestampConfirmacionViajero" to System.currentTimeMillis(),
-                    "uidConductorAcep" to "uidConductorAcep"
+                    "timestampConfirmacionViajero" to System.currentTimeMillis()
                 )
             )
             .addOnSuccessListener {
@@ -446,30 +529,58 @@ class MapViewModel : ViewModel() {
         docRef.get()
             .addOnSuccessListener { snap ->
                 val estadoActual = snap.getString("estado")
-                val uidConductor = snap.getString("uidConductorAcep") ?: ""
+                val infoConductor = snap.get("infoConductor") as? Map<*, *>
+                val uidConductor = infoConductor?.get("uid") as? String ?: ""
 
                 if (estadoActual == "ofertaConductor" && uidConductor.isNotEmpty()) {
+                    val trackingMap = mapOf(
+                        "compartiendo" to false,
+                        "lat" to null,
+                        "lng" to null,
+                        "ultimaActualizacion" to System.currentTimeMillis()
+                    )
+
                     db.runTransaction { tx ->
                         tx.update(
                             docRef,
                             mapOf(
                                 "estado" to "pendiente",
-                                "uidConductorAcep" to "",
-                                "uidConductorCan" to FieldValue.arrayUnion(uidConductor)
+                                "infoConductor" to null,
+                                "uidConductorCan" to FieldValue.arrayUnion(uidConductor),
+                                "trackingViajero" to trackingMap
                             )
                         )
                     }
-                        .addOnSuccessListener {
-                            onResult(true)
-                        }
-                        .addOnFailureListener {
-                            onResult(false)
-                        }
+                        .addOnSuccessListener { onResult(true) }
+                        .addOnFailureListener { onResult(false) }
                 } else {
                     onResult(false)
                 }
             }
-            .addOnFailureListener {
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun cancelarViajeViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        // Al cancelar, dejamos de compartir ubicación
+        val trackingMap = mapOf(
+            "compartiendo" to false,
+            "lat" to null,
+            "lng" to null,
+            "ultimaActualizacion" to System.currentTimeMillis()
+        )
+
+        docRef.update(
+            mapOf(
+                "estado" to "cancelada",
+                "trackingViajero" to trackingMap
+            )
+        )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al cancelar viaje", e)
                 onResult(false)
             }
     }
@@ -500,37 +611,166 @@ class MapViewModel : ViewModel() {
             }
     }
 
-    fun observarPeticionesPendientes(uidConductor: String){
+    fun observarPeticionesPendientesAceptadas(uidConductor: String) {
         val db = FirebaseFirestore.getInstance()
         listenerPeticiones?.remove()
 
         listenerPeticiones = db.collection(peticion)
             .addSnapshotListener { snapshot, e ->
-                if (e == null && snapshot != null) {
+                if (e != null) {
+                    Log.e(TAG, "Error escuchando peticiones", e)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
 
-                    val visibles = snapshot.documents
-                        .mapNotNull { it.toObject(Peticion::class.java) }
-                        .onEach { pet ->
-                            Log.d(TAG, "id=${pet.id}, can=${pet.uidConductorCan}")
-                        }
-                        .filter { pet ->
-                            val esMia = pet.uidUsuario == uidConductor
-                            val yoLaHeRechazado = pet.uidConductorCan.contains(uidConductor)
-                            val esPendiente = pet.estado == "pendiente"
-                            val esAceptadaPorViajero = pet.estado == "aceptada"
-                            val esOfertaDelConductor = pet.estado == "ofertaConductor" && pet.uidConductorAcep == uidConductor
+                val visibles = snapshot.documents
+                    .mapNotNull { it.toObject(Peticion::class.java) }
+                    .onEach { pet ->
+                        Log.d(TAG, "id=${pet.id}, can=${pet.uidConductorCan}")
+                    }
+                    .filter { pet ->
+                        val esMia = pet.uidUsuario == uidConductor
+                        val yoLaHeRechazado = pet.uidConductorCan.contains(uidConductor)
+                        val esPendiente = pet.estado == "pendiente"
+                        val esAceptadaPorViajero = pet.estado == "aceptada"
+                        val esAceptadaParaMi = pet.estado == "aceptada" && pet.infoConductor?.uid == uidConductor
+                        val esOfertaDelConductor = pet.estado == "ofertaConductor" && pet.infoConductor?.uid == uidConductor
 
-                            Log.d(TAG,"id=${pet.id} - uidConductor=$uidConductor, can=${pet.uidConductorCan}, yoLaHeRechazado=$yoLaHeRechazado, estado=${pet.estado}")
+                        Log.d(TAG,"id=${pet.id} - uidConductor=$uidConductor, can=${pet.uidConductorCan}, yoLaHeRechazado=$yoLaHeRechazado, estado=${pet.estado}, infoConductor=${pet.infoConductor}")
 
-                            // Esta es una manera más rápida de ponerle condición al filtrado.
-                            !esMia && !yoLaHeRechazado && !esAceptadaPorViajero && (esPendiente || esOfertaDelConductor)
-                        }
+                        // Nueva manera de crear condiciones al filter.
+                        !esMia && !yoLaHeRechazado && (esPendiente || esOfertaDelConductor || esAceptadaParaMi)
+                    }
 
-                    peticionesPendientes = visibles
+                peticionesPendientes = visibles
+            }
+    }
+
+    /**
+     * Métodos para la ubicación en tiempo real
+     * */
+    fun actualizarUbicacionViajero(pet: Peticion, posicion: LatLng) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        val trackingMap = mapOf(
+            "compartiendo" to true,
+            "lat" to posicion.latitude,
+            "lng" to posicion.longitude,
+            "ultimaActualizacion" to System.currentTimeMillis()
+        )
+
+        docRef.update(
+            mapOf(
+                "trackingViajero" to trackingMap
+            )
+        ).addOnFailureListener { e ->
+            Log.e(TAG, "Error actualizando tracking del viajero", e)
+        }
+    }
+
+    fun observarTrackingPeticion(idPeticion: String) {
+        val db = FirebaseFirestore.getInstance()
+        listenerTracking?.remove()
+
+        listenerTracking = db.collection(peticion)
+            .document(idPeticion)
+            .addSnapshotListener { snap, e ->
+                if (e != null || snap == null || !snap.exists()) {
+                    Log.e(TAG, "Error escuchando tracking de la petición", e)
+                    _posicionViajero.value = null
+                    return@addSnapshotListener
+                }
+
+                val pet = snap.toObject(Peticion::class.java)
+                val tracking = pet?.trackingViajero
+
+                if (tracking?.compartiendo == true &&
+                    tracking.lat != null &&
+                    tracking.lng != null
+                ) {
+                    _posicionViajero.value = LatLng(tracking.lat, tracking.lng)
+                } else {
+                    // No está compartiendo o no hay coords válidas
+                    _posicionViajero.value = null
                 }
             }
     }
 
+    fun onLocationChangedViajero(latLng: LatLng) {
+        // Actualizamos la cámara como ya hacías
+        updateCameraPosition(latLng)
+
+        // Si tengo una petición mía y está aceptada, envío mi posición
+        val pet = _miPeticion.value
+        if (pet != null && pet.estado == "aceptada") {
+            actualizarUbicacionViajero(pet, latLng)
+        }
+    }
+
+    private fun obtenerRuta(origen: LatLng, destino: LatLng, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val apiKey = context.getString(R.string.google_maps_key)
+
+                val url = "https://maps.googleapis.com/maps/api/directions/json" +
+                        "?origin=${origen.latitude},${origen.longitude}" +
+                        "&destination=${destino.latitude},${destino.longitude}" +
+                        "&mode=driving&key=$apiKey"
+
+                val client = OkHttpClient()
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).execute()
+                val body = response.body?.string() ?: return@launch
+
+                val json = JSONObject(body)
+                val routes = json.getJSONArray("routes")
+                if (routes.length() == 0) return@launch
+
+                val route = routes.getJSONObject(0)
+                val overviewPolyline = route
+                    .getJSONObject("overview_polyline")
+                    .getString("points")
+
+                val puntosRuta = decodePolyline(overviewPolyline)
+
+                withContext(Dispatchers.Main) {
+                    _ruta.value = puntosRuta
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error obteniendo ruta", e)
+            }
+        }
+    }
+
+    fun finalizarViajeViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        // Marcamos que el viajero ya no comparte ubicación
+        val trackingMap = mapOf(
+            "compartiendo" to false,
+            "lat" to null,
+            "lng" to null,
+            "ultimaActualizacion" to System.currentTimeMillis()
+        )
+
+        docRef.update(
+            mapOf(
+                "estado" to "finalizada",           // <- nuevo estado de viaje terminado
+                "trackingViajero" to trackingMap
+            )
+        )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al finalizar viaje", e)
+                onResult(false)
+            }
+    }
+
+    /**
+     * Métodos que gestionan el tiempo de cancelación por inactividad.
+     * */
     private fun programarCancelacionPorTimeout(idPeticion: String) {
         val db = FirebaseFirestore.getInstance()
 
@@ -577,5 +817,8 @@ class MapViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         listenerPeticiones?.remove()
+        listenerMiPeticion?.remove()
+        listenerTracking?.remove()
     }
+
 }

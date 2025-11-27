@@ -6,9 +6,11 @@ import android.location.Location
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,36 +19,46 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerInfoWindow
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.*
-import androidx.activity.result.IntentSenderRequest
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import com.google.android.gms.tasks.CancellationTokenSource
+import com.proyecto.autoapp.R
+import com.proyecto.autoapp.general.funcionesComunes.IconoMapsViajero
+import com.google.maps.android.compose.Polyline
+
 
 @Composable
-fun MapScreen(mapViewModel: MapViewModel){
-    var TAG = "Jose"
+fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
+    val TAG = "Jose"
     val context = LocalContext.current
 
+    val miPeticion by mapViewModel.miPeticion.collectAsState()
+    val posicionViajero by mapViewModel.posicionViajero.collectAsState()
     val markers by mapViewModel.markers.collectAsState()
     val cameraPosition by mapViewModel.cameraPosition.collectAsState()
+    val ruta by mapViewModel.ruta.collectAsState()
+
 
     val selectedCoordinates by mapViewModel.selectedCoordinates.collectAsState()
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -54,7 +66,7 @@ fun MapScreen(mapViewModel: MapViewModel){
     val settingsClient = LocationServices.getSettingsClient(context)
     val resolutionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
-    ) {  }
+    ) { }
 
     var longitude by remember { mutableStateOf(TextFieldValue("")) }
     var latitude by remember { mutableStateOf(TextFieldValue("")) }
@@ -68,11 +80,12 @@ fun MapScreen(mapViewModel: MapViewModel){
             locationPermissionGranted = granted
         }
     )
+
     val circleCenter = remember { mutableStateOf(mapViewModel.home) }
     val location = remember { mutableStateOf<Location?>(null) }
-    val cameraPositionState = rememberCameraPositionState{position = cameraPosition}
+    val cameraPositionState = rememberCameraPositionState { position = cameraPosition }
 
-            /**     PERMISOS UBICACIÓN     */
+    /**     PERMISOS UBICACIÓN     */
     //Solicitamos permisos de ubicación al iniciar.
     LaunchedEffect(Unit) {
         if (!locationPermissionGranted) {
@@ -84,7 +97,10 @@ fun MapScreen(mapViewModel: MapViewModel){
     LaunchedEffect(locationPermissionGranted) {
         if (locationPermissionGranted) {
             // 1. Comprobar que la ubicación del sistema está encendida
-            val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000).build()
+            val req = LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                10_000
+            ).build()
             val settingsRequest = LocationSettingsRequest.Builder()
                 .addLocationRequest(req).build()
 
@@ -98,29 +114,49 @@ fun MapScreen(mapViewModel: MapViewModel){
                 }
 
             // 2. Obtener lastLocation de forma segura. Por si aún no está en caché
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
                 try {
                     fusedLocationClient.lastLocation
                         .addOnSuccessListener { loc ->
                             /**
                              *  Al recoger loc y guardarlo, desde el móvil no se rompe si no tiene memoria caché.
-                             * Así solucionamos el problema del usuario que recién se registra y quiere ubicarse en el pundo donde se encuentra
+                             * Así solucionamos el problema del usuario que recién se registra y quiere ubicarse en el punto donde se encuentra
                              * y la app se rompe.
-                             * */
+                             */
                             location.value = loc
                             if (loc != null) {
                                 val pos = LatLng(loc.latitude, loc.longitude)
-                                mapViewModel.updateCameraPosition(pos)
+
+                                if (esViajero) {
+                                    mapViewModel.onLocationChangedViajero(pos)
+                                } else {
+                                    mapViewModel.updateCameraPosition(pos)
+                                }
                             } else {
                                 val cts = CancellationTokenSource()
-                                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY,cts.token).addOnSuccessListener { fresh ->
+                                fusedLocationClient.getCurrentLocation(
+                                    Priority.PRIORITY_HIGH_ACCURACY,
+                                    cts.token
+                                ).addOnSuccessListener { fresh ->
                                     location.value = fresh
                                     if (fresh != null) {
                                         val pos = LatLng(fresh.latitude, fresh.longitude)
-                                        mapViewModel.updateCameraPosition(pos)
+
+                                        if (esViajero) {
+                                            mapViewModel.onLocationChangedViajero(pos)
+                                        } else {
+                                            mapViewModel.updateCameraPosition(pos)
+                                        }
                                     } else {
-                                        Toast.makeText(context, "Algo ha sucedido. Vuelve a pulsar",Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context,"Algo ha sucedido. Vuelve a pulsar",Toast.LENGTH_SHORT).show()
                                     }
                                 }.addOnFailureListener { e ->
                                     Log.e(TAG, "Algo ha ocurrido dentro del else => $e")
@@ -130,7 +166,8 @@ fun MapScreen(mapViewModel: MapViewModel){
                         .addOnFailureListener { e ->
                             Log.e(TAG, "Algo ha ocurrido al recoger lastLocation => $e")
                         }
-                } catch (_: SecurityException) { }
+                } catch (_: SecurityException) {
+                }
             }
         }
     }
@@ -158,7 +195,22 @@ fun MapScreen(mapViewModel: MapViewModel){
     LaunchedEffect(cameraPosition) {
         cameraPositionState.position = cameraPosition
     }
-            /** -------------------------- */
+
+    // Cuando el viajero tiene una petición aceptada y ya sabemos su ubicación,
+    // enviamos una PRIMERA posición automática al conductor.
+    LaunchedEffect(esViajero, miPeticion, location.value) {
+        if (esViajero) {
+            val pet = miPeticion
+            val loc = location.value
+
+            if (pet != null && pet.estado == "aceptada" && loc != null) {
+                val pos = LatLng(loc.latitude, loc.longitude)
+                mapViewModel.onLocationChangedViajero(pos)
+            }
+        }
+    }
+
+    /** -------------------------- */
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -167,7 +219,10 @@ fun MapScreen(mapViewModel: MapViewModel){
                 .fillMaxSize()
                 .clip(RoundedCornerShape(16.dp)),
             cameraPositionState = cameraPositionState,
-            properties = MapProperties(mapType = MapType.HYBRID, isMyLocationEnabled = locationPermissionGranted),
+            properties = MapProperties(
+                mapType = MapType.HYBRID,
+                isMyLocationEnabled = locationPermissionGranted
+            ),
             uiSettings = MapUiSettings(zoomControlsEnabled = false),
             onMapLongClick = { latLng ->
                 mapViewModel.addMarker(latLng)
@@ -185,29 +240,37 @@ fun MapScreen(mapViewModel: MapViewModel){
                 mapViewModel.selectCoordinates(latLng)
                 longitude = TextFieldValue(latLng.longitude.toString())
                 latitude = TextFieldValue(latLng.latitude.toString())
-                mapViewModel.updateCameraPosition(latLng, cameraPositionState.position.zoom, cameraPositionState.position.tilt, cameraPositionState.position.bearing) //Para mantener el zoom actual.
+                mapViewModel.updateCameraPosition(
+                    latLng,
+                    cameraPositionState.position.zoom,
+                    cameraPositionState.position.tilt,
+                    cameraPositionState.position.bearing
+                ) //Para mantener el zoom actual.
             },
             onMapLoaded = {
                 cameraPositionState.position = mapViewModel.cameraPosition.value
                 if (locationPermissionGranted) {
-                    // Si el permiso es concedido, activa el punto azul
                     location.value?.let { loc ->
-                        //Aquí no es necesario hacer nada extra para mostrar el punto azul,
-                        //solo asegurarte de que la ubicación está permitida.
-                        //Esto es para dibujar un círculo en la posición actual del usuario.
                         circleCenter.value = LatLng(loc.latitude, loc.longitude)
                     }
                 }
             },
             onMyLocationButtonClick = {
                 Toast.makeText(context, "Ubicación actual", Toast.LENGTH_SHORT).show()
-                val ubiActual = LatLng(location.value!!.latitude, location.value!!.longitude)
 
-                if (location.value != null) {
-                    mapViewModel.updateCameraPosition(ubiActual, 17f)
-                    Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Tiene valores")
+                val locActual = location.value
+                if (locActual != null) {
+                    val ubiActual = LatLng(locActual.latitude, locActual.longitude)
+
+                    if (esViajero) {
+                        mapViewModel.updateCameraPosition(ubiActual, 17f)
+                        mapViewModel.onLocationChangedViajero(ubiActual)
+                    } else {
+                        mapViewModel.updateCameraPosition(ubiActual, 17f)
+                    }
+                    Log.e(TAG,"Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Tiene valores")
                 } else {
-                    Log.e("Jose", "Ubicación a donde me manda ${ubiActual.latitude}, ${ubiActual.longitude}. Es un valor nulo")
+                    Log.e(TAG,"Ubicación a donde me manda es un valor nulo porque location.value es null")
                 }
                 true
             },
@@ -220,7 +283,6 @@ fun MapScreen(mapViewModel: MapViewModel){
             /**     USO DE MARCADORES Y LOCALIZACIÓN     */
             //En la ubicación actual
             location.value?.let {
-
                 //Dibuja un círculo alrededor del punto azul de la ubicación.
                 Circle(
                     center = LatLng(it.latitude, it.longitude),
@@ -257,6 +319,26 @@ fun MapScreen(mapViewModel: MapViewModel){
                     }
                 )
             }
+
+            // Marcador del viajero (solo se verá en el mapa del CONDUCTOR, porque ahí se observa posicionViajero)
+            posicionViajero?.let { pos ->
+                Marker(
+                    state = MarkerState(position = pos),
+                    title = "Viajero",
+                    icon = IconoMapsViajero(context, R.mipmap.inoco_maps)
+                )
+            }
+
+            // Ruta hacia el viajero (si existe)
+            if (ruta.isNotEmpty()) {
+                Polyline(
+                    points = ruta,
+                    width = 12f,
+                    color = Color.Blue, // pon el color que quieras
+                    geodesic = true
+                )
+            }
+
             /**     -------------------------------      */
         }
     }

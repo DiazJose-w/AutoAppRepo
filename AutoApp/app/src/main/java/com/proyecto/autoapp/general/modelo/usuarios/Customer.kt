@@ -14,5 +14,6 @@ class Customer (
     fotoUrl: String? = null,
     val perfilConductor: PerfilConductor = PerfilConductor(),
     val perfilPasajero: PerfilPasajero = PerfilPasajero(),
+    // Aquí me falta añadir la lista de coches. Se convertirá en la subcolección vehiculos.
     nuevo: Boolean
 ): Usuario(id, nombre, apellidos, email, edad, password, fotoUrl, RolUsuario.CUSTOMER, true)

@@ -23,7 +23,7 @@ import com.proyecto.autoapp.inicio.registro.RegistroVM
 import com.proyecto.autoapp.inicio.viewInicial.ViewInicial
 import com.proyecto.autoapp.ui.theme.AutoAppTheme
 import com.proyecto.autoapp.viewUsuario.PerfilUsuario
-import com.proyecto.autoapp.viewUsuario.viajero.ViewInicialUsuario
+import com.proyecto.autoapp.viewUsuario.viajero.ViewViajero
 import com.proyecto.autoapp.viewUsuario.conductor.ViewConductor
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
                      * Views inicio usuario
                      */
                     composable(Rutas.ViewUsuario){
-                        ViewInicialUsuario(mapViewModel, loginVM, navController, perfilVM)
+                        ViewViajero(mapViewModel, loginVM, navController, perfilVM)
                     }
 
                     /**
