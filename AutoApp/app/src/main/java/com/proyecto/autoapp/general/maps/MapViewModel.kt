@@ -111,7 +111,7 @@ class MapViewModel : ViewModel() {
         _ruta.value = emptyList()
     }
 
-    private fun decodePolyline(encoded: String): List<LatLng> {
+    private fun decodificacionRuta(encoded: String): List<LatLng> {
         val poly = ArrayList<LatLng>()
         var index = 0
         val len = encoded.length
@@ -124,7 +124,7 @@ class MapViewModel : ViewModel() {
             var result = 0
             do {
                 b = encoded[index++].code - 63
-                result = result or (b and 0x1f shl shift)
+                result = result or ((b and 0x1f) shl shift)
                 shift += 5
             } while (b >= 0x20)
             val dlat = if ((result and 1) != 0) (result shr 1).inv() else (result shr 1)
@@ -134,7 +134,7 @@ class MapViewModel : ViewModel() {
             result = 0
             do {
                 b = encoded[index++].code - 63
-                result = result or (b and 0x1f shl shift)
+                result = result or ((b and 0x1f) shl shift)
                 shift += 5
             } while (b >= 0x20)
             val dlng = if ((result and 1) != 0) (result shr 1).inv() else (result shr 1)
@@ -723,16 +723,21 @@ class MapViewModel : ViewModel() {
                 val response = client.newCall(request).execute()
                 val body = response.body?.string() ?: return@launch
 
+                Log.d(TAG, "Directions body: $body")
+
                 val json = JSONObject(body)
                 val routes = json.getJSONArray("routes")
-                if (routes.length() == 0) return@launch
+                if (routes.length() == 0) {
+                    Log.w(TAG, "Directions: routes vacío")
+                    return@launch
+                }
 
                 val route = routes.getJSONObject(0)
                 val overviewPolyline = route
                     .getJSONObject("overview_polyline")
                     .getString("points")
 
-                val puntosRuta = decodePolyline(overviewPolyline)
+                val puntosRuta = decodificacionRuta(overviewPolyline)
 
                 withContext(Dispatchers.Main) {
                     _ruta.value = puntosRuta

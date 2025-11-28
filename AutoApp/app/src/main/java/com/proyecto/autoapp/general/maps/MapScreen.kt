@@ -46,6 +46,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.funcionesComunes.IconoMapsViajero
 import com.google.maps.android.compose.Polyline
+import com.proyecto.autoapp.ui.theme.ThumbUpPurple
 
 
 @Composable
@@ -334,7 +335,7 @@ fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
                 Polyline(
                     points = ruta,
                     width = 12f,
-                    color = Color.Blue, // pon el color que quieras
+                    color = ThumbUpPurple,
                     geodesic = true
                 )
             }
