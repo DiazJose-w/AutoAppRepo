@@ -31,7 +31,7 @@ import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.maps.MapScreen
-import com.proyecto.autoapp.general.maps.MapViewModel
+import com.proyecto.autoapp.general.maps.viewModels.MapViewModel
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.funcionesComunes.isEdadValida
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
@@ -44,10 +44,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.platform.LocalConfiguration
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
+import com.proyecto.autoapp.general.peticiones.PeticionesVM
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavController,perfilVM: PerfilVM) {
+fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavController, perfilVM: PerfilVM, peticionesVM: PeticionesVM) {
     val context = LocalContext.current
     val TAG = "jose"
     val uiState by perfilVM.uiState.collectAsState()
@@ -56,7 +57,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
 
     // UID del usuario actual
     val usuarioActual = loginVM.uidActual
-    val miPeticionState by mapViewModel.miPeticion.collectAsState()
+    val miPeticionState by peticionesVM.miPeticion.collectAsState()
 
     /**
      * Variables para los diálogos
@@ -84,7 +85,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
     LaunchedEffect(usuarioActual) {
         if (usuarioActual.isNotBlank()) {
             perfilVM.cargarUsuario(usuarioActual)
-            mapViewModel.observarMiPeticion(usuarioActual)
+            peticionesVM.observarMiPeticion(usuarioActual)
         } else {
             Log.e(TAG, "Hubo un problema al cargar el usuario actual")
         }
@@ -306,7 +307,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(16.dp))
                         ) {
-                            MapScreen(mapViewModel, true)
+                            MapScreen(mapViewModel, true, peticionesVM)
                         }
                     }
 
@@ -468,7 +469,8 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                         text = "Realizar petición",
                         enabled = true,
                         onClick = {
-                            mapViewModel.enviarPeticion(usuarioActual) { exito ->
+                            peticionesVM.enviarPeticion(usuarioActual, mapViewModel.inicioTexto, mapViewModel.inicioLatLng, mapViewModel.inicioPlaceId,
+                                mapViewModel.destinoTexto, mapViewModel.destinoLatLng, mapViewModel.destinoPlaceId) { exito ->
                                 if (exito) {
                                     estadoSolicitud = Pendiente
                                     mapViewModel.onInicioChange("")
@@ -537,7 +539,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     onConfirm = {
                                         when (accionDialogo) {
                                             AccionDialogo.ACEPTAR -> {
-                                                mapViewModel.aceptarOfertaViajero(pet) { ok ->
+                                                peticionesVM.aceptarOfertaViajero(pet) { ok ->
                                                     if (ok) {
                                                         estadoSolicitud = Confirmada(pet)
                                                     } else {
@@ -546,7 +548,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                                 }
                                             }
                                             AccionDialogo.RECHAZAR -> {
-                                                mapViewModel.rechazarOfertaViajero(pet) { ok ->
+                                                peticionesVM.rechazarOfertaViajero(pet) { ok ->
                                                     if (!ok) {
                                                         Toast.makeText(context,"No se pudo rechazar la oferta", Toast.LENGTH_SHORT).show()
                                                     }
@@ -585,7 +587,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     confirmText = "Cancelar viaje",
                                     dismissText = "Volver",
                                     onConfirm = {
-                                        mapViewModel.cancelarViajeViajero(pet) { ok ->
+                                        peticionesVM.cancelarViajeViajero(pet) { ok ->
                                             if (ok) {
                                                 Toast.makeText(context, "Viaje cancelado", Toast.LENGTH_SHORT).show()
                                             } else {

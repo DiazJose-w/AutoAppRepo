@@ -11,13 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -26,42 +20,29 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationSettingsRequest
-import com.google.android.gms.location.Priority
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.maps.android.compose.Circle
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerInfoWindow
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.*
 import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.funcionesComunes.IconoMapsViajero
-import com.google.maps.android.compose.Polyline
+import com.proyecto.autoapp.general.maps.viewModels.MapViewModel
+import com.proyecto.autoapp.general.peticiones.PeticionesVM
 import com.proyecto.autoapp.ui.theme.ThumbUpPurple
 
 
 @Composable
-fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
+fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean, peticionesVM: PeticionesVM) {
     val TAG = "Jose"
     val context = LocalContext.current
 
-    val miPeticion by mapViewModel.miPeticion.collectAsState()
-    val posicionViajero by mapViewModel.posicionViajero.collectAsState()
+    val miPeticion by peticionesVM.miPeticion.collectAsState()
+    val posicionViajero by peticionesVM.posicionViajero.collectAsState()
     val markers by mapViewModel.markers.collectAsState()
     val cameraPosition by mapViewModel.cameraPosition.collectAsState()
     val ruta by mapViewModel.ruta.collectAsState()
 
-
-    val selectedCoordinates by mapViewModel.selectedCoordinates.collectAsState()
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
     val settingsClient = LocationServices.getSettingsClient(context)
@@ -136,10 +117,12 @@ fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
                             if (loc != null) {
                                 val pos = LatLng(loc.latitude, loc.longitude)
 
+                                // 1) siempre movemos la cámara al usuario
+                                mapViewModel.updateCameraPosition(pos)
+
+                                // 2) si es viajero, además enviamos tracking a Firestore
                                 if (esViajero) {
-                                    mapViewModel.onLocationChangedViajero(pos)
-                                } else {
-                                    mapViewModel.updateCameraPosition(pos)
+                                    peticionesVM.onLocationChangedViajero(pos)
                                 }
                             } else {
                                 val cts = CancellationTokenSource()
@@ -151,10 +134,10 @@ fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
                                     if (fresh != null) {
                                         val pos = LatLng(fresh.latitude, fresh.longitude)
 
+                                        mapViewModel.updateCameraPosition(pos)
+
                                         if (esViajero) {
-                                            mapViewModel.onLocationChangedViajero(pos)
-                                        } else {
-                                            mapViewModel.updateCameraPosition(pos)
+                                            peticionesVM.onLocationChangedViajero(pos)
                                         }
                                     } else {
                                         Toast.makeText(context,"Algo ha sucedido. Vuelve a pulsar",Toast.LENGTH_SHORT).show()
@@ -206,7 +189,7 @@ fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
 
             if (pet != null && pet.estado == "aceptada" && loc != null) {
                 val pos = LatLng(loc.latitude, loc.longitude)
-                mapViewModel.onLocationChangedViajero(pos)
+                peticionesVM.onLocationChangedViajero(pos)
             }
         }
     }
@@ -265,7 +248,7 @@ fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean) {
 
                     if (esViajero) {
                         mapViewModel.updateCameraPosition(ubiActual, 17f)
-                        mapViewModel.onLocationChangedViajero(ubiActual)
+                        peticionesVM.onLocationChangedViajero(ubiActual)
                     } else {
                         mapViewModel.updateCameraPosition(ubiActual, 17f)
                     }

@@ -31,9 +31,10 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.maps.MapScreen
-import com.proyecto.autoapp.general.maps.MapViewModel
+import com.proyecto.autoapp.general.maps.viewModels.MapViewModel
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
+import com.proyecto.autoapp.general.peticiones.PeticionesVM
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.PerfilMenu
@@ -41,7 +42,7 @@ import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, loginVM: LoginVM, perfilVM: PerfilVM) {
+fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, loginVM: LoginVM, perfilVM: PerfilVM, peticionesVM: PeticionesVM) {
     val TAG = "jose"
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
@@ -50,8 +51,8 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     var fotoPerfil by remember { mutableStateOf<String?>(null) }
     val uiState by perfilVM.uiState.collectAsState()
 
-    val peticionesPendientes = mapViewModel.peticionesPendientes
-    val posicionViajero by mapViewModel.posicionViajero.collectAsState()
+    val peticionesPendientes = peticionesVM.peticionesPendientes
+    val posicionViajero by peticionesVM.posicionViajero.collectAsState()
 
     var showDialogAccion by remember { mutableStateOf(false) }
     var peticionSeleccionada by remember { mutableStateOf<Peticion?>(null) }
@@ -60,7 +61,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
 
     // Launcher para poder escuchar las peticiones
     LaunchedEffect(Unit) {
-        mapViewModel.observarPeticionesPendientesAceptadas(usuarioActual)
+        peticionesVM.observarPeticionesPendientesAceptadas(usuarioActual)
     }
 
     // Cargar foto de perfil
@@ -199,7 +200,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                             .clip(RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        MapScreen(mapViewModel, false)
+                        MapScreen(mapViewModel, false, peticionesVM)
                     }
                 }
 
@@ -372,9 +373,9 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                     val nombreConductor = listOf(uiState.nombre, uiState.apellidos)
                                                         .filter { it.isNotBlank() }
                                                         .joinToString(" ")
-                                                    mapViewModel.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, uiState.fotoPerfilUrl.toString()) { ok ->
+                                                    peticionesVM.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, uiState.fotoPerfilUrl.toString()) { ok ->
                                                         if (ok) {
-                                                            mapViewModel.observarTrackingPeticion(pet.id)
+                                                            peticionesVM.observarTrackingPeticion(pet.id)
                                                             Toast.makeText(context,"Petición aceptada",Toast.LENGTH_SHORT).show()
                                                         } else {
                                                             Toast.makeText(context,"La petición ya fue atendida",Toast.LENGTH_SHORT).show()
@@ -383,7 +384,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                 }
 
                                                 AccionDialogo.RECHAZAR -> {
-                                                    mapViewModel.rechazarPeticionConductor(pet, usuarioActual) { ok ->
+                                                    peticionesVM.rechazarPeticionConductor(pet, usuarioActual) { ok ->
                                                         if (ok) {
                                                             Toast.makeText(context,"Error al rechazar petición", Toast.LENGTH_SHORT).show()
                                                         }

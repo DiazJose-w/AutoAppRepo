@@ -14,7 +14,8 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.galeria.GaleriaScreen
 import com.proyecto.autoapp.general.galeria.galeriaViewModel.GaleriaViewModel
-import com.proyecto.autoapp.general.maps.MapViewModel
+import com.proyecto.autoapp.general.maps.viewModels.MapViewModel
+import com.proyecto.autoapp.general.peticiones.PeticionesVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
         var mapViewModel = MapViewModel()
         var perfilVM = PerfilVM()
         var galeriaViewModel = GaleriaViewModel()
+        var peticionesVM= PeticionesVM()
 
         mapViewModel.setPlacesClient(placesClient)
 
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
                      * Views inicio usuario
                      */
                     composable(Rutas.ViewUsuario){
-                        ViewViajero(mapViewModel, loginVM, navController, perfilVM)
+                        ViewViajero(mapViewModel, loginVM, navController, perfilVM, peticionesVM)
                     }
 
                     /**
@@ -84,7 +86,7 @@ class MainActivity : ComponentActivity() {
                         GaleriaScreen(this@MainActivity, galeriaViewModel, navController, loginVM, perfilVM)
                     }
                     composable(Rutas.ViewConductor) {
-                        ViewConductor(mapViewModel, navController, loginVM, perfilVM)
+                        ViewConductor(mapViewModel, navController, loginVM, perfilVM, peticionesVM)
                     }
                 }
             }
