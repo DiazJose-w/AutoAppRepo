@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.proyecto.autoapp.general.modelo.dataClass.ViajeUi
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
@@ -256,19 +255,41 @@ fun TitulosRegistro(texto: String) {
 @OptIn(ExperimentalFoundationApi::class)
 fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado: EstadoPeticion, onAccionSeleccionada: (AccionDialogo) -> Unit,
     onMostrarInfoViaje: () -> Unit, onCancelarViaje: () -> Unit, modifier: Modifier = Modifier, contentDescription: String? = null) {
+    // Texto que mostramos según el estado
+    val textoEstado = when (estado) {
+        EstadoPeticion.PENDIENTE -> "Esperando a que un conductor acepte tu petición"
+        EstadoPeticion.OFERTA_CONDUCTOR ->"Un conductor quiere llevarte. Revisa la oferta."
+        EstadoPeticion.ACEPTADA -> "Conductor confirmado. Dirígete al punto de encuentro."
+        EstadoPeticion.EN_CURSO -> "Viaje en curso. Disfruta del trayecto."
+    }
+
+    val badgeText: String
+    val badgeColor: Color
+
+    when (estado) {
+        EstadoPeticion.PENDIENTE -> {
+            badgeText = "Pendiente"
+            badgeColor = Color.Gray
+        }
+        EstadoPeticion.OFERTA_CONDUCTOR -> {
+            badgeText = "Oferta de conductor"
+            badgeColor = ThumbUpMustard
+        }
+        EstadoPeticion.ACEPTADA -> {
+            badgeText = "Aceptada"
+            badgeColor = Color(0xFF4CAF50)
+        }
+        EstadoPeticion.EN_CURSO -> {
+            badgeText = "En curso"
+            badgeColor = Color(0xFF42A5F5)
+        }
+    }
+
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 12.dp)
             .shadow(8.dp, RoundedCornerShape(16.dp))
-            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
-            .combinedClickable(
-                onClick = { /* click normal en la card, lo dejamos vacío */ },
-                onLongClick = {
-                    // Long click en la card → cancelar viaje
-                    onCancelarViaje()
-                }
-            ),
+            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
         elevation = CardDefaults.cardElevation(6.dp)
@@ -277,121 +298,196 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            // -------- CABECERA: foto + nombre + badge --------
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Columna con foto + nombre
+
+                // Avatar del conductor
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!fotoConductor.isNullOrBlank()) {
+                        AsyncImage(
+                            model = fotoConductor,
+                            contentDescription = contentDescription,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = contentDescription,
+                            tint = ThumbUpMustard,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
-                    AsyncImage(
-                        model = fotoConductor,
-                        contentDescription = contentDescription,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, ThumbUpMustard, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Spacer(Modifier.height(6.dp))
-
                     Text(
                         text = nombreConductor,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleSmall.copy(
+                        color = ThumbUpTextPrimary,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    Text(
+                        text = textoEstado,
+                        color = Color.White.copy(alpha = 0.75f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = badgeColor.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .border(
+                            1.dp,
+                            badgeColor.copy(alpha = 0.9f),
+                            RoundedCornerShape(999.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = badgeText,
+                        color = badgeColor,
+                        style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.SemiBold
                         )
                     )
                 }
-                Spacer(Modifier.width(16.dp))
-                // Columna de acciones, depende del estado
-                when (estado) {
-                    EstadoPeticion.OFERTA_CONDUCTOR -> {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { onAccionSeleccionada(AccionDialogo.ACEPTAR) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = ThumbUpMustard,
-                                    contentColor = ThumbUpSurfaceDark
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(
-                                    "Aceptar viaje",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                )
-                            }
+            }
 
-                            OutlinedButton(
-                                onClick = { onAccionSeleccionada(AccionDialogo.RECHAZAR) },
-                                modifier = Modifier.fillMaxWidth(),
-                                border = BorderStroke(1.dp, ThumbUpMustard),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = ThumbUpMustard
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(
-                                    "Rechazar",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+            // -------- ACCIONES (depende del estado) --------
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                when (estado) {
+                    EstadoPeticion.PENDIENTE -> {
+                        OutlinedButton(
+                            onClick = onMostrarInfoViaje,
+                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = ThumbUpMustard
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Ver detalles",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold
                                 )
-                            }
+                            )
+                        }
+                    }
+                    EstadoPeticion.OFERTA_CONDUCTOR -> {
+                        OutlinedButton(
+                            onClick = { onAccionSeleccionada(AccionDialogo.RECHAZAR) },
+                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = ThumbUpMustard
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Rechazar",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Button(
+                            onClick = { onAccionSeleccionada(AccionDialogo.ACEPTAR) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ThumbUpMustard,
+                                contentColor = ThumbUpSurfaceDark
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Aceptar",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
                         }
                     }
                     EstadoPeticion.ACEPTADA -> {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        OutlinedButton(
+                            onClick = onMostrarInfoViaje,
+                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = ThumbUpMustard
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "Viaje concertado",
-                                color = ThumbUpMustard,
+                                text = "Info viaje",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             )
+                        }
 
-                            Button(
-                                onClick = { onMostrarInfoViaje() },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = ThumbUpMustard,
-                                    contentColor = ThumbUpSurfaceDark
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(
-                                    "Ver información del viaje",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                )
-                            }
+                        Spacer(Modifier.width(8.dp))
 
+                        Button(
+                            onClick = onCancelarViaje,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ThumbUpMustard,
+                                contentColor = ThumbUpSurfaceDark
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
                             Text(
-                                text = "Mantén pulsado para cancelar el viaje",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.labelSmall
+                                text = "Cacnelar viaje",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             )
                         }
                     }
-                    EstadoPeticion.PENDIENTE -> { }
+                    EstadoPeticion.EN_CURSO -> {
+                        Button(
+                            onClick = onMostrarInfoViaje,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ThumbUpMustard,
+                                contentColor = ThumbUpSurfaceDark
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Info del viaje",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -15,7 +15,7 @@ import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.galeria.GaleriaScreen
 import com.proyecto.autoapp.general.galeria.galeriaViewModel.GaleriaViewModel
 import com.proyecto.autoapp.general.maps.viewModels.MapViewModel
-import com.proyecto.autoapp.general.peticiones.PeticionesVM
+import com.proyecto.autoapp.viewUsuario.peticiones.PeticionesVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.Login
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.login.ViewsLogin.TokenSMS

@@ -1,28 +1,35 @@
 package com.proyecto.autoapp.general.maps.viewModels
 
+
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
+import com.google.android.gms.location.SettingsClient
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.*
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
-import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.maps.MapMarker
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
+import android.Manifest
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlin.collections.plus
 
 class MapViewModel : ViewModel() {
@@ -73,70 +80,23 @@ class MapViewModel : ViewModel() {
     var destinoLatLng by mutableStateOf<LatLng?>(null)
         private set
 
-
-    private val _ruta = MutableStateFlow<List<LatLng>>(emptyList())
-    val ruta: StateFlow<List<LatLng>> = _ruta
-
-    fun limpiarRuta() {
-        _ruta.value = emptyList()
-    }
-
-    private fun decodificacionRuta(encoded: String): List<LatLng> {
-        val poly = ArrayList<LatLng>()
-        var index = 0
-        val len = encoded.length
-        var lat = 0
-        var lng = 0
-
-        while (index < len) {
-            var b: Int
-            var shift = 0
-            var result = 0
-            do {
-                b = encoded[index++].code - 63
-                result = result or ((b and 0x1f) shl shift)
-                shift += 5
-            } while (b >= 0x20)
-            val dlat = if ((result and 1) != 0) (result shr 1).inv() else (result shr 1)
-            lat += dlat
-
-            shift = 0
-            result = 0
-            do {
-                b = encoded[index++].code - 63
-                result = result or ((b and 0x1f) shl shift)
-                shift += 5
-            } while (b >= 0x20)
-            val dlng = if ((result and 1) != 0) (result shr 1).inv() else (result shr 1)
-            lng += dlng
-
-            val latLng = LatLng(
-                lat / 1E5,
-                lng / 1E5
-            )
-            poly.add(latLng)
-        }
-        return poly
-    }
-
-    /**
-     * Traza una ruta desde la posición actual de la cámara hasta el destino.
-     * De momento usamos cameraPosition.target como "origen" del conductor.
-     */
-    fun trazarRutaHasta(destino: LatLng, context: Context) {
-        val origen = cameraPosition.value.target
-        obtenerRuta(origen, destino, context)
-    }
-
     // Funciones para actualizar desde la UI
-    fun onInicioChange(nuevo: String) {
-        inicioTexto = nuevo
-        lanzarSugerencias(query = nuevo, esInicio = true)
+    fun onInicioChange(inicio: String) {
+        inicioTexto = inicio
+
+        inicioPlaceId = null
+        inicioLatLng = null
+
+        lanzarSugerencias(inicio, true)
     }
 
-    fun onDestinoChange(nuevo: String) {
-        destinoTexto = nuevo
-        lanzarSugerencias(query = nuevo, esInicio = false)
+    fun onDestinoChange(destino: String) {
+        destinoTexto = destino
+
+        destinoPlaceId = null
+        destinoLatLng = null
+
+        lanzarSugerencias(destino, false)
     }
 
     private val _cameraPosition = MutableStateFlow(
@@ -157,7 +117,7 @@ class MapViewModel : ViewModel() {
      * */
     fun addMarker(latLng: LatLng, title: String = "Título del marcador", snippet: String = "Contenido del marcador") {
         viewModelScope.launch {
-            _markers.value + MapMarker(position = latLng, title = title, snippet = snippet)
+            _markers.value = _markers.value + MapMarker(position = latLng, title = title, snippet = snippet)
         }
     }
 
@@ -204,6 +164,86 @@ class MapViewModel : ViewModel() {
     fun selectCoordinates(latLng: LatLng) {
         viewModelScope.launch {
             _selectedCoordinates.value = latLng
+        }
+    }
+
+    fun usarMiUbicacionComoInicio(): Boolean {
+        val actual = ubicacionActual
+        Log.e(TAG, "Valor de la ubicación 'mi ubicación' $actual")
+        return if (actual != null) {
+            inicioTexto = "Mi ubicación actual"
+            inicioPlaceId = null
+            inicioLatLng = actual
+            sugerenciasInicio = emptyList()
+            true
+        } else {
+            Log.e(TAG, "No hay ubicación actual disponible para usar como inicio")
+            false
+        }
+    }
+
+    fun prepararUbicacionInicial(context: Context, fusedLocationClient: FusedLocationProviderClient, settingsClient: SettingsClient,
+        resolutionLauncher: ActivityResultLauncher<IntentSenderRequest>, esViajero: Boolean, onViajeroLocation: (LatLng) -> Unit) {
+        // 1. Comprobar que la ubicación del sistema está encendida
+        val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000).build()
+
+        val settingsRequest = LocationSettingsRequest.Builder()
+            .addLocationRequest(req)
+            .build()
+
+        settingsClient.checkLocationSettings(settingsRequest)
+            .addOnFailureListener { ex ->
+                if (ex is ResolvableApiException) {
+                    resolutionLauncher.launch(
+                        IntentSenderRequest.Builder(ex.resolution.intentSender).build()
+                    )
+                }
+            }
+
+        // 2. Obtener lastLocation de forma segura
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            try {
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { loc ->
+                        if (loc != null) {
+                            val pos = LatLng(loc.latitude, loc.longitude)
+
+                            // 1) movemos cámara y actualizamos ubicacionActual
+                            updateCameraPosition(pos)
+
+                            // 2) si es viajero, avisamos al callback
+                            if (esViajero) {
+                                onViajeroLocation(pos)
+                            }
+                        } else {
+                            // Si lastLocation viene null, pedimos una ubicación fresca
+                            val cts = CancellationTokenSource()
+                            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
+                                .addOnSuccessListener { fresh ->
+                                    if (fresh != null) {
+                                        val pos = LatLng(fresh.latitude, fresh.longitude)
+
+                                        updateCameraPosition(pos)
+
+                                        if (esViajero) {
+                                            onViajeroLocation(pos)
+                                        }
+                                    } else {
+                                        Log.e(TAG, "No se pudo obtener ubicación actual")
+                                    }
+                            }.addOnFailureListener { e ->
+                                Log.e(TAG, "Error al obtener ubicación actual => $e")
+                            }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al recoger lastLocation => $e")
+                    }
+            } catch (_: SecurityException) {
+            }
         }
     }
 
@@ -351,46 +391,6 @@ class MapViewModel : ViewModel() {
         if (latLng != null) {
             updateCameraPosition(latLng, zoom)
             addMarker(latLng, title = "Destino")
-        }
-    }
-
-    private fun obtenerRuta(origen: LatLng, destino: LatLng, context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val apiKey = context.getString(R.string.google_maps_key)
-
-                val url = "https://maps.googleapis.com/maps/api/directions/json" +
-                        "?origin=${origen.latitude},${origen.longitude}" +
-                        "&destination=${destino.latitude},${destino.longitude}" +
-                        "&mode=driving&key=$apiKey"
-
-                val client = OkHttpClient()
-                val request = Request.Builder().url(url).build()
-                val response = client.newCall(request).execute()
-                val body = response.body?.string() ?: return@launch
-
-                Log.d(TAG, "Directions body: $body")
-
-                val json = JSONObject(body)
-                val routes = json.getJSONArray("routes")
-                if (routes.length() == 0) {
-                    Log.w(TAG, "Directions: routes vacío")
-                    return@launch
-                }
-
-                val route = routes.getJSONObject(0)
-                val overviewPolyline = route
-                    .getJSONObject("overview_polyline")
-                    .getString("points")
-
-                val puntosRuta = decodificacionRuta(overviewPolyline)
-
-                withContext(Dispatchers.Main) {
-                    _ruta.value = puntosRuta
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error obteniendo ruta", e)
-            }
         }
     }
 

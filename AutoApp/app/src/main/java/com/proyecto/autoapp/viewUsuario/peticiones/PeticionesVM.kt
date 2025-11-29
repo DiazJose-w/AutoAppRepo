@@ -1,4 +1,4 @@
-package com.proyecto.autoapp.general.peticiones
+package com.proyecto.autoapp.viewUsuario.peticiones
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -59,9 +59,14 @@ class PeticionesVM : ViewModel(){
                 }
 
                 if (snap != null && !snap.isEmpty) {
-                    // Por si hubiera más de una, cogemos la más reciente
-                    val peticiones = snap.documents.mapNotNull { it.toObject(Peticion::class.java) }
-                    val peticionMasReciente = peticiones.maxByOrNull { it.timestamp }
+                    val peticiones = snap.documents
+                        .mapNotNull { it.toObject(Peticion::class.java) }
+
+                    val activas = peticiones.filter { pet ->
+                        pet.estado != "cancelada" && pet.estado != "finalizada"
+                    }
+
+                    val peticionMasReciente = activas.maxByOrNull { it.timestamp }
                     _miPeticion.value = peticionMasReciente
                 } else {
                     _miPeticion.value = null
@@ -98,6 +103,7 @@ class PeticionesVM : ViewModel(){
                             "pendiente" -> true                                    // Cualquiera la puede ver
                             "ofertaConductor" -> pet.infoConductor?.uid == uidConductor
                             "aceptada" -> pet.infoConductor?.uid == uidConductor   // Solo el que la tiene aceptada
+                            "enCurso" -> pet.infoConductor?.uid == uidConductor
                             else -> false                                          // Deja de mostarse
                         }
 
@@ -290,7 +296,69 @@ class PeticionesVM : ViewModel(){
         val db = FirebaseFirestore.getInstance()
         val docRef = db.collection(peticion).document(pet.id)
 
-        // Al cancelar, dejamos de compartir ubicación
+        docRef.get()
+            .addOnSuccessListener { snap ->
+                val estadoActual = snap.getString("estado")
+
+                if (estadoActual == "aceptada" || estadoActual == "ofertaConductor" || estadoActual == "pendiente") {
+
+                    val trackingMap = mapOf(
+                        "compartiendo" to false,
+                        "lat" to null,
+                        "lng" to null,
+                        "ultimaActualizacion" to System.currentTimeMillis()
+                    )
+
+                    docRef.update(
+                        mapOf(
+                            "estado" to "cancelada",
+                            "trackingViajero" to trackingMap
+                        )
+                    )
+                        .addOnSuccessListener { onResult(true) }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Error al cancelar viaje", e)
+                            onResult(false)
+                        }
+                } else {
+                    onResult(false)
+                }
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
+    }
+
+    fun marcarViajeEnCursoViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        // No tocamos el tracking salvo para actualizar la marca temporal
+        val trackingMap = mapOf(
+            "compartiendo" to true,
+            "lat" to pet.trackingViajero?.lat,
+            "lng" to pet.trackingViajero?.lng,
+            "ultimaActualizacion" to System.currentTimeMillis()
+        )
+
+        docRef.update(
+            mapOf(
+                "estado" to "enCurso",
+                "trackingViajero" to trackingMap
+            )
+        )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al pasar viaje a enCurso", e)
+                onResult(false)
+            }
+    }
+
+    fun finalizarViajeViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        // Marcamos que el viajero ya no comparte ubicación
         val trackingMap = mapOf(
             "compartiendo" to false,
             "lat" to null,
@@ -300,13 +368,13 @@ class PeticionesVM : ViewModel(){
 
         docRef.update(
             mapOf(
-                "estado" to "cancelada",
+                "estado" to "finalizada",
                 "trackingViajero" to trackingMap
             )
         )
             .addOnSuccessListener { onResult(true) }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Error al cancelar viaje", e)
+                Log.e(TAG, "Error al finalizar viaje", e)
                 onResult(false)
             }
     }
@@ -327,13 +395,11 @@ class PeticionesVM : ViewModel(){
                 val pet = snap.toObject(Peticion::class.java)
                 val tracking = pet?.trackingViajero
 
-                if (tracking?.compartiendo == true &&
-                    tracking.lat != null &&
-                    tracking.lng != null
+                if (pet?.estado == "aceptada" && tracking?.compartiendo == true &&
+                    tracking.lat != null && tracking.lng != null
                 ) {
                     _posicionViajero.value = LatLng(tracking.lat, tracking.lng)
                 } else {
-                    // No está compartiendo o no hay coords válidas
                     _posicionViajero.value = null
                 }
             }
@@ -342,7 +408,7 @@ class PeticionesVM : ViewModel(){
     fun onLocationChangedViajero(latLng: LatLng) {
         // Si tengo una petición mía y está aceptada, envío mi posición
         val pet = _miPeticion.value
-        if (pet != null && pet.estado == "aceptada") {
+        if (pet != null && (pet.estado == "aceptada" || pet.estado == "enCurso")) {
             actualizarUbicacionViajero(pet, latLng)
         }
     }
@@ -423,28 +489,10 @@ class PeticionesVM : ViewModel(){
         }
     }
 
-    fun finalizarViajeViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        val docRef = db.collection(peticion).document(pet.id)
-
-        // Marcamos que el viajero ya no comparte ubicación
-        val trackingMap = mapOf(
-            "compartiendo" to false,
-            "lat" to null,
-            "lng" to null,
-            "ultimaActualizacion" to System.currentTimeMillis()
-        )
-
-        docRef.update(
-            mapOf(
-                "estado" to "finalizada",           // <- nuevo estado de viaje terminado
-                "trackingViajero" to trackingMap
-            )
-        )
-            .addOnSuccessListener { onResult(true) }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error al finalizar viaje", e)
-                onResult(false)
-            }
+    fun detenerTracking() {
+        listenerTracking?.remove()
+        listenerTracking = null
+        _posicionViajero.value = null
     }
+
 }

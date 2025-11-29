@@ -12,29 +12,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.maps.MapScreen
 import com.proyecto.autoapp.general.maps.viewModels.MapViewModel
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.peticiones.Peticion
-import com.proyecto.autoapp.general.peticiones.PeticionesVM
+import com.proyecto.autoapp.viewUsuario.peticiones.PeticionesVM
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.PerfilMenu
@@ -62,6 +58,17 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     // Launcher para poder escuchar las peticiones
     LaunchedEffect(Unit) {
         peticionesVM.observarPeticionesPendientesAceptadas(usuarioActual)
+    }
+
+    LaunchedEffect(peticionesPendientes, usuarioActual) {
+        val hayAceptadaParaMi = peticionesPendientes.any { pet ->
+            pet.estado == "aceptada" && pet.infoConductor?.uid == usuarioActual
+        }
+
+        if (!hayAceptadaParaMi) {
+            // Si ya no tengo ningún viaje aceptado, dejo de escuchar el tracking
+            peticionesVM.detenerTracking()
+        }
     }
 
     // Cargar foto de perfil
@@ -184,11 +191,20 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                         }
                     )
                 }
+                val configuration = LocalConfiguration.current
+                val screenHeight = configuration.screenHeightDp.dp
+                val mapHeight = screenHeight * 0.50F
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .height(mapHeight)
+                        .shadow(12.dp, RoundedCornerShape(20.dp))
+                        .border(
+                            2.dp,
+                            ThumbUpMustard,
+                            RoundedCornerShape(20.dp)
+                        ),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(8.dp),
                     colors = CardDefaults.cardColors(containerColor = ThumbUpMustard)
@@ -276,10 +292,22 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                             // BOTÓN "IR A UBICACIÓN DEL VIAJERO"
                                             Button(
                                                 onClick = {
-                                                    val pos = posicionViajero
-                                                    if (pos != null) {
-                                                        mapViewModel.updateCameraPosition(pos, 15f)
-                                                        mapViewModel.trazarRutaHasta(pos, context)
+                                                    // 1) Tracking en tiempo real (si lo hay)
+                                                    val posTracking = posicionViajero
+
+                                                    // 2) Fallback: punto de inicio guardado en la petición
+                                                    val posInicio: LatLng? = if (peticion.inicio.lat != null && peticion.inicio.lng != null) {
+                                                        LatLng(peticion.inicio.lat, peticion.inicio.lng)
+                                                    } else {
+                                                        null
+                                                    }
+
+                                                    // 3) Elegimos la mejor disponible: primero tracking, luego inicio
+                                                    val destino = posTracking ?: posInicio
+
+                                                    if (destino != null) {
+                                                        Log.e(TAG, "Valor del destino y del inicio $destino, $posInicio")
+                                                        mapViewModel.updateCameraPosition(destino, 15f)
                                                     } else {
                                                         Toast.makeText(context, "Aún no hay ubicación del viajero", Toast.LENGTH_SHORT).show()
                                                     }

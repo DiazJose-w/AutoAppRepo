@@ -6,16 +6,9 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -44,7 +37,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.platform.LocalConfiguration
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
-import com.proyecto.autoapp.general.peticiones.PeticionesVM
+import com.proyecto.autoapp.viewUsuario.peticiones.PeticionesVM
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -75,7 +68,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                 "pendiente" -> Pendiente
                 "ofertaConductor" -> OfertaConductor(pet)
                 "aceptada" -> Confirmada(pet)
-                "confirmadaPorViajero" -> OfertaConductor(pet)
+                "enCurso" -> EnCurso(pet)
                 else -> null
             }
         }
@@ -291,25 +284,38 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Mapa
+                    // Map
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(mapHeight),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = CardDefaults.cardElevation(8.dp),
+                            .height(mapHeight)
+                            .shadow(12.dp, RoundedCornerShape(20.dp))
+                            .border(
+                                2.dp,
+                                ThumbUpMustard,
+                                RoundedCornerShape(20.dp)
+                            ),
+                        shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF1A1A1A)
+                            containerColor = ThumbUpMustard
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 8.dp
                         )
                     ) {
                         Box(
-                            Modifier
+                            modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(20.dp))
                         ) {
-                            MapScreen(mapViewModel, true, peticionesVM)
+                            MapScreen(
+                                mapViewModel = mapViewModel,
+                                esViajero = true,
+                                peticionesVM = peticionesVM
+                            )
                         }
                     }
+
 
                     Spacer(Modifier.height(24.dp))
 
@@ -357,7 +363,23 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     color = Color.White
                                 ),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ThumbUpTextFieldColors()
+                                colors = ThumbUpTextFieldColors(),
+                                trailingIcon = {
+                                    IconButton(
+                                        onClick = {
+                                            val ok = mapViewModel.usarMiUbicacionComoInicio()
+                                            if (!ok) {
+                                                Toast.makeText(context,"No se ha podido obtener tu ubicación",Toast.LENGTH_SHORT).show()
+                                            }
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.MyLocation,
+                                            contentDescription = "Usar mi ubicación actual",
+                                            tint = ThumbUpMustard,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
                             )
 
                             if (sugerenciasInicio.isNotEmpty()) {
@@ -385,8 +407,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                                             fontWeight = FontWeight.SemiBold
                                                         )
                                                     )
-                                                    val secondary =
-                                                        pred.getSecondaryText(null).toString()
+                                                    val secondary = pred.getSecondaryText(null).toString()
                                                     if (secondary.isNotBlank()) {
                                                         Text(
                                                             text = secondary,
@@ -444,8 +465,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                                             fontWeight = FontWeight.SemiBold
                                                         )
                                                     )
-                                                    val secondary =
-                                                        pred.getSecondaryText(null).toString()
+                                                    val secondary = pred.getSecondaryText(null).toString()
                                                     if (secondary.isNotBlank()) {
                                                         Text(
                                                             text = secondary,
@@ -469,16 +489,23 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                         text = "Realizar petición",
                         enabled = true,
                         onClick = {
-                            peticionesVM.enviarPeticion(usuarioActual, mapViewModel.inicioTexto, mapViewModel.inicioLatLng, mapViewModel.inicioPlaceId,
-                                mapViewModel.destinoTexto, mapViewModel.destinoLatLng, mapViewModel.destinoPlaceId) { exito ->
-                                if (exito) {
-                                    estadoSolicitud = Pendiente
-                                    mapViewModel.onInicioChange("")
-                                    mapViewModel.onDestinoChange("")
-                                } else {
-                                    Toast.makeText(context,"Error al enviar",Toast.LENGTH_SHORT).show()
+                            val inicio = mapViewModel.inicioLatLng
+                            val destino = mapViewModel.destinoLatLng
+                            if (inicio == null || destino == null) {
+                                Toast.makeText(context, "Selecciona un origen y un destino de la lista de sugerencias", Toast.LENGTH_SHORT).show()
+                            }else{
+                                peticionesVM.enviarPeticion(usuarioActual, mapViewModel.inicioTexto, mapViewModel.inicioLatLng, mapViewModel.inicioPlaceId,
+                                    mapViewModel.destinoTexto, mapViewModel.destinoLatLng, mapViewModel.destinoPlaceId) { exito ->
+                                    if (exito) {
+                                        estadoSolicitud = Pendiente
+                                        mapViewModel.onInicioChange("")
+                                        mapViewModel.onDestinoChange("")
+                                    } else {
+                                        Toast.makeText(context,"Error al enviar",Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
+
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -578,6 +605,32 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                         showDialogCancelar = true
                                     }
                                 )
+                                Spacer(Modifier.height(12.dp))
+                                ThumbUpPrimaryButton(
+                                    text = "Ya estoy con el conductor",
+                                    enabled = true,
+                                    onClick = {
+                                        peticionesVM.marcarViajeEnCursoViajero(pet) { ok ->
+                                            if (ok) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Viaje en marcha",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                estadoSolicitud = EnCurso(pet)
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "No se pudo actualizar el estado",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                )
 
                                 // Diálogo de confirmación de CANCELAR viaje
                                 ThumbUpAceptarRechazarViaje(
@@ -601,6 +654,50 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     }
                                 )
                             }
+                            is EnCurso -> {
+                                val pet = estado.peticion
+                                val nombreConductor = pet.infoConductor?.nombre ?: "Conductor"
+                                val fotoConductor = pet.infoConductor?.foto
+
+                                PanelEstadoPeticion(
+                                    fotoConductor = fotoConductor,
+                                    nombreConductor = nombreConductor,
+                                    estado = EstadoPeticion.EN_CURSO,
+                                    contentDescription = uiState.fotoPerfilUrl,
+                                    onAccionSeleccionada = { },
+                                    onMostrarInfoViaje = { },
+                                    onCancelarViaje = { }
+                                )
+
+                                Spacer(Modifier.height(12.dp))
+
+                                ThumbUpPrimaryButton(
+                                    text = "Finalizar viaje",
+                                    enabled = true,
+                                    onClick = {
+                                        peticionesVM.finalizarViajeViajero(pet) { ok ->
+                                            if (ok) {
+                                                Toast.makeText(context, "Viaje finalizado", Toast.LENGTH_SHORT).show()
+                                                estadoSolicitud = ViajeFinalizado(pet)
+                                            } else {
+                                                Toast.makeText(context, "No se pudo finalizar el viaje", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                )
+                            }
+                            is ViajeFinalizado -> {
+                                Text(
+                                    text = "Viaje finalizado ✔ Gracias por usar ThumbsUp",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                // Aquí podrías mostrar botón "Nueva petición" si quieres
+                            }
+
                         }
                     }
                 }
@@ -612,11 +709,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                         if (uiState.isConductorSelected) {
                             navController.navigate(Rutas.ViewConductor)
                         } else if (!isEdadValida(uiState.edad)) {
-                            Toast.makeText(
-                                context,
-                                "No puedes ser conductor. Eres menor de edad",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(context,"No puedes ser conductor. Eres menor de edad",Toast.LENGTH_SHORT).show()
                         } else {
                             mostrarDialogo = true
                         }
@@ -656,4 +749,7 @@ sealed interface EstadoSolicitud {
     data object Pendiente : EstadoSolicitud
     data class OfertaConductor(val peticion: Peticion) : EstadoSolicitud
     data class Confirmada(val peticion: Peticion) : EstadoSolicitud
+    data class EnCurso(val peticion: Peticion) : EstadoSolicitud
+    data class ViajeFinalizado(val peticion: Peticion) : EstadoSolicitud
+
 }

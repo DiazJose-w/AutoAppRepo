@@ -96,7 +96,6 @@ dependencies {
     implementation(libs.places.v350)
     implementation(libs.okhttp)
 
-
     // Librería de iconos
     implementation(libs.androidx.material.icons.extended)
 
