@@ -208,7 +208,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
         onSalirIgualmente = {
             showExitDialog = false
             if (primerAcceso) {
-                navController.navigate(Rutas.ViewUsuario) {
+                navController.navigate(Rutas.ViewViajero) {
                     popUpTo(Rutas.ViewInicial) { inclusive = false }
                     launchSingleTop = true
                 }
@@ -243,7 +243,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 showExitDialog = true
                             } else {
                                 if (primerAcceso) {
-                                    navController.navigate(Rutas.ViewUsuario) {
+                                    navController.navigate(Rutas.ViewViajero) {
                                         popUpTo(Rutas.ViewInicial) { inclusive = false }
                                         launchSingleTop = true
                                     }

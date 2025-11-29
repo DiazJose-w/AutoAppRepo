@@ -492,7 +492,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 // BOTÓN FIJO ABAJO (fuera del scroll)
                 Button(
                     onClick = {
-                        navController.navigate(Rutas.ViewUsuario) {
+                        navController.navigate(Rutas.ViewViajero) {
                             popUpTo(Rutas.ViewConductor) { inclusive = true }
                         }
                     },

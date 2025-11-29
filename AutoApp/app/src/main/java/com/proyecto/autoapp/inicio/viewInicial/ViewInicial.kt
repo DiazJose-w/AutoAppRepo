@@ -46,7 +46,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                     loginVM.loginWithGoogle(idToken, { ok ->
                         if (ok) {
                             Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
-                            navController.navigate(Rutas.ViewUsuario)
+                            navController.navigate(Rutas.ViewViajero)
                         } else {
                             Toast.makeText(context, "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
                         }

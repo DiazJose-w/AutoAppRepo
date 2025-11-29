@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     /**
                      * Views inicio usuario
                      */
-                    composable(Rutas.ViewUsuario){
+                    composable(Rutas.ViewViajero){
                         ViewViajero(mapViewModel, loginVM, navController, perfilVM, peticionesVM)
                     }
 

@@ -200,6 +200,30 @@ class LoginVM {
         }
     }
 
+    fun obtenerRolesUsuario(onResult: (esViajero: Boolean, esConductor: Boolean) -> Unit) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            onResult(true, false)   // por defecto: solo viajero
+            return
+        }
+
+        FirebaseFirestore.getInstance()
+            .collection(Coleccion.Usuario)
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                val perfilPasajero = doc.get("perfilPasajero") as? Map<*, *>
+                val esViajero = (perfilPasajero?.get("enabled") as? Boolean) ?: false
+
+                val perfilConductor = doc.get("perfilConductor") as? Map<*, *>
+                val esConductor = (perfilConductor?.get("enabled") as? Boolean) ?: false
+                onResult(esViajero, esConductor)
+            }
+            .addOnFailureListener {
+                onResult(true, false)
+            }
+    }
+
     /**
      * MÉTODOS Y HERRAMIENTAS PARA LA VERIFICACIÓN MEDIANTE SMS
      *  -> 1) Enviar SMS
