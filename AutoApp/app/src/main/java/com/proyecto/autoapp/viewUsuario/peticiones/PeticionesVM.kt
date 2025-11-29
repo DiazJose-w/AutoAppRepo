@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 
 class PeticionesVM : ViewModel(){
     val TAG = "Jose"
-    val auth = FirebaseAuth.getInstance()
     var peticion = Coleccion.PeticionViaje
 
     val isLoadingPeticion = mutableStateOf(false)
@@ -118,6 +117,8 @@ class PeticionesVM : ViewModel(){
     /**
      * Funciones para gestionar las peticiones
      * */
+
+    /** VIAJERO */
     fun enviarPeticion(uidUsuario: String,inicioTexto: String, inicioLatLng: LatLng?, inicioPlaceId: String?, destinoTexto: String, destinoLatLng: LatLng?,
                        destinoPlaceId: String?, onResult: (Boolean) -> Unit) {
         isLoadingPeticion.value = true
@@ -170,67 +171,6 @@ class PeticionesVM : ViewModel(){
                 Log.e(TAG, "ERROR al enviar petición", e)
                 errorPeticion.value = e.message ?: "Error desconocido al guardar petición"
                 isLoadingPeticion.value = false
-                onResult(false)
-            }
-    }
-
-    fun rechazarPeticionConductor(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        val docRef = db.collection(peticion).document(pet.id)
-
-        /**
-         * Una vez el conductor rechaza se almacena en la lista de conductores que rechazaron llevar al viajero.
-         * Automáticamente deja de aparecer el viaje en su vista
-         * */
-        docRef.update(
-            mapOf(
-                "estado" to "pendiente",
-                "uidConductorCan" to FieldValue.arrayUnion(uidConductor)
-            )
-        )
-            .addOnSuccessListener {
-                onResult(true)
-            }
-            .addOnFailureListener {
-                onResult(false)
-            }
-    }
-
-    fun aceptarPeticionConductor(pet: Peticion, uidConductor: String, nombreDelConductor: String, fotoConductor: String, onResult: (Boolean) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        val docRef = db.collection(peticion).document(pet.id)
-
-        Log.e(TAG, "Foto de perfil == $fotoConductor")
-
-        db.runTransaction { tx ->
-            val snap = tx.get(docRef)
-            val estadoActual = snap.getString("estado")
-            val infoConductorActual = snap.get("infoConductor") as? Map<*, *>
-
-            // Solo actualizamos si sigue pendiente y nadie la ha aceptado aún
-            if (estadoActual == "pendiente" && infoConductorActual == null) {
-                val infoConductorMap = mapOf(
-                    "uid" to uidConductor,
-                    "nombre" to nombreDelConductor,
-                    "foto" to fotoConductor
-                )
-
-                tx.update(
-                    docRef,
-                    mapOf(
-                        "estado" to "ofertaConductor",
-                        "infoConductor" to infoConductorMap,
-                        "timestampAceptacion" to System.currentTimeMillis()
-                    )
-                )
-            }
-        }
-            .addOnSuccessListener {
-                programarTimeoutRespuestaViajero(pet.id)
-                onResult(true)
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error aceptando petición", e)
                 onResult(false)
             }
     }
@@ -329,6 +269,31 @@ class PeticionesVM : ViewModel(){
             }
     }
 
+    fun finalizarViajeViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        // Marcamos que el viajero ya no comparte ubicación
+        val trackingMap = mapOf(
+            "compartiendo" to false,
+            "lat" to null,
+            "lng" to null,
+            "ultimaActualizacion" to System.currentTimeMillis()
+        )
+
+        docRef.update(
+            mapOf(
+                "estado" to "finalizada",
+                "trackingViajero" to trackingMap
+            )
+        )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al finalizar viaje", e)
+                onResult(false)
+            }
+    }
+
     fun marcarViajeEnCursoViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
         val docRef = db.collection(peticion).document(pet.id)
@@ -354,27 +319,64 @@ class PeticionesVM : ViewModel(){
             }
     }
 
-    fun finalizarViajeViajero(pet: Peticion, onResult: (Boolean) -> Unit) {
+    /** CONDUCTOR */
+    fun rechazarPeticionConductor(pet: Peticion, uidConductor: String, onResult: (Boolean) -> Unit) {
         val db = FirebaseFirestore.getInstance()
         val docRef = db.collection(peticion).document(pet.id)
 
-        // Marcamos que el viajero ya no comparte ubicación
-        val trackingMap = mapOf(
-            "compartiendo" to false,
-            "lat" to null,
-            "lng" to null,
-            "ultimaActualizacion" to System.currentTimeMillis()
-        )
-
+        /**
+         * Una vez el conductor rechaza se almacena en la lista de conductores que rechazaron llevar al viajero.
+         * Automáticamente deja de aparecer el viaje en su vista
+         * */
         docRef.update(
             mapOf(
-                "estado" to "finalizada",
-                "trackingViajero" to trackingMap
+                "estado" to "pendiente",
+                "uidConductorCan" to FieldValue.arrayUnion(uidConductor)
             )
         )
-            .addOnSuccessListener { onResult(true) }
+            .addOnSuccessListener {
+                onResult(true)
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
+    }
+
+    fun aceptarPeticionConductor(pet: Peticion, uidConductor: String, nombreDelConductor: String, fotoConductor: String, onResult: (Boolean) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val docRef = db.collection(peticion).document(pet.id)
+
+        Log.e(TAG, "Foto de perfil == $fotoConductor")
+
+        db.runTransaction { tx ->
+            val snap = tx.get(docRef)
+            val estadoActual = snap.getString("estado")
+            val infoConductorActual = snap.get("infoConductor") as? Map<*, *>
+
+            // Solo actualizamos si sigue pendiente y nadie la ha aceptado aún
+            if (estadoActual == "pendiente" && infoConductorActual == null) {
+                val infoConductorMap = mapOf(
+                    "uid" to uidConductor,
+                    "nombre" to nombreDelConductor,
+                    "foto" to fotoConductor
+                )
+
+                tx.update(
+                    docRef,
+                    mapOf(
+                        "estado" to "ofertaConductor",
+                        "infoConductor" to infoConductorMap,
+                        "timestampAceptacion" to System.currentTimeMillis()
+                    )
+                )
+            }
+        }
+            .addOnSuccessListener {
+                programarTimeoutRespuestaViajero(pet.id)
+                onResult(true)
+            }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Error al finalizar viaje", e)
+                Log.e(TAG, "Error aceptando petición", e)
                 onResult(false)
             }
     }
@@ -403,14 +405,6 @@ class PeticionesVM : ViewModel(){
                     _posicionViajero.value = null
                 }
             }
-    }
-
-    fun onLocationChangedViajero(latLng: LatLng) {
-        // Si tengo una petición mía y está aceptada, envío mi posición
-        val pet = _miPeticion.value
-        if (pet != null && (pet.estado == "aceptada" || pet.estado == "enCurso")) {
-            actualizarUbicacionViajero(pet, latLng)
-        }
     }
 
     /**
@@ -495,4 +489,11 @@ class PeticionesVM : ViewModel(){
         _posicionViajero.value = null
     }
 
+    fun onLocationChangedViajero(latLng: LatLng) {
+        // Si tengo una petición mía y está aceptada, envío mi posición
+        val pet = _miPeticion.value
+        if (pet != null && (pet.estado == "aceptada" || pet.estado == "enCurso")) {
+            actualizarUbicacionViajero(pet, latLng)
+        }
+    }
 }

@@ -8,7 +8,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
@@ -54,19 +56,17 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     var peticionSeleccionada by remember { mutableStateOf<Peticion?>(null) }
     var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
 
-
     // Launcher para poder escuchar las peticiones
     LaunchedEffect(Unit) {
         peticionesVM.observarPeticionesPendientesAceptadas(usuarioActual)
     }
 
+    // Si ya no tengo ningún viaje aceptado, dejo de escuchar tracking
     LaunchedEffect(peticionesPendientes, usuarioActual) {
         val hayAceptadaParaMi = peticionesPendientes.any { pet ->
             pet.estado == "aceptada" && pet.infoConductor?.uid == usuarioActual
         }
-
         if (!hayAceptadaParaMi) {
-            // Si ya no tengo ningún viaje aceptado, dejo de escuchar el tracking
             peticionesVM.detenerTracking()
         }
     }
@@ -128,7 +128,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 .fillMaxSize()
                 .background(ThumbUpPurple)
         ) {
-            // ICONO DE ACCESO A MENSAJERÍA CON NOTIFICACIONES DE NÚMERO DE MENSAJES POR LEER
+            // ICONO MENSAJERÍA
             Column(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -144,9 +144,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                     }
                 ) {
                     SmallFloatingActionButton(
-                        onClick = {
-                            // navController.navigate(Rutas.Mensajeria)
-                        },
+                        onClick = { /* navController.navigate(Rutas.Mensajeria) */ },
                         containerColor = ThumbUpMustard,
                         contentColor = ThumbUpSurfaceDark,
                         shape = RoundedCornerShape(50),
@@ -170,272 +168,328 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.Top
             ) {
-
-                // MENÚ DE PERFIL ARRIBA A LA IZQUIERDA
+                // MENÚ PERFIL ARRIBA IZQUIERDA
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.TopStart
                 ) {
                     PerfilMenu(
                         fotoPerfil = fotoPerfil,
-                        onPerfil = {
-                            navController.navigate(Rutas.Perfil)
-                        },
+                        onPerfil = { navController.navigate(Rutas.Perfil) },
                         onHistorial = { },
                         onFavoritos = { },
                         onConfiguracion = { },
-                        onLogout = {
-                            showDialog = true
-                        }
+                        onLogout = { showDialog = true }
                     )
                 }
+
+                Spacer(Modifier.height(8.dp))
+
+                // CONTENIDO SCROLLEABLE (mapa + lista)
                 val configuration = LocalConfiguration.current
                 val screenHeight = configuration.screenHeightDp.dp
-                val mapHeight = screenHeight * 0.50F
+                val mapHeight = screenHeight * 0.50F    // un poco más de la mitad
 
-                Card(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(mapHeight)
-                        .shadow(12.dp, RoundedCornerShape(20.dp))
-                        .border(
-                            2.dp,
-                            ThumbUpMustard,
-                            RoundedCornerShape(20.dp)
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = ThumbUpMustard)
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        MapScreen(mapViewModel, false, peticionesVM)
-                    }
-                }
-
-                // Lista de peticiones pendientes
-                if (peticionesPendientes.isEmpty()) {
-                    Box(
+                    // MAPA
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        contentAlignment = Alignment.Center
+                            .height(mapHeight)
+                            .shadow(12.dp, RoundedCornerShape(20.dp))
+                            .border(
+                                2.dp,
+                                ThumbUpMustard,
+                                RoundedCornerShape(20.dp)
+                            ),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = ThumbUpMustard)
                     ) {
-                        Text(
-                            text = "No hay viajeros en el camino",
-                            color = ThumbUpTextPrimary.copy(alpha = 0.55f),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-                    }
-                }
-                else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 260.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Peticiones cercanas",
-                            color = ThumbUpTextPrimary,
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-
-                        LazyColumn(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                                .clip(RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            itemsIndexed(peticionesPendientes) { index, peticion ->
-                                val esAceptadaParaMi = peticion.estado == "aceptada" && peticion.infoConductor?.uid == usuarioActual
+                            MapScreen(mapViewModel, false, peticionesVM)
+                        }
+                    }
 
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 12.dp)
-                                        .shadow(8.dp, RoundedCornerShape(16.dp))
-                                        .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
-                                    elevation = CardDefaults.cardElevation(6.dp)
-                                ) {
-                                    Row(
+                    // LISTA DE PETICIONES
+                    if (peticionesPendientes.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No hay viajeros en el camino",
+                                color = ThumbUpTextPrimary.copy(alpha = 0.55f),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 260.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Peticiones cercanas",
+                                color = ThumbUpTextPrimary,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+
+                            LazyColumn(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                itemsIndexed(peticionesPendientes) { index, peticion ->
+                                    val esAceptadaParaMi =
+                                        peticion.estado == "aceptada" && peticion.infoConductor?.uid == usuarioActual
+
+                                    Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                            .padding(top = 12.dp)
+                                            .shadow(8.dp, RoundedCornerShape(16.dp))
+                                            .border(
+                                                1.dp,
+                                                ThumbUpMustard,
+                                                RoundedCornerShape(16.dp)
+                                            ),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color(0xFF1A1A1A)
+                                        ),
+                                        elevation = CardDefaults.cardElevation(6.dp)
                                     ) {
-                                        Column(
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(
+                                                    horizontal = 16.dp,
+                                                    vertical = 14.dp
+                                                ),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Text(
-                                                text = "Viajero ${index + 1}",
-                                                color = ThumbUpTextPrimary,
-                                                style = MaterialTheme.typography.bodyLarge.copy(
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            )
-                                        }
-
-                                        if (esAceptadaParaMi) {
-                                            // BOTÓN "IR A UBICACIÓN DEL VIAJERO"
-                                            Button(
-                                                onClick = {
-                                                    // 1) Tracking en tiempo real (si lo hay)
-                                                    val posTracking = posicionViajero
-
-                                                    // 2) Fallback: punto de inicio guardado en la petición
-                                                    val posInicio: LatLng? = if (peticion.inicio.lat != null && peticion.inicio.lng != null) {
-                                                        LatLng(peticion.inicio.lat, peticion.inicio.lng)
-                                                    } else {
-                                                        null
-                                                    }
-
-                                                    // 3) Elegimos la mejor disponible: primero tracking, luego inicio
-                                                    val destino = posTracking ?: posInicio
-
-                                                    if (destino != null) {
-                                                        Log.e(TAG, "Valor del destino y del inicio $destino, $posInicio")
-                                                        mapViewModel.updateCameraPosition(destino, 15f)
-                                                    } else {
-                                                        Toast.makeText(context, "Aún no hay ubicación del viajero", Toast.LENGTH_SHORT).show()
-                                                    }
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = ThumbUpMustard,
-                                                    contentColor = ThumbUpSurfaceDark
-                                                ),
-                                                shape = RoundedCornerShape(12.dp)
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(4.dp)
                                             ) {
                                                 Text(
-                                                    text = "Ir a por el viajero",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                            }
-                                        } else {
-                                            // Botón Rechazar
-                                            OutlinedButton(
-                                                onClick = {
-                                                    peticionSeleccionada = peticion
-                                                    accionDialogo = AccionDialogo.RECHAZAR
-                                                    showDialogAccion = true
-                                                },
-                                                border = BorderStroke(1.dp, ThumbUpMustard),
-                                                colors = ButtonDefaults.outlinedButtonColors(
-                                                    containerColor = Color.Transparent,
-                                                    contentColor = ThumbUpMustard
-                                                ),
-                                                shape = RoundedCornerShape(12.dp),
-                                                modifier = Modifier.padding(start = 12.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Rechazar",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                    text = "Viajero ${index + 1}",
+                                                    color = ThumbUpTextPrimary,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
                                                         fontWeight = FontWeight.SemiBold
                                                     )
                                                 )
                                             }
 
-                                            // Botón Aceptar
-                                            Button(
-                                                onClick = {
-                                                    peticionSeleccionada = peticion
-                                                    accionDialogo = AccionDialogo.ACEPTAR
-                                                    showDialogAccion = true
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = ThumbUpMustard,
-                                                    contentColor = ThumbUpSurfaceDark
-                                                ),
-                                                shape = RoundedCornerShape(12.dp),
-                                                modifier = Modifier.padding(start = 8.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Aceptar",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                ThumbUpAceptarRechazarViaje(
-                                    visible = showDialogAccion,
-                                    title = when (accionDialogo) {
-                                        AccionDialogo.ACEPTAR -> "Aceptar petición"
-                                        AccionDialogo.RECHAZAR -> "Rechazar petición"
-                                        else -> ""
-                                    },
-                                    message = when (accionDialogo) {
-                                        AccionDialogo.ACEPTAR ->  "¿Quieres ofrecerte para llevar a este viajero?"
-                                        AccionDialogo.RECHAZAR -> "¿Seguro que quieres rechazar a este viajero?"
-                                        else -> ""
-                                    },
-                                    confirmText = when (accionDialogo) {
-                                        AccionDialogo.ACEPTAR -> "Sí, aceptar"
-                                        AccionDialogo.RECHAZAR -> "Sí, rechazar"
-                                        else -> ""
-                                    },
-                                    dismissText = "Cancelar",
-                                    onConfirm = {
-                                        val pet = peticionSeleccionada
-                                        val accion = accionDialogo
+                                            if (esAceptadaParaMi) {
+                                                Button(
+                                                    onClick = {
+                                                        val posTracking = posicionViajero
+                                                        val posInicio: LatLng? =
+                                                            if (peticion.inicio.lat != null &&
+                                                                peticion.inicio.lng != null
+                                                            ) {
+                                                                LatLng(
+                                                                    peticion.inicio.lat,
+                                                                    peticion.inicio.lng
+                                                                )
+                                                            } else null
 
-                                        if (pet != null && accion != null) {
-                                            when (accion) {
-                                                AccionDialogo.ACEPTAR -> {
-                                                    val nombreConductor = listOf(uiState.nombre, uiState.apellidos)
-                                                        .filter { it.isNotBlank() }
-                                                        .joinToString(" ")
-                                                    peticionesVM.aceptarPeticionConductor(pet, usuarioActual.toString(), nombreConductor, uiState.fotoPerfilUrl.toString()) { ok ->
-                                                        if (ok) {
-                                                            peticionesVM.observarTrackingPeticion(pet.id)
-                                                            Toast.makeText(context,"Petición aceptada",Toast.LENGTH_SHORT).show()
+                                                        val destino = posTracking ?: posInicio
+
+                                                        if (destino != null) {
+                                                            mapViewModel.updateCameraPosition(
+                                                                destino,
+                                                                15f
+                                                            )
                                                         } else {
-                                                            Toast.makeText(context,"La petición ya fue atendida",Toast.LENGTH_SHORT).show()
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Aún no hay ubicación del viajero",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
                                                         }
-                                                    }
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = ThumbUpMustard,
+                                                        contentColor = ThumbUpSurfaceDark
+                                                    ),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Ir a por el viajero",
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    )
+                                                }
+                                            } else {
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        peticionSeleccionada = peticion
+                                                        accionDialogo = AccionDialogo.RECHAZAR
+                                                        showDialogAccion = true
+                                                    },
+                                                    border = BorderStroke(
+                                                        1.dp,
+                                                        ThumbUpMustard
+                                                    ),
+                                                    colors = ButtonDefaults.outlinedButtonColors(
+                                                        containerColor = Color.Transparent,
+                                                        contentColor = ThumbUpMustard
+                                                    ),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    modifier = Modifier.padding(start = 12.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Rechazar",
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    )
                                                 }
 
-                                                AccionDialogo.RECHAZAR -> {
-                                                    peticionesVM.rechazarPeticionConductor(pet, usuarioActual) { ok ->
-                                                        if (ok) {
-                                                            Toast.makeText(context,"Error al rechazar petición", Toast.LENGTH_SHORT).show()
+                                                Button(
+                                                    onClick = {
+                                                        peticionSeleccionada = peticion
+                                                        accionDialogo = AccionDialogo.ACEPTAR
+                                                        showDialogAccion = true
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = ThumbUpMustard,
+                                                        contentColor = ThumbUpSurfaceDark
+                                                    ),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    modifier = Modifier.padding(start = 8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Aceptar",
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    ThumbUpAceptarRechazarViaje(
+                                        visible = showDialogAccion,
+                                        title = when (accionDialogo) {
+                                            AccionDialogo.ACEPTAR -> "Aceptar petición"
+                                            AccionDialogo.RECHAZAR -> "Rechazar petición"
+                                            else -> ""
+                                        },
+                                        message = when (accionDialogo) {
+                                            AccionDialogo.ACEPTAR ->
+                                                "¿Quieres ofrecerte para llevar a este viajero?"
+                                            AccionDialogo.RECHAZAR ->
+                                                "¿Seguro que quieres rechazar a este viajero?"
+                                            else -> ""
+                                        },
+                                        confirmText = when (accionDialogo) {
+                                            AccionDialogo.ACEPTAR -> "Sí, aceptar"
+                                            AccionDialogo.RECHAZAR -> "Sí, rechazar"
+                                            else -> ""
+                                        },
+                                        dismissText = "Cancelar",
+                                        onConfirm = {
+                                            val pet = peticionSeleccionada
+                                            val accion = accionDialogo
+
+                                            if (pet != null && accion != null) {
+                                                when (accion) {
+                                                    AccionDialogo.ACEPTAR -> {
+                                                        val nombreConductor =
+                                                            listOf(
+                                                                uiState.nombre,
+                                                                uiState.apellidos
+                                                            )
+                                                                .filter { it.isNotBlank() }
+                                                                .joinToString(" ")
+
+                                                        peticionesVM.aceptarPeticionConductor(
+                                                            pet,
+                                                            usuarioActual.toString(),
+                                                            nombreConductor,
+                                                            uiState.fotoPerfilUrl.toString()
+                                                        ) { ok ->
+                                                            if (ok) {
+                                                                peticionesVM.observarTrackingPeticion(
+                                                                    pet.id
+                                                                )
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Petición aceptada",
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
+                                                            } else {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "La petición ya fue atendida",
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
+                                                            }
+                                                        }
+                                                    }
+
+                                                    AccionDialogo.RECHAZAR -> {
+                                                        peticionesVM.rechazarPeticionConductor(
+                                                            pet,
+                                                            usuarioActual
+                                                        ) { ok ->
+                                                            if (ok) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Error al rechazar petición",
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
-                                        }
 
-                                        showDialogAccion = false
-                                        accionDialogo = null
-                                        peticionSeleccionada = null
-                                    },
-                                    onDismiss = {
-                                        showDialogAccion = false
-                                        accionDialogo = null
-                                        peticionSeleccionada = null
-                                    }
-                                )
+                                            showDialogAccion = false
+                                            accionDialogo = null
+                                            peticionSeleccionada = null
+                                        },
+                                        onDismiss = {
+                                            showDialogAccion = false
+                                            accionDialogo = null
+                                            peticionSeleccionada = null
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
+                Spacer(Modifier.height(8.dp))
+
+                // BOTÓN FIJO ABAJO (fuera del scroll)
                 Button(
                     onClick = {
                         navController.navigate(Rutas.ViewUsuario) {
