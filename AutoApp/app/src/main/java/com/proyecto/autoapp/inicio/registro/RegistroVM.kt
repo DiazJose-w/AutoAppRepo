@@ -25,7 +25,7 @@ class RegistroVM() {
     val errorMessage = MutableStateFlow<String?>(null)
 
     /**     MÉTODOS PARA EL REGISTRO DEL USUARIO     */
-    fun registroWhitEmail(nombre: String, apellidos: String, edad: String, password: String, email: String, onResult: (Boolean) -> Unit, uid: (String) -> Unit){
+    fun registroWhitEmail(nombre: String, apellidos: String, fechaNacimiento: Long?, password: String, email: String, onResult: (Boolean) -> Unit, uid: (String) -> Unit) {
         isLoading.value = true
         errorMessage.value = null
 
@@ -35,7 +35,7 @@ class RegistroVM() {
                     val userId = task.result?.user?.uid
 
                     if (userId != null) {
-                        val edadInt = edad.toIntOrNull() ?: -1
+                        val edadInt = calcularEdad(fechaNacimiento)
 
                         val customer = Customer(
                             id = userId,
@@ -67,10 +67,11 @@ class RegistroVM() {
                             "apellidos" to customer.apellidos,
                             "email" to customer.email,
                             "edad" to customer.edad,
+                            "fechaNacimiento" to (fechaNacimiento ?: 0L),
                             "password" to customer.password,
                             "fotoUrl" to customer.fotoUrl,
                             "rol" to RolUsuario.CUSTOMER.name,
-                            "nuevo" to true, // Fuerzo que sea true. Si no, registra como falso
+                            "nuevo" to true,
                             "perfilConductor" to mapOf(
                                 "enabled" to customer.perfilConductor.enabled,
                                 "ratingAvg" to customer.perfilConductor.ratingAvg,
@@ -93,13 +94,12 @@ class RegistroVM() {
                             .set(datosUsuario)
                             .addOnSuccessListener {
                                 uid(userId)
-                                Log.e(TAG, "Usuario registrado ${datosUsuario}")
+                                Log.e(TAG, "Usuario registrado $datosUsuario")
                                 isLoading.value = false
                                 onResult(true)
                             }
                             .addOnFailureListener { e ->
                                 Log.e(TAG, "Error al guardar el usuario en Firestore", e)
-
                                 isLoading.value = false
                                 errorMessage.value = e.message ?: "Error desconocido al guardar en Firestore"
                                 onResult(false)
@@ -132,5 +132,31 @@ class RegistroVM() {
         } catch (e: Exception) {
             false
         }
+    }
+
+    fun calcularEdad(fechaNacimiento: Long?): Int {
+        var edadResultado = 0
+
+        if (fechaNacimiento != null) {
+            val nacimiento = java.util.Calendar.getInstance().apply {
+                timeInMillis = fechaNacimiento
+            }
+
+            val hoy = java.util.Calendar.getInstance()
+
+            edadResultado = hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
+
+            val mesHoy = hoy.get(java.util.Calendar.MONTH)
+            val diaHoy = hoy.get(java.util.Calendar.DAY_OF_MONTH)
+
+            val mesNac = nacimiento.get(java.util.Calendar.MONTH)
+            val diaNac = nacimiento.get(java.util.Calendar.DAY_OF_MONTH)
+
+            if (mesHoy < mesNac || (mesHoy == mesNac && diaHoy < diaNac)) {
+                edadResultado--
+            }
+        }
+
+        return edadResultado
     }
 }

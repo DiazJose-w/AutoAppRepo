@@ -5,14 +5,18 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,21 +25,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.proyecto.autoapp.general.modelo.enumClass.AccionDialogo
 import com.proyecto.autoapp.general.modelo.enumClass.EstadoPeticion
-import com.proyecto.autoapp.general.modelo.peticiones.Peticion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarGeneral(titulo: String, onAccion: (Int) -> Unit) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = ThumbUpPurple,
-            titleContentColor = ThumbUpMustard
+            containerColor = ThumbsUpPurple,
+            titleContentColor = ThumbsUpMustard
         ),
         title = {
             Box(
@@ -202,7 +208,7 @@ fun InfoRowLabelValue(label: String, value: String, textColor: Color, subColor: 
 
 // Colores personalizados de los TextField oscuros
 @Composable
-fun ThumbUpTextFieldColors(disabled: Boolean = false): TextFieldColors {
+fun ThumbsUpTextFieldColors(disabled: Boolean = false): TextFieldColors {
     return OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Color(0xFFE09810),
         unfocusedBorderColor = Color(0xFF555555),
@@ -219,7 +225,7 @@ fun ThumbUpTextFieldColors(disabled: Boolean = false): TextFieldColors {
 }
 
 @Composable
-fun ThumbUpPrimaryButton(text: String, enabled: Boolean = true, onClick: () -> Unit, modifier: Modifier = Modifier ) {
+fun ThumbsUpPrimaryButton(text: String, enabled: Boolean = true, onClick: () -> Unit, modifier: Modifier = Modifier ) {
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -228,9 +234,9 @@ fun ThumbUpPrimaryButton(text: String, enabled: Boolean = true, onClick: () -> U
             .height(52.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = ThumbUpMustard,
+            containerColor = ThumbsUpMustard,
             contentColor = Color(0xFF1A1A1A),
-            disabledContainerColor = ThumbUpMustard.copy(alpha = 0.5f),
+            disabledContainerColor = ThumbsUpMustard.copy(alpha = 0.5f),
             disabledContentColor = Color(0xFF1A1A1A).copy(alpha = 0.7f)
         )
     ) {
@@ -243,7 +249,7 @@ fun TitulosRegistro(texto: String) {
     Text(
         text = texto,
         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-        color = ThumbUpMustard,
+        color = ThumbsUpMustard,
         modifier = Modifier.padding(bottom = 8.dp)
     )
 }
@@ -273,7 +279,7 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
         }
         EstadoPeticion.OFERTA_CONDUCTOR -> {
             badgeText = "Oferta de conductor"
-            badgeColor = ThumbUpMustard
+            badgeColor = ThumbsUpMustard
         }
         EstadoPeticion.ACEPTADA -> {
             badgeText = "Aceptada"
@@ -289,7 +295,7 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
         modifier = Modifier
             .fillMaxWidth()
             .shadow(8.dp, RoundedCornerShape(16.dp))
-            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp)),
+            .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
         elevation = CardDefaults.cardElevation(6.dp)
@@ -326,7 +332,7 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = contentDescription,
-                            tint = ThumbUpMustard,
+                            tint = ThumbsUpMustard,
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -337,7 +343,7 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                 ) {
                     Text(
                         text = nombreConductor,
-                        color = ThumbUpTextPrimary,
+                        color = ThumbsUpTextPrimary,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -384,10 +390,10 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                     EstadoPeticion.PENDIENTE -> {
                         OutlinedButton(
                             onClick = onMostrarInfoViaje,
-                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            border = BorderStroke(1.dp, ThumbsUpMustard),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = Color.Transparent,
-                                contentColor = ThumbUpMustard
+                                contentColor = ThumbsUpMustard
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -402,10 +408,10 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                     EstadoPeticion.OFERTA_CONDUCTOR -> {
                         OutlinedButton(
                             onClick = { onAccionSeleccionada(AccionDialogo.RECHAZAR) },
-                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            border = BorderStroke(1.dp, ThumbsUpMustard),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = Color.Transparent,
-                                contentColor = ThumbUpMustard
+                                contentColor = ThumbsUpMustard
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -422,8 +428,8 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                         Button(
                             onClick = { onAccionSeleccionada(AccionDialogo.ACEPTAR) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ThumbUpMustard,
-                                contentColor = ThumbUpSurfaceDark
+                                containerColor = ThumbsUpMustard,
+                                contentColor = ThumbsUpSurfaceDark
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -438,10 +444,10 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                     EstadoPeticion.ACEPTADA -> {
                         OutlinedButton(
                             onClick = onMostrarInfoViaje,
-                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            border = BorderStroke(1.dp, ThumbsUpMustard),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = Color.Transparent,
-                                contentColor = ThumbUpMustard
+                                contentColor = ThumbsUpMustard
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -458,8 +464,8 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                         Button(
                             onClick = onCancelarViaje,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ThumbUpMustard,
-                                contentColor = ThumbUpSurfaceDark
+                                containerColor = ThumbsUpMustard,
+                                contentColor = ThumbsUpSurfaceDark
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -475,8 +481,8 @@ fun PanelEstadoPeticion(fotoConductor: String?, nombreConductor: String, estado:
                         Button(
                             onClick = onMostrarInfoViaje,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ThumbUpMustard,
-                                contentColor = ThumbUpSurfaceDark
+                                containerColor = ThumbsUpMustard,
+                                contentColor = ThumbsUpSurfaceDark
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -502,7 +508,7 @@ private fun EtiquetaDato(icono: ImageVector, etiqueta: String) {
         label = {
             Text(
                 etiqueta,
-                color = ThumbUpMustard,
+                color = ThumbsUpMustard,
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
             )
         },
@@ -511,15 +517,15 @@ private fun EtiquetaDato(icono: ImageVector, etiqueta: String) {
                 icono,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
-                tint = ThumbUpMustard
+                tint = ThumbsUpMustard
             )
         },
         shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, ThumbUpMustard),
+        border = BorderStroke(1.dp, ThumbsUpMustard),
         colors = AssistChipDefaults.assistChipColors(
             containerColor = Color.Transparent,
-            labelColor = ThumbUpMustard,
-            leadingIconContentColor = ThumbUpMustard
+            labelColor = ThumbsUpMustard,
+            leadingIconContentColor = ThumbsUpMustard
         )
     )
 }
@@ -555,7 +561,7 @@ fun DialogoConfirmacionThumbsUp(visible: Boolean, onGuardarYSalir: () -> Unit, o
                     onClick = { onGuardarYSalir() },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
+                        containerColor = ThumbsUpMustard,
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
@@ -578,10 +584,10 @@ fun DialogoConfirmacionThumbsUp(visible: Boolean, onGuardarYSalir: () -> Unit, o
                 OutlinedButton(
                     onClick = { onSalirSinGuardar() },
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.Transparent,
-                        contentColor = ThumbUpMustard
+                        contentColor = ThumbsUpMustard
                     )
                 ) {
                     Text(
@@ -593,7 +599,7 @@ fun DialogoConfirmacionThumbsUp(visible: Boolean, onGuardarYSalir: () -> Unit, o
                 }
             },
             modifier = Modifier
-                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
         )
     }
@@ -631,7 +637,7 @@ fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCanc
                     onClick = { onSalirIgualmente() },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
+                        containerColor = ThumbsUpMustard,
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
@@ -655,10 +661,10 @@ fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCanc
                 OutlinedButton(
                     onClick = { onCancelar() },
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.Transparent,
-                        contentColor = ThumbUpMustard
+                        contentColor = ThumbsUpMustard
                     )
                 ) {
                     Text(
@@ -671,14 +677,14 @@ fun DialogoSalirThumbsUp(visible: Boolean, onSalirIgualmente: () -> Unit, onCanc
             },
 
             modifier = Modifier
-                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
         )
     }
 }
 
 @Composable
-fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String, confirmText: String, dismissText: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+fun ThumbsUpAceptarRechazarViaje(visible: Boolean, title: String, message: String, confirmText: String, dismissText: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     if (visible) {
         AlertDialog(
             onDismissRequest = onDismiss,
@@ -688,7 +694,7 @@ fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String
             title = {
                 Text(
                     text = title,
-                    color = ThumbUpTextPrimary,
+                    color = ThumbsUpTextPrimary,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     )
@@ -697,7 +703,7 @@ fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String
             text = {
                 Text(
                     text = message,
-                    color = ThumbUpTextPrimary.copy(alpha = 0.85f),
+                    color = ThumbsUpTextPrimary.copy(alpha = 0.85f),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -706,8 +712,8 @@ fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String
                     onClick = onConfirm,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
-                        contentColor = ThumbUpSurfaceDark
+                        containerColor = ThumbsUpMustard,
+                        contentColor = ThumbsUpSurfaceDark
                     )
                 ) {
                     Text(
@@ -722,10 +728,10 @@ fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String
                 OutlinedButton(
                     onClick = onDismiss,
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.Transparent,
-                        contentColor = ThumbUpMustard
+                        contentColor = ThumbsUpMustard
                     )
                 ) {
                     Text(
@@ -739,6 +745,117 @@ fun ThumbUpAceptarRechazarViaje(visible: Boolean, title: String, message: String
         )
     }
 }
+
+@Composable
+fun CambiarPasswordDialog(onDismiss: () -> Unit, onGuardar: (String, String, String) -> Unit) {
+    var passwordActual by remember { mutableStateOf("") }
+    var passwordNueva by remember { mutableStateOf("") }
+    var passwordConfirmacion by remember { mutableStateOf("") }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = ThumbsUpCard),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+
+                // TÍTULO
+                Text(
+                    text = "Cambiar contraseña",
+                    color = ThumbsUpMustard,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                // CONTRASEÑA ACTUAL
+                OutlinedTextField(
+                    value = passwordActual,
+                    onValueChange = { passwordActual = it },
+                    label = { Text("Contraseña actual", color = ThumbsUpTextSecondary) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = ThumbsUpTextFieldColors(), // ← tus colores de text field
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // NUEVA CONTRASEÑA
+                OutlinedTextField(
+                    value = passwordNueva,
+                    onValueChange = { passwordNueva = it },
+                    label = { Text("Nueva contraseña", color = ThumbsUpTextSecondary) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = ThumbsUpTextFieldColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // CONFIRMAR NUEVA
+                OutlinedTextField(
+                    value = passwordConfirmacion,
+                    onValueChange = { passwordConfirmacion = it },
+                    label = { Text("Confirmar nueva contraseña", color = ThumbsUpTextSecondary) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    colors = ThumbsUpTextFieldColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                ) {
+
+                    // CANCELAR
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, ThumbsUpMustard),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = ThumbsUpMustard
+                        )
+                    ) {
+                        Text(
+                            text = "Cancelar",
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // GUARDAR CAMBIOS
+                    Button(
+                        onClick = {
+                            onGuardar(passwordActual, passwordNueva, passwordConfirmacion)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ThumbsUpMustard,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "Guardar cambios",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 /**
  * Diálogo para cerrar sesión
@@ -771,7 +888,7 @@ fun CerrarSesion(showDialog: Boolean, onDismiss: () -> Unit, onConfirmCerrarSesi
                 onClick = { onConfirmCerrarSesion() },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ThumbUpMustard,
+                    containerColor = ThumbsUpMustard,
                     contentColor = Color(0xFF1A1A1A)
                 )
             ) {
@@ -785,10 +902,10 @@ fun CerrarSesion(showDialog: Boolean, onDismiss: () -> Unit, onConfirmCerrarSesi
             OutlinedButton(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, ThumbUpMustard),
+                border = BorderStroke(1.dp, ThumbsUpMustard),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = Color.Transparent,
-                    contentColor = ThumbUpMustard
+                    contentColor = ThumbsUpMustard
                 )
             ) {
                 Text(
@@ -798,7 +915,7 @@ fun CerrarSesion(showDialog: Boolean, onDismiss: () -> Unit, onConfirmCerrarSesi
             }
         },
         modifier = Modifier
-            .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+            .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
     )
 }

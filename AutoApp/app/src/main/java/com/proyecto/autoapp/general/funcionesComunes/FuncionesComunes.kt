@@ -3,6 +3,7 @@ package com.proyecto.autoapp.general.funcionesComunes
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
+import java.util.Calendar
 
 /**
  * Funciones:
@@ -39,7 +40,25 @@ fun validarEmail(email: String): Boolean {
 }
 
 // Función para comprobar que el usuario cumple con la edad mínima
-fun isEdadValida(edadTexto: String): Boolean {
-    val edadInt = edadTexto.toIntOrNull() ?: return false
-    return edadInt in 18..80
+fun isEdadValida(fechaNacimiento: Long?): Boolean {
+    if (fechaNacimiento == null) return false
+
+    val nacimiento = Calendar.getInstance().apply {
+        timeInMillis = fechaNacimiento
+    }
+    val hoy = Calendar.getInstance()
+
+    var edad = hoy.get(Calendar.YEAR) - nacimiento.get(Calendar.YEAR)
+
+    val mesHoy = hoy.get(Calendar.MONTH)
+    val diaHoy = hoy.get(Calendar.DAY_OF_MONTH)
+    val mesNac = nacimiento.get(Calendar.MONTH)
+    val diaNac = nacimiento.get(Calendar.DAY_OF_MONTH)
+
+    if (mesHoy < mesNac || (mesHoy == mesNac && diaHoy < diaNac)) {
+        edad--
+    }
+
+    return edad in 18..80
 }
+

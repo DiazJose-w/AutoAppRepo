@@ -119,7 +119,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
             containerColor = Color(0xFF1A1A1A),
             tonalElevation = 8.dp,
             modifier = Modifier
-                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp)),
             title = {
                 Text(
@@ -150,10 +150,10 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                             Toast.makeText(context, "Entrando en modo viajero", Toast.LENGTH_SHORT).show()
                         },
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, ThumbUpMustard),
+                        border = BorderStroke(1.dp, ThumbsUpMustard),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = Color.Transparent,
-                            contentColor = ThumbUpMustard
+                            contentColor = ThumbsUpMustard
                         )
                     ) {
                         Text(
@@ -173,7 +173,7 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ThumbUpMustard,
+                            containerColor = ThumbsUpMustard,
                             contentColor = Color(0xFF1A1A1A)
                         )
                     ) {
@@ -198,13 +198,13 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = ThumbUpPurple
+        containerColor = ThumbsUpPurple
     ) { padding ->
         Box(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(ThumbUpPurple)
+                .background(ThumbsUpPurple)
         ) {
             Image(
                 painter = painterResource(R.mipmap.camino_central),
@@ -250,8 +250,8 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ThumbUpMustard,
-                            contentColor = ThumbUpPurple
+                            containerColor = ThumbsUpMustard,
+                            contentColor = ThumbsUpPurple
                         ),
                         shape = RoundedCornerShape(16.dp)
                     ) {
@@ -266,9 +266,9 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = ThumbUpMustard
+                            contentColor = ThumbsUpMustard
                         ),
-                        border = BorderStroke(2.dp, ThumbUpMustard),
+                        border = BorderStroke(2.dp, ThumbsUpMustard),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text("Regístrate")
@@ -282,9 +282,9 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = ThumbUpMustard
+                            contentColor = ThumbsUpMustard
                         ),
-                        border = BorderStroke(2.dp, ThumbUpMustard),
+                        border = BorderStroke(2.dp, ThumbsUpMustard),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text("Entrar con Google")

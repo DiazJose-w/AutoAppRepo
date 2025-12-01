@@ -1,5 +1,6 @@
 package com.proyecto.autoapp.inicio.registro.viewsRegistro
 
+import PasoEdad
 import android.util.Log
 import android.widget.Toast
 import com.proyecto.autoapp.R
@@ -24,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -32,16 +32,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.google.i18n.phonenumbers.NumberParseException
-import com.google.i18n.phonenumbers.PhoneNumberUtil
-import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat
 import com.proyecto.autoapp.general.Rutas
-import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.inicio.registro.RegistroVM
-import com.proyecto.autoapp.ui.theme.ThumbUpCard
-import com.proyecto.autoapp.ui.theme.ThumbUpMustard
-import com.proyecto.autoapp.ui.theme.ThumbUpPurple
+import com.proyecto.autoapp.ui.theme.ThumbsUpCard
+import com.proyecto.autoapp.ui.theme.ThumbsUpMustard
+import com.proyecto.autoapp.ui.theme.ThumbsUpPurple
+import java.util.Calendar
 
 @Composable
 fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: LoginVM) {
@@ -55,6 +52,7 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var edad by rememberSaveable { mutableStateOf("") }
+    var fechaNacimiento by rememberSaveable { mutableStateOf<Long?>(null) }
     var confirmEmail by rememberSaveable { mutableStateOf("") }
     var tokenServidor by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -62,13 +60,13 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
     var cont by rememberSaveable { mutableIntStateOf(1) }
 
     Scaffold(
-        containerColor = ThumbUpPurple
+        containerColor = ThumbsUpPurple
     ) { padding ->
         Box(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(ThumbUpPurple),
+                .background(ThumbsUpPurple),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -92,7 +90,7 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
 
                 Text(
                     text = "Crea tu cuenta",
-                    color = ThumbUpMustard,
+                    color = ThumbsUpMustard,
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -102,7 +100,7 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
+                    colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
                 ) {
                     Column(
                         modifier = Modifier
@@ -121,8 +119,8 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                             )
 
                             2 -> PasoEdad(
-                                edad = edad,
-                                onEdadChange = { edad = it },
+                                fechaNacimiento = fechaNacimiento,
+                                onFechaNacimientoSeleccionada = { fechaNacimiento = it },
                                 onNext = { cont = 3 },
                                 onBack = { cont = 1 }
                             )
@@ -158,13 +156,15 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                 onFinish = { ok ->
                                     cont = 4
                                     if(ok){
-                                        registroVM.registroWhitEmail (nombre, apellidos, edad, password, email, {
-                                            if(it){
-                                                navController.navigate(Rutas.Perfil)
-                                            }else{
-                                                Toast.makeText(context, "Error en el registro", Toast.LENGTH_SHORT).show()
+                                        registroVM.registroWhitEmail(nombre, apellidos, fechaNacimiento, password, email,
+                                            { exito ->
+                                                if (exito) {
+                                                    navController.navigate(Rutas.Perfil)
+                                                } else {
+                                                    Toast.makeText(context, "Error en el registro", Toast.LENGTH_SHORT).show()
+                                                }
                                             }
-                                        }){ uid ->
+                                        ) { uid ->
                                             loginVM.uidActual = uid
                                             Log.e(TAG, "Usuario registrado. UID => $uid")
                                         }
@@ -192,9 +192,29 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = ThumbUpMustard
+                    color = ThumbsUpMustard
                 )
             }
         }
     }
+}
+
+private fun calcularEdadDesdeMillis(fechaNacimiento: Long): Int {
+    val nacimiento = Calendar.getInstance().apply {
+        timeInMillis = fechaNacimiento
+    }
+    val hoy = Calendar.getInstance()
+
+    var edad = hoy.get(Calendar.YEAR) - nacimiento.get(Calendar.YEAR)
+
+    val mesHoy = hoy.get(Calendar.MONTH)
+    val diaHoy = hoy.get(Calendar.DAY_OF_MONTH)
+    val mesNac = nacimiento.get(Calendar.MONTH)
+    val diaNac = nacimiento.get(Calendar.DAY_OF_MONTH)
+
+    if (mesHoy < mesNac || (mesHoy == mesNac && diaHoy < diaNac)) {
+        edad--
+    }
+
+    return edad
 }

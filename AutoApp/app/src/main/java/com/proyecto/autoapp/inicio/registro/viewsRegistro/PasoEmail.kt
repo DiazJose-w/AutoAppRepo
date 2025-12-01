@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.proyecto.autoapp.general.funcionesComunes.validarEmail
-import com.proyecto.autoapp.ui.theme.ThumbUpPrimaryButton
-import com.proyecto.autoapp.ui.theme.ThumbUpTextFieldColors
+import com.proyecto.autoapp.ui.theme.ThumbsUpPrimaryButton
+import com.proyecto.autoapp.ui.theme.ThumbsUpTextFieldColors
 import com.proyecto.autoapp.ui.theme.TitulosRegistro
 
 @Composable
@@ -59,7 +59,7 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
             singleLine = true,
             isError = errorEmail != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            colors = ThumbUpTextFieldColors()
+            colors = ThumbsUpTextFieldColors()
         )
 
         Spacer(Modifier.height(12.dp))
@@ -81,7 +81,7 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
             singleLine = true,
             isError = errorConfirm != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            colors = ThumbUpTextFieldColors()
+            colors = ThumbsUpTextFieldColors()
         )
 
         errorEmail?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -129,7 +129,7 @@ fun PasoEmail(email: String, onEmailChange: (String) -> Unit, confirmEmail: Stri
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             TextButton(onClick = onBack) { Text("Atrás") }
-            ThumbUpPrimaryButton(
+            ThumbsUpPrimaryButton(
                 text = "Finalizar registro",
                 enabled = email.isNotBlank(),
                 onClick = {

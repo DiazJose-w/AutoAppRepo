@@ -63,7 +63,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
             containerColor = Color(0xFF1A1A1A),
             tonalElevation = 8.dp,
             modifier = Modifier
-                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp)),
             title = {
                 Text(
@@ -94,10 +94,10 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                             Toast.makeText(context, "Entrando en modo viajero", Toast.LENGTH_SHORT).show()
                         },
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, ThumbUpMustard),
+                        border = BorderStroke(1.dp, ThumbsUpMustard),
                         colors = ButtonDefaults.outlinedButtonColors(
                             containerColor = Color.Transparent,
-                            contentColor = ThumbUpMustard
+                            contentColor = ThumbsUpMustard
                         )
                     ) {
                         Text(
@@ -117,7 +117,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ThumbUpMustard,
+                            containerColor = ThumbsUpMustard,
                             contentColor = Color(0xFF1A1A1A)
                         )
                     ) {
@@ -157,7 +157,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(ThumbUpPurple),
+                .background(ThumbsUpPurple),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -179,7 +179,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                 // Título
                 Text(
                     text = "Bienvenido a ThumbsUp",
-                    color = ThumbUpMustard,
+                    color = ThumbsUpMustard,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -191,7 +191,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                     modifier = Modifier
                         .fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
+                    colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
                 ) {
                     Column(
                         modifier = Modifier
@@ -206,7 +206,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                             modifier = Modifier
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
-                            colors = ThumbUpTextFieldColors()
+                            colors = ThumbsUpTextFieldColors()
                         )
 
                         Spacer(Modifier.height(12.dp))
@@ -220,7 +220,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                             modifier = Modifier
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
-                            colors = ThumbUpTextFieldColors()
+                            colors = ThumbsUpTextFieldColors()
                         )
                     }
                 }
@@ -265,7 +265,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                         .height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
+                        containerColor = ThumbsUpMustard,
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
@@ -284,7 +284,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                             .background(Color.White, shape = RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = ThumbUpMustard)
+                        CircularProgressIndicator(color = ThumbsUpMustard)
                     }
                 }
             }

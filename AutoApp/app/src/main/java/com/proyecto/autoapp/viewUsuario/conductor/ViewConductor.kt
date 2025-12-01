@@ -105,19 +105,19 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = ThumbUpPurple,
+        containerColor = ThumbsUpPurple,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Modo conductor",
-                        color = ThumbUpTextPrimary,
+                        color = ThumbsUpTextPrimary,
                         fontWeight = MaterialTheme.typography.titleMedium.fontWeight
                     )
                 },
                 navigationIcon = { },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = ThumbUpPurple
+                    containerColor = ThumbsUpPurple
                 )
             )
         }
@@ -126,7 +126,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(ThumbUpPurple)
+                .background(ThumbsUpPurple)
         ) {
             // ICONO MENSAJERÍA
             Column(
@@ -145,14 +145,14 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 ) {
                     SmallFloatingActionButton(
                         onClick = { /* navController.navigate(Rutas.Mensajeria) */ },
-                        containerColor = ThumbUpMustard,
-                        contentColor = ThumbUpSurfaceDark,
+                        containerColor = ThumbsUpMustard,
+                        contentColor = ThumbsUpSurfaceDark,
                         shape = RoundedCornerShape(50),
                         modifier = Modifier
                             .shadow(8.dp, RoundedCornerShape(50))
                             .border(
                                 1.dp,
-                                ThumbUpSurfaceDark.copy(alpha = 0.4f),
+                                ThumbsUpSurfaceDark.copy(alpha = 0.4f),
                                 RoundedCornerShape(50)
                             )
                     ) {
@@ -207,12 +207,12 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                             .shadow(12.dp, RoundedCornerShape(20.dp))
                             .border(
                                 2.dp,
-                                ThumbUpMustard,
+                                ThumbsUpMustard,
                                 RoundedCornerShape(20.dp)
                             ),
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = ThumbUpMustard)
+                        colors = CardDefaults.cardColors(containerColor = ThumbsUpMustard)
                     ) {
                         Box(
                             modifier = Modifier
@@ -235,7 +235,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                         ) {
                             Text(
                                 text = "No hay viajeros en el camino",
-                                color = ThumbUpTextPrimary.copy(alpha = 0.55f),
+                                color = ThumbsUpTextPrimary.copy(alpha = 0.55f),
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Medium
                                 )
@@ -250,7 +250,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                         ) {
                             Text(
                                 text = "Peticiones cercanas",
-                                color = ThumbUpTextPrimary,
+                                color = ThumbsUpTextPrimary,
                                 style = MaterialTheme.typography.titleSmall.copy(
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -271,7 +271,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                             .shadow(8.dp, RoundedCornerShape(16.dp))
                                             .border(
                                                 1.dp,
-                                                ThumbUpMustard,
+                                                ThumbsUpMustard,
                                                 RoundedCornerShape(16.dp)
                                             ),
                                         shape = RoundedCornerShape(16.dp),
@@ -295,7 +295,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                             ) {
                                                 Text(
                                                     text = "Viajero ${index + 1}",
-                                                    color = ThumbUpTextPrimary,
+                                                    color = ThumbsUpTextPrimary,
                                                     style = MaterialTheme.typography.bodyLarge.copy(
                                                         fontWeight = FontWeight.SemiBold
                                                     )
@@ -332,8 +332,8 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                         }
                                                     },
                                                     colors = ButtonDefaults.buttonColors(
-                                                        containerColor = ThumbUpMustard,
-                                                        contentColor = ThumbUpSurfaceDark
+                                                        containerColor = ThumbsUpMustard,
+                                                        contentColor = ThumbsUpSurfaceDark
                                                     ),
                                                     shape = RoundedCornerShape(12.dp)
                                                 ) {
@@ -353,11 +353,11 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                     },
                                                     border = BorderStroke(
                                                         1.dp,
-                                                        ThumbUpMustard
+                                                        ThumbsUpMustard
                                                     ),
                                                     colors = ButtonDefaults.outlinedButtonColors(
                                                         containerColor = Color.Transparent,
-                                                        contentColor = ThumbUpMustard
+                                                        contentColor = ThumbsUpMustard
                                                     ),
                                                     shape = RoundedCornerShape(12.dp),
                                                     modifier = Modifier.padding(start = 12.dp)
@@ -377,8 +377,8 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                         showDialogAccion = true
                                                     },
                                                     colors = ButtonDefaults.buttonColors(
-                                                        containerColor = ThumbUpMustard,
-                                                        contentColor = ThumbUpSurfaceDark
+                                                        containerColor = ThumbsUpMustard,
+                                                        contentColor = ThumbsUpSurfaceDark
                                                     ),
                                                     shape = RoundedCornerShape(12.dp),
                                                     modifier = Modifier.padding(start = 8.dp)
@@ -394,7 +394,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                         }
                                     }
 
-                                    ThumbUpAceptarRechazarViaje(
+                                    ThumbsUpAceptarRechazarViaje(
                                         visible = showDialogAccion,
                                         title = when (accionDialogo) {
                                             AccionDialogo.ACEPTAR -> "Aceptar petición"
@@ -500,8 +500,8 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                         .fillMaxWidth()
                         .padding(top = 4.dp, bottom = 8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
-                        contentColor = ThumbUpTextPrimary
+                        containerColor = ThumbsUpMustard,
+                        contentColor = ThumbsUpTextPrimary
                     )
                 ) {
                     Text(

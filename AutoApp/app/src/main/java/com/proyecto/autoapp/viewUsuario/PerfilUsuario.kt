@@ -38,6 +38,10 @@ import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 import java.io.File
+import android.app.DatePickerDialog
+import androidx.compose.foundation.clickable
+import java.util.Calendar
+
 
 /**
  * Muestra la view de perfil del usuario.
@@ -53,6 +57,24 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
     var usuario = loginVM.uidActual
     var mostrarDialogoElegirFuente by remember { mutableStateOf(false) }
     var tempFile by remember { mutableStateOf<File?>(null) }
+
+    val fechaNacimiento = uiState.fechaNacimiento
+
+    val fechaNacimientoTexto = remember(fechaNacimiento) {
+        if (fechaNacimiento == null) {
+            ""
+        } else {
+            val cal = Calendar.getInstance().apply {
+                timeInMillis = fechaNacimiento
+            }
+
+            val dia = cal.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+            val mes = (cal.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+            val anio = cal.get(Calendar.YEAR).toString()
+
+            "$dia/$mes/$anio"
+        }
+    }
 
     val primerAcceso = perfilVM.usuarioNuevo
 
@@ -112,6 +134,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
     /** =================================================== */
 
     var showExitDialog by remember { mutableStateOf(false) }
+    var showDialogPassword by remember { mutableStateOf(false) }
 
     if (mostrarDialogoElegirFuente) {
         AlertDialog(
@@ -143,7 +166,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
+                        containerColor = ThumbsUpMustard,
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
@@ -169,17 +192,17 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         galleryLauncher.launch("image/*")
                     },
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.Transparent,
-                        contentColor = ThumbUpMustard
+                        contentColor = ThumbsUpMustard
                     )
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoLibrary,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = ThumbUpMustard
+                        tint = ThumbsUpMustard
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
@@ -191,8 +214,22 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                 }
             },
             modifier = Modifier
-                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
+        )
+    }
+
+    if (showDialogPassword) {
+        CambiarPasswordDialog(
+            onDismiss = { showDialogPassword = false },
+            onGuardar = { actual, nueva, confirmar ->
+                perfilVM.cambiarPassword(actual, nueva, confirmar) { ok, msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    if (ok){
+                        showDialogPassword = false
+                    }
+                }
+            }
         )
     }
 
@@ -226,13 +263,13 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = ThumbUpPurple,
+        containerColor = ThumbsUpPurple,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Mi perfil",
-                        color = ThumbUpTextPrimary,
+                        color = ThumbsUpTextPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
                 },
@@ -256,12 +293,12 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver",
-                            tint = ThumbUpMustard
+                            tint = ThumbsUpMustard
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = ThumbUpPurple
+                    containerColor = ThumbsUpPurple
                 )
             )
         },
@@ -269,7 +306,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(ThumbUpPurple)
+                    .background(ThumbsUpPurple)
                     .padding(horizontal = 24.dp, vertical = 30.dp)
             ) {
                 Button(
@@ -277,7 +314,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         val edadNum = uiState.edad.toIntOrNull()
                         when {
                             edadNum == null -> {
-                                Toast.makeText(context, "Debes introducir una edad válida", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Introduce una fecha de nacimiento válida", Toast.LENGTH_SHORT).show()
                             }
                             edadNum < 16 -> {
                                 Toast.makeText(context, "Debes tener al menos 16 años", Toast.LENGTH_SHORT).show()
@@ -299,10 +336,10 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                     shape = RoundedCornerShape(14.dp),
                     enabled = uiState.isSaveEnabled,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
-                        contentColor = ThumbUpSurfaceDark,
-                        disabledContainerColor = ThumbUpMustard.copy(alpha = 0.5f),
-                        disabledContentColor = ThumbUpSurfaceDark.copy(alpha = 0.5f)
+                        containerColor = ThumbsUpMustard,
+                        contentColor = ThumbsUpSurfaceDark,
+                        disabledContainerColor = ThumbsUpMustard.copy(alpha = 0.5f),
+                        disabledContentColor = ThumbsUpSurfaceDark.copy(alpha = 0.5f)
                     )
                 ) {
                     Text(
@@ -334,17 +371,17 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                      * */
                     navController.navigate(Rutas.Galeria)
                 },
-                ThumbUpCard = ThumbUpCard,
-                ThumbUpTextPrimary = ThumbUpTextPrimary,
-                ThumbUpTextSecondary = ThumbUpTextSecondary,
-                ThumbUpMustard = ThumbUpMustard
+                ThumbUpCard = ThumbsUpCard,
+                ThumbUpTextPrimary = ThumbsUpTextPrimary,
+                ThumbUpTextSecondary = ThumbsUpTextSecondary,
+                ThumbUpMustard = ThumbsUpMustard
             )
 
-            // 2. DATOS BÁSICOS DEL USUARIO
+            // 2. DATOS PERSONALES DEL USUARIO
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
+                colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
             ) {
                 Column(
                     modifier = Modifier
@@ -355,69 +392,104 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
                     OutlinedTextField(
                         value = uiState.nombre,
-                        onValueChange = {
-
-                        },
-                        label = { Text("Nombre", color = ThumbUpTextSecondary) },
+                        onValueChange = { },
+                        label = { Text("Nombre", color = ThumbsUpTextSecondary) },
                         singleLine = true,
                         enabled = false,
-                        textStyle = TextStyle(color = ThumbUpTextPrimary),
-                        colors = ThumbUpTextFieldColors(),
+                        textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                        colors = ThumbsUpTextFieldColors(),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
 
                     OutlinedTextField(
                         value = uiState.apellidos,
-                        onValueChange = {
-
-                        },
-                        label = { Text("Apellidos", color = ThumbUpTextSecondary) },
+                        onValueChange = { },
+                        label = { Text("Apellidos", color = ThumbsUpTextSecondary) },
                         singleLine = true,
                         enabled = false,
-                        textStyle = TextStyle(color = ThumbUpTextPrimary),
-                        colors = ThumbUpTextFieldColors(),
+                        textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                        colors = ThumbsUpTextFieldColors(),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
-                            value = uiState.edad,
-                            onValueChange = {
-                                perfilVM.onEdadChange(it)
-                            },
-                            label = { Text("Edad", color = ThumbUpTextSecondary) },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number
-                            ),
-                            textStyle = TextStyle(color = ThumbUpTextPrimary),
-                            colors = ThumbUpTextFieldColors(),
-                            modifier = Modifier.fillMaxWidth(),
+                            value = fechaNacimientoTexto,
+                            onValueChange = { },
+                            label = { Text("Fecha de nacimiento", color = ThumbsUpTextSecondary) },
+                            singleLine = true,
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                            colors = ThumbsUpTextFieldColors(),
                             shape = RoundedCornerShape(12.dp)
                         )
 
-                        if (uiState.showEdadWarningConductor) {
-                            Text(
-                                text = "Para ser conductor debes ser mayor de edad.",
-                                color = ThumbUpDanger,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = uiState.edad,
+                                onValueChange = { },
+                                label = { Text("Edad", color = ThumbsUpTextSecondary) },
+                                singleLine = true,
+                                enabled = false,
+                                textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                                colors = ThumbsUpTextFieldColors(disabled = true),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
                             )
+
+                            if (uiState.showEdadWarningConductor) {
+                                Text(
+                                    text = "Para ser conductor debes ser mayor de edad.",
+                                    color = ThumbsUpDanger,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
+                    }
+
+                    OutlinedTextField(
+                        value = uiState.telefono,
+                        onValueChange = { perfilVM.onTelefonoChange(it) },
+                        label = { Text("Teléfono", color = ThumbsUpTextSecondary) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                        colors = ThumbsUpTextFieldColors(),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Button(
+                        onClick = { showDialogPassword = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ThumbsUpPurple,
+                            contentColor = ThumbsUpTextPrimary    // blanco
+                        )
+                    ) {
+                        Text(
+                            text = "Cambiar contraseña",
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
 
                     /**
                      * Como no puede modificarse, hacer que muestre el email del usuario concreto.
-                     * */
+                     */
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = { },
-                        label = { Text("Email", color = ThumbUpTextSecondary) },
+                        label = { Text("Email", color = ThumbsUpTextSecondary) },
                         singleLine = true,
                         enabled = false,
-                        textStyle = TextStyle(color = ThumbUpTextPrimary),
-                        colors = ThumbUpTextFieldColors(disabled = true),
+                        textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                        colors = ThumbsUpTextFieldColors(disabled = true),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -428,7 +500,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
+                colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
             ) {
                 Column(
                     modifier = Modifier
@@ -439,7 +511,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
                     Text(
                         text = "¿Cómo quieres usar ThumbsUp?",
-                        color = ThumbUpTextPrimary,
+                        color = ThumbsUpTextPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -451,9 +523,9 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                             .clip(RoundedCornerShape(12.dp))
                             .background(
                                 if (uiState.isPasajeroSelected)
-                                    ThumbUpMustard.copy(alpha = 0.12f)
+                                    ThumbsUpMustard.copy(alpha = 0.12f)
                                 else
-                                    ThumbUpSurfaceDark.copy(alpha = 0.3f)
+                                    ThumbsUpSurfaceDark.copy(alpha = 0.3f)
                             )
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -465,12 +537,12 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         ) {
                             Text(
                                 text = "Quiero viajar (Pasajero)",
-                                color = ThumbUpTextPrimary,
+                                color = ThumbsUpTextPrimary,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = "Pide trayectos a otros conductores",
-                                color = ThumbUpTextSecondary,
+                                color = ThumbsUpTextSecondary,
                                 fontSize = 13.sp
                             )
                         }
@@ -480,8 +552,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 perfilVM.onPasajeroToggle(checked)
                             },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = ThumbUpMustard,
-                                checkedTrackColor = ThumbUpMustard.copy(alpha = 0.4f)
+                                checkedThumbColor = ThumbsUpMustard,
+                                checkedTrackColor = ThumbsUpMustard.copy(alpha = 0.4f)
                             )
                         )
                     }
@@ -493,9 +565,9 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                             .clip(RoundedCornerShape(12.dp))
                             .background(
                                 if (uiState.isConductorSelected)
-                                    ThumbUpMustard.copy(alpha = 0.12f)
+                                    ThumbsUpMustard.copy(alpha = 0.12f)
                                 else
-                                    ThumbUpSurfaceDark.copy(alpha = 0.3f)
+                                    ThumbsUpSurfaceDark.copy(alpha = 0.3f)
                             )
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -507,12 +579,12 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         ) {
                             Text(
                                 text = "Quiero llevar gente (Conductor)",
-                                color = ThumbUpTextPrimary,
+                                color = ThumbsUpTextPrimary,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = "Ofrece tu coche y propone rutas",
-                                color = ThumbUpTextSecondary,
+                                color = ThumbsUpTextSecondary,
                                 fontSize = 13.sp
                             )
                         }
@@ -522,8 +594,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 perfilVM.onConductorToggle(checked)
                             },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = ThumbUpMustard,
-                                checkedTrackColor = ThumbUpMustard.copy(alpha = 0.4f)
+                                checkedThumbColor = ThumbsUpMustard,
+                                checkedTrackColor = ThumbsUpMustard.copy(alpha = 0.4f)
                             )
                         )
                     }
@@ -535,7 +607,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
+                    colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
                 ) {
                     Column(
                         modifier = Modifier
@@ -546,7 +618,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
                         Text(
                             text = "Pasajero",
-                            color = ThumbUpTextPrimary,
+                            color = ThumbsUpTextPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -558,15 +630,15 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 Estado.BLOQUEADO -> "Bloqueado"
                                 else -> "Pendiente"
                             },
-                            textColor = ThumbUpTextPrimary,
-                            subColor = ThumbUpTextSecondary
+                            textColor = ThumbsUpTextPrimary,
+                            subColor = ThumbsUpTextSecondary
                         )
 
                         InfoRowLabelValue(
                             label = "Reputación",
                             value = "${uiState.pasajeroRatingAvg} ★ (${uiState.pasajeroRatingCount} valoraciones)",
-                            textColor = ThumbUpTextPrimary,
-                            subColor = ThumbUpTextSecondary
+                            textColor = ThumbsUpTextPrimary,
+                            subColor = ThumbsUpTextSecondary
                         )
                     }
                 }
@@ -577,7 +649,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = ThumbUpCard)
+                    colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
                 ) {
                     Column(
                         modifier = Modifier
@@ -588,7 +660,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
                         Text(
                             text = "Conductor",
-                            color = ThumbUpTextPrimary,
+                            color = ThumbsUpTextPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -600,15 +672,15 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 Estado.BLOQUEADO -> "Bloqueado"
                                 else -> "Pendiente verificación"
                             },
-                            textColor = ThumbUpTextPrimary,
-                            subColor = ThumbUpTextSecondary
+                            textColor = ThumbsUpTextPrimary,
+                            subColor = ThumbsUpTextSecondary
                         )
 
                         InfoRowLabelValue(
                             label = "Reputación",
                             value = "${uiState.conductorRatingAvg} ★ (${uiState.conductorRatingCount} valoraciones)",
-                            textColor = ThumbUpTextPrimary,
-                            subColor = ThumbUpTextSecondary
+                            textColor = ThumbsUpTextPrimary,
+                            subColor = ThumbsUpTextSecondary
                         )
 
                         // Permiso de conducir / verificación conductor
@@ -617,7 +689,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         ) {
                             Text(
                                 text = "Permiso de conducir",
-                                color = ThumbUpTextPrimary,
+                                color = ThumbsUpTextPrimary,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp
                             )
@@ -625,7 +697,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(ThumbUpSurfaceDark.copy(alpha = 0.4f))
+                                    .background(ThumbsUpSurfaceDark.copy(alpha = 0.4f))
                                     .padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -635,13 +707,13 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 ) {
                                     Text(
                                         text = if (uiState.licenciaSubida) "Documento enviado" else "Pendiente de subir",
-                                        color = ThumbUpTextPrimary,
+                                        color = ThumbsUpTextPrimary,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
                                         text = if (uiState.licenciaVerificada) "Verificada" else "En revisión",
-                                        color = if (uiState.licenciaVerificada) ThumbUpMustard else ThumbUpTextSecondary,
+                                        color = if (uiState.licenciaVerificada) ThumbsUpMustard else ThumbsUpTextSecondary,
                                         fontSize = 12.sp
                                     )
                                 }
@@ -650,8 +722,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                     onClick = { /* subir licencia */ },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = ThumbUpMustard,
-                                        contentColor = ThumbUpSurfaceDark
+                                        containerColor = ThumbsUpMustard,
+                                        contentColor = ThumbsUpSurfaceDark
                                     )
                                 ) {
                                     Text(
@@ -669,14 +741,14 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         ) {
                             Text(
                                 text = "Vehículo",
-                                color = ThumbUpTextPrimary,
+                                color = ThumbsUpTextPrimary,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp
                             )
 
                             Text(
                                 text = "Sube una foto clara del coche donde se vea el color y la matrícula.",
-                                color = ThumbUpTextSecondary,
+                                color = ThumbsUpTextSecondary,
                                 fontSize = 12.sp,
                                 lineHeight = 16.sp
                             )
@@ -685,7 +757,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(ThumbUpSurfaceDark.copy(alpha = 0.4f))
+                                    .background(ThumbsUpSurfaceDark.copy(alpha = 0.4f))
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -695,21 +767,21 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                     modifier = Modifier
                                         .size(64.dp)
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(ThumbUpSurfaceDark),
+                                        .background(ThumbsUpSurfaceDark),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (uiState.vehiculoFotoUrl != null) {
                                         Icon(
                                             imageVector = Icons.Default.DirectionsCar,
                                             contentDescription = null,
-                                            tint = ThumbUpMustard,
+                                            tint = ThumbsUpMustard,
                                             modifier = Modifier.size(32.dp)
                                         )
                                     } else {
                                         Icon(
                                             imageVector = Icons.Default.DirectionsCar,
                                             contentDescription = "Añadir vehículo",
-                                            tint = ThumbUpTextSecondary,
+                                            tint = ThumbsUpTextSecondary,
                                             modifier = Modifier.size(32.dp)
                                         )
                                     }
@@ -720,7 +792,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 ) {
                                     Text(
                                         text = if (uiState.vehiculoFotoUrl != null) "añadir vehículo" else "Sin foto",
-                                        color = ThumbUpTextPrimary,
+                                        color = ThumbsUpTextPrimary,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -728,7 +800,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                         text = uiState.vehiculoDescripcion.ifBlank {
                                             "Marca / modelo / color / matrícula"
                                         },
-                                        color = ThumbUpTextSecondary,
+                                        color = ThumbsUpTextSecondary,
                                         fontSize = 12.sp
                                     )
                                 }
@@ -739,8 +811,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                     },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = ThumbUpMustard,
-                                        contentColor = ThumbUpSurfaceDark
+                                        containerColor = ThumbsUpMustard,
+                                        contentColor = ThumbsUpSurfaceDark
                                     )
                                 ) {
                                     Text(
@@ -760,7 +832,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                         .fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = ThumbUpSurfaceDark.copy(alpha = 0.4f)
+                                        containerColor = ThumbsUpSurfaceDark.copy(alpha = 0.4f)
                                     )
                                 ) {
                                     Column(
@@ -779,12 +851,12 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                             label = {
                                                 Text(
                                                     "Modelo",
-                                                    color = ThumbUpTextSecondary
+                                                    color = ThumbsUpTextSecondary
                                                 )
                                             },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
-                                            colors = ThumbUpTextFieldColors(),
+                                            textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                                            colors = ThumbsUpTextFieldColors(),
                                             modifier = Modifier.fillMaxWidth(),
                                             shape = RoundedCornerShape(12.dp)
                                         )
@@ -798,12 +870,12 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                             label = {
                                                 Text(
                                                     "Matrícula",
-                                                    color = ThumbUpTextSecondary
+                                                    color = ThumbsUpTextSecondary
                                                 )
                                             },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
-                                            colors = ThumbUpTextFieldColors(),
+                                            textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                                            colors = ThumbsUpTextFieldColors(),
                                             modifier = Modifier.fillMaxWidth(),
                                             shape = RoundedCornerShape(12.dp)
                                         )
@@ -814,10 +886,10 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                             onValueChange = {
                                                 perfilVM.onColorChange(it)
                                             },
-                                            label = { Text("Color", color = ThumbUpTextSecondary) },
+                                            label = { Text("Color", color = ThumbsUpTextSecondary) },
                                             singleLine = true,
-                                            textStyle = TextStyle(color = ThumbUpTextPrimary),
-                                            colors = ThumbUpTextFieldColors(),
+                                            textStyle = TextStyle(color = ThumbsUpTextPrimary),
+                                            colors = ThumbsUpTextFieldColors(),
                                             modifier = Modifier.fillMaxWidth(),
                                             shape = RoundedCornerShape(12.dp)
                                         )
@@ -829,8 +901,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                             },
                                             shape = RoundedCornerShape(10.dp),
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = ThumbUpMustard,
-                                                contentColor = ThumbUpSurfaceDark
+                                                containerColor = ThumbsUpMustard,
+                                                contentColor = ThumbsUpSurfaceDark
                                             )
                                         ) {
                                             Text(
@@ -851,8 +923,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                                 shape = RoundedCornerShape(10.dp),
                                                 enabled = uiState.isSaveEnableCar,
                                                 colors = ButtonDefaults.buttonColors(
-                                                    containerColor = ThumbUpMustard,
-                                                    contentColor = ThumbUpSurfaceDark
+                                                    containerColor = ThumbsUpMustard,
+                                                    contentColor = ThumbsUpSurfaceDark
                                                 )
                                             ) {
                                                 Text(
@@ -873,7 +945,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                 ) {
                                     Text(
                                         text = "Tus vehículos",
-                                        color = ThumbUpTextPrimary,
+                                        color = ThumbsUpTextPrimary,
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 14.sp
                                     )
@@ -884,14 +956,14 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clip(RoundedCornerShape(10.dp))
-                                                .background(ThumbUpSurfaceDark.copy(alpha = 0.4f))
+                                                .background(ThumbsUpSurfaceDark.copy(alpha = 0.4f))
                                                 .padding(12.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.DirectionsCar,
                                                 contentDescription = null,
-                                                tint = ThumbUpMustard,
+                                                tint = ThumbsUpMustard,
                                                 modifier = Modifier
                                                     .size(24.dp)
                                                     .padding(end = 8.dp)
@@ -899,7 +971,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
                                             Text(
                                                 text = coche.modelo,
-                                                color = ThumbUpTextPrimary,
+                                                color = ThumbsUpTextPrimary,
                                                 fontSize = 14.sp
                                             )
                                         }

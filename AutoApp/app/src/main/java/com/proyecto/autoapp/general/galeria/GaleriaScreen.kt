@@ -162,7 +162,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                 title = {
                     Text(
                         text = "Galería",
-                        color = ThumbUpTextPrimary
+                        color = ThumbsUpTextPrimary
                     )
                 },
                 navigationIcon = {
@@ -178,16 +178,16 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver",
-                            tint = ThumbUpTextPrimary
+                            tint = ThumbsUpTextPrimary
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = ThumbUpPurple
+                    containerColor = ThumbsUpPurple
                 )
             )
         },
-        containerColor = ThumbUpPurple
+        containerColor = ThumbsUpPurple
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -200,7 +200,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
              * */
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ThumbUpCard),
+                colors = CardDefaults.cardColors(containerColor = ThumbsUpCard),
                 shape = RoundedCornerShape(24.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
@@ -230,7 +230,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "Foto de perfil",
-                                tint = ThumbUpMustard,
+                                tint = ThumbsUpMustard,
                                 modifier = Modifier.size(56.dp)
                             )
                         }
@@ -240,14 +240,14 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
 
                     Text(
                         text = "Foto de perfil",
-                        color = ThumbUpTextPrimary,
+                        color = ThumbsUpTextPrimary,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = "Gestiona tus fotos y elige cuál se mostrará a otros usuarios.",
-                        color = ThumbUpTextSecondary,
+                        color = ThumbsUpTextSecondary,
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )
@@ -266,7 +266,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                                 permissionLauncher.launch(android.Manifest.permission.CAMERA)
                             },
                             modifier = Modifier.weight(1f),
-                            border = BorderStroke(1.dp, ThumbUpMustard),
+                            border = BorderStroke(1.dp, ThumbsUpMustard),
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Icon(
@@ -288,7 +288,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ThumbUpMustard,
+                                containerColor = ThumbsUpMustard,
                                 contentColor = Color.Black
                             )
                         ) {
@@ -306,7 +306,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
             Spacer(Modifier.height(24.dp))
             Text(
                 text = "Tus fotos guardadas",
-                color = ThumbUpTextPrimary,
+                color = ThumbsUpTextPrimary,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -325,7 +325,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                 ) {
                     Text(
                         text = "Cuando subas fotos, aparecerán aquí.",
-                        color = ThumbUpTextSecondary
+                        color = ThumbsUpTextSecondary
                     )
                 }
             } else {
@@ -343,7 +343,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
                             modifier = Modifier
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(ThumbUpCard),
+                                .background(ThumbsUpCard),
                             contentAlignment = Alignment.Center
                         ) {
                             AsyncImage(

@@ -10,6 +10,8 @@ data class PerfilUiState(
     val apellidos: String = "",
     val edad: String = "",
     val email: String = "",
+    val telefono: String= "",
+    val fechaNacimiento: Long? = null,
 
     // Foto perfil
     val fotoPerfilUrl: String? = null,

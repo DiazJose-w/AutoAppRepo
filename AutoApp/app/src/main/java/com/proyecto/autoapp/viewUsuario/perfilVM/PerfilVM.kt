@@ -6,6 +6,7 @@ import PerfilUiState
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
@@ -13,7 +14,6 @@ import com.proyecto.autoapp.general.DirectorioStorage
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
-import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -44,17 +44,18 @@ class PerfilVM {
     fun modPerfilUsuario(usuarioActual: String, success: (Boolean) -> Unit) {
         val state = _uiState.value
 
-        // Si la edad está vacía, no seguimos
-        if (state.edad.isBlank()) {
+        val edadInt = calcularEdad(state.fechaNacimiento)
+
+        if (edadInt <= 0) {
+            // No hay fecha o es incorrecta
             success(false)
         } else {
-            val edadInt = state.edad.toIntOrNull() ?: 0
-
-            // Campos que SIEMPRE vamos a actualizar
             val baseUpdates = mutableMapOf<String, Any>(
                 "perfilPasajero.enabled"  to state.isPasajeroSelected,
                 "perfilConductor.enabled" to state.isConductorSelected,
-                "edad" to edadInt
+                "edad" to edadInt,
+                "telefono" to state.telefono,
+                "fechaNacimiento" to (state.fechaNacimiento ?: 0L)
             )
 
             val file = nuevaFotoFile
@@ -132,7 +133,6 @@ class PerfilVM {
             }
     }
 
-
     // =============================================================
     // CARGAR LOS DATOS DEL USUARIO
     // =============================================================
@@ -150,6 +150,10 @@ class PerfilVM {
                         val edad = (document.get("edad") as? Long)?.toInt() ?: 0
                         val email = document.getString("email").orEmpty()
                         val fotoUrl = document.getString("fotoUrl")
+                        val telefono = document.getString("telefono").orEmpty()
+                        val fechaNacimiento = document.getLong("fechaNacimiento")
+
+                        val edadCalculada = calcularEdad(fechaNacimiento)
 
                         // PERFIL PASAJERO
                         val perfilPasajeroMap = document.get("perfilPasajero") as? Map<*, *>
@@ -180,9 +184,11 @@ class PerfilVM {
                         _uiState.value = PerfilUiState(
                             nombre = nombre,
                             apellidos = apellidos,
-                            edad = if (edad == 0) "" else edad.toString(),
+                            edad = if (edadCalculada <= 0) "" else edadCalculada.toString(),
                             email = email,
                             fotoPerfilUrl = fotoUrl,
+                            telefono = telefono,
+                            fechaNacimiento = fechaNacimiento,
                             isPasajeroSelected = pasajeroEnabled,
                             isConductorSelected = conductorEnabled,
                             pasajeroEnabled = if (pasajeroEnabled) Estado.ACTIVO else Estado.PENDIENTE,
@@ -226,6 +232,49 @@ class PerfilVM {
             .addOnFailureListener {
                 Log.e(TAG, "Error al cargar la imagen del usuario")
             }
+    }
+
+    fun cambiarPassword(passwordActual: String, passwordNueva: String,  passwordConfirmacion: String, onResult: (Boolean, String) -> Unit) {
+        val user = auth.currentUser
+
+        if (user == null) {
+            onResult(false, "No se ha encontrado el usuario actual.")
+        } else {
+            val email = user.email
+            val tienePassword = user.providerData.any { info ->
+                info.providerId == EmailAuthProvider.PROVIDER_ID
+            }
+
+            if (email.isNullOrBlank()) {
+                onResult(false, "No se ha podido obtener el email del usuario.")
+            } else if (!tienePassword) {
+                onResult(false, "Tu cuenta está vinculada a Google. La contraseña se gestiona desde tu cuenta de Google.")
+            }else if (passwordActual.isBlank() || passwordNueva.isBlank() || passwordConfirmacion.isBlank()) {
+                onResult(false, "Debes rellenar todos los campos.")
+            } else if (passwordNueva != passwordConfirmacion) {
+                onResult(false, "Las contraseñas nuevas no coinciden.")
+            } else if (passwordNueva.length < 8) {
+                onResult(false, "La nueva contraseña debe tener al menos 8 caracteres.")
+            } else {
+                val credential = EmailAuthProvider.getCredential(email, passwordActual)
+
+                user.reauthenticate(credential)
+                    .addOnSuccessListener {
+                        user.updatePassword(passwordNueva)
+                            .addOnSuccessListener {
+                                onResult(true, "Contraseña actualizada correctamente.")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "Error al actualizar la contraseña", e)
+                                onResult(false, "Error al actualizar la contraseña.")
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al reautenticar al usuario", e)
+                        onResult(false, "La contraseña actual no es correcta.")
+                    }
+            }
+        }
     }
 
     /**
@@ -285,7 +334,7 @@ class PerfilVM {
 
     fun onConductorToggle(checked: Boolean) {
         _uiState.update { curr ->
-            val edadNum = curr.edad.toIntOrNull() ?: 0
+            val edadNum = calcularEdad(curr.fechaNacimiento)
             val permitido = if (checked && edadNum < 18) false else checked
 
             curr.copy(
@@ -298,22 +347,19 @@ class PerfilVM {
     }
 
     // Métodos para poder modificar los datos del usuario
-    fun onEdadChange(edad: String) {
-        _uiState.update {
-            // Convertimos a número si es posible
-            val edadNum = edad.toIntOrNull() ?: 0
-
-            it.copy(
-                edad = edad,
-                showEdadWarningConductor = it.isConductorSelected && edadNum < 18,
-                isSaveEnabled = true
-            )
-        }
-    }
 
     fun onShowEditorVehiculo(){
         _uiState.update {
             it.copy(showVehiculoEditor = !it.showVehiculoEditor)
+        }
+    }
+
+    fun onTelefonoChange(nuevoTelefono: String) {
+        _uiState.update { estadoActual ->
+            estadoActual.copy(
+                telefono = nuevoTelefono,
+                isSaveEnabled = true
+            )
         }
     }
 
@@ -360,5 +406,33 @@ class PerfilVM {
             fotoPerfilUrl = nuevaUri,
             isSaveEnabled = true   // activamos el botón "Guardar cambios"
         )
+    }
+
+    fun calcularEdad(fechaNacimiento: Long?): Int {
+        var edad = 0
+
+        if (fechaNacimiento != null) {
+            val nacimiento = java.util.Calendar.getInstance().apply {
+                timeInMillis = fechaNacimiento
+            }
+
+            val hoy = java.util.Calendar.getInstance()
+
+            edad = hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
+
+            val mesHoy = hoy.get(java.util.Calendar.MONTH)
+            val diaHoy = hoy.get(java.util.Calendar.DAY_OF_MONTH)
+
+            val mesNac = nacimiento.get(java.util.Calendar.MONTH)
+            val diaNac = nacimiento.get(java.util.Calendar.DAY_OF_MONTH)
+
+            if (mesHoy < mesNac || (mesHoy == mesNac && diaHoy < diaNac)) {
+                edad--
+            }
+        } else {
+            edad = 0
+        }
+
+        return edad
     }
 }

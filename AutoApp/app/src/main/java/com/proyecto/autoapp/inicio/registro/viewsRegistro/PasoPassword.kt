@@ -18,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.proyecto.autoapp.ui.theme.ThumbUpPrimaryButton
-import com.proyecto.autoapp.ui.theme.ThumbUpTextFieldColors
+import com.proyecto.autoapp.ui.theme.ThumbsUpPrimaryButton
+import com.proyecto.autoapp.ui.theme.ThumbsUpTextFieldColors
 import com.proyecto.autoapp.ui.theme.TitulosRegistro
 
 @Composable
@@ -47,7 +47,7 @@ fun PasoPassword(password: String, onPasswordChange: (String) -> Unit, onBack: (
             },
             supportingText = { Text("Mínimo 8 caracteres, 1 número") },
             isError = error != null,
-            colors = ThumbUpTextFieldColors()
+            colors = ThumbsUpTextFieldColors()
         )
 
         Spacer(Modifier.height(24.dp))
@@ -65,13 +65,13 @@ fun PasoPassword(password: String, onPasswordChange: (String) -> Unit, onBack: (
             },
             supportingText = { Text("Vuelve a escribir la contraseña") },
             isError = error != null,
-            colors = ThumbUpTextFieldColors()
+            colors = ThumbsUpTextFieldColors()
         )
 
         Spacer(Modifier.height(24.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onBack) { Text("Atrás") }
-            ThumbUpPrimaryButton(
+            ThumbsUpPrimaryButton(
                 text = "Siguiente",
                 enabled = pass.isNotBlank() && password.isNotBlank(),
                 onClick = {

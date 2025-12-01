@@ -121,7 +121,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
+                        containerColor = ThumbsUpMustard,
                         contentColor = Color(0xFF1A1A1A)
                     )
                 ) {
@@ -144,10 +144,10 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                 OutlinedButton(
                     onClick = { mostrarDialogo = false },
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ThumbUpMustard),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.Transparent,
-                        contentColor = ThumbUpMustard
+                        contentColor = ThumbsUpMustard
                     )
                 ) {
                     Text(
@@ -159,7 +159,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                 }
             },
             modifier = Modifier
-                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp))
         )
     }
@@ -188,14 +188,14 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(ThumbUpPurple),
-        containerColor = ThumbUpPurple
+            .background(ThumbsUpPurple),
+        containerColor = ThumbsUpPurple
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(ThumbUpPurple)
+                .background(ThumbsUpPurple)
         ) {
             Image(
                 painter = painterResource(R.mipmap.camino_central),
@@ -229,14 +229,14 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                         onClick = {
                             // navController.navigate(Rutas.Mensajeria)
                         },
-                        containerColor = ThumbUpMustard,
-                        contentColor = ThumbUpSurfaceDark,
+                        containerColor = ThumbsUpMustard,
+                        contentColor = ThumbsUpSurfaceDark,
                         shape = RoundedCornerShape(50),
                         modifier = Modifier
                             .shadow(8.dp, RoundedCornerShape(50))
                             .border(
                                 1.dp,
-                                ThumbUpSurfaceDark.copy(alpha = 0.4f),
+                                ThumbsUpSurfaceDark.copy(alpha = 0.4f),
                                 RoundedCornerShape(50)
                             )
                     ) {
@@ -292,12 +292,12 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                             .shadow(12.dp, RoundedCornerShape(20.dp))
                             .border(
                                 2.dp,
-                                ThumbUpMustard,
+                                ThumbsUpMustard,
                                 RoundedCornerShape(20.dp)
                             ),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = ThumbUpMustard
+                            containerColor = ThumbsUpMustard
                         ),
                         elevation = CardDefaults.cardElevation(
                             defaultElevation = 8.dp
@@ -326,7 +326,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                             .shadow(8.dp, RoundedCornerShape(16.dp))
                             .border(
                                 1.dp,
-                                ThumbUpMustard,
+                                ThumbsUpMustard,
                                 RoundedCornerShape(16.dp)
                             ),
                         colors = CardDefaults.cardColors(
@@ -351,7 +351,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                 label = {
                                     Text(
                                         "Punto de inicio",
-                                        color = ThumbUpMustard,
+                                        color = ThumbsUpMustard,
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -363,7 +363,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     color = Color.White
                                 ),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ThumbUpTextFieldColors(),
+                                colors = ThumbsUpTextFieldColors(),
                                 trailingIcon = {
                                     IconButton(
                                         onClick = {
@@ -375,7 +375,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                         Icon(
                                             imageVector = Icons.Default.MyLocation,
                                             contentDescription = "Usar mi ubicación actual",
-                                            tint = ThumbUpMustard,
+                                            tint = ThumbsUpMustard,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -428,7 +428,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                 label = {
                                     Text(
                                         "Destino",
-                                        color = ThumbUpMustard,
+                                        color = ThumbsUpMustard,
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -440,7 +440,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     color = Color.White
                                 ),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ThumbUpTextFieldColors()
+                                colors = ThumbsUpTextFieldColors()
                             )
                             if (sugerenciasDestino.isNotEmpty()) {
                                 Card(
@@ -485,7 +485,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                     Spacer(Modifier.height(18.dp))
 
                     // Botón realizar petición
-                    ThumbUpPrimaryButton(
+                    ThumbsUpPrimaryButton(
                         text = "Realizar petición",
                         enabled = true,
                         onClick = {
@@ -545,7 +545,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     onCancelarViaje = { }
                                 )
 
-                                ThumbUpAceptarRechazarViaje(
+                                ThumbsUpAceptarRechazarViaje(
                                     visible = accionDialogo != null,
                                     title = when (accionDialogo) {
                                         AccionDialogo.ACEPTAR -> "Aceptar viaje"
@@ -606,7 +606,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     }
                                 )
                                 Spacer(Modifier.height(12.dp))
-                                ThumbUpPrimaryButton(
+                                ThumbsUpPrimaryButton(
                                     text = "Ya estoy con el conductor",
                                     enabled = true,
                                     onClick = {
@@ -633,7 +633,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                 )
 
                                 // Diálogo de confirmación de CANCELAR viaje
-                                ThumbUpAceptarRechazarViaje(
+                                ThumbsUpAceptarRechazarViaje(
                                     visible = showDialogCancelar,
                                     title = "Cancelar viaje",
                                     message = "¿Seguro que quieres cancelar este viaje? El conductor dejará de ver tu ubicación.",
@@ -671,7 +671,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
 
                                 Spacer(Modifier.height(12.dp))
 
-                                ThumbUpPrimaryButton(
+                                ThumbsUpPrimaryButton(
                                     text = "Finalizar viaje",
                                     enabled = true,
                                     onClick = {
@@ -708,7 +708,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                     onClick = {
                         if (uiState.isConductorSelected) {
                             navController.navigate(Rutas.ViewConductor)
-                        } else if (!isEdadValida(uiState.edad)) {
+                        } else if (!isEdadValida(uiState.fechaNacimiento)) {
                             Toast.makeText(context,"No puedes ser conductor. Eres menor de edad",Toast.LENGTH_SHORT).show()
                         } else {
                             mostrarDialogo = true
@@ -719,13 +719,13 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                         .height(54.dp)
                         .border(
                             1.5.dp,
-                            ThumbUpMustard,
+                            ThumbsUpMustard,
                             RoundedCornerShape(14.dp)
                         ),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = ThumbUpMustard
+                        contentColor = ThumbsUpMustard
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {

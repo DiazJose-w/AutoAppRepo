@@ -31,9 +31,9 @@ fun PasoNombreApl(nombre: String, apellidos: String, onNombreChange: (String) ->
             singleLine = true,
             isError = error != null && nombre.isBlank(),
             textStyle = LocalTextStyle.current.copy(
-                color = ThumbUpTextPrimary
+                color = ThumbsUpTextPrimary
             ),
-            colors = ThumbUpTextFieldColors()
+            colors = ThumbsUpTextFieldColors()
         )
 
 
@@ -47,7 +47,7 @@ fun PasoNombreApl(nombre: String, apellidos: String, onNombreChange: (String) ->
             label = { Text("Apellidos") },
             singleLine = true,
             isError = error != null && apellidos.isBlank(),
-            colors = ThumbUpTextFieldColors()
+            colors = ThumbsUpTextFieldColors()
         )
 
         Spacer(Modifier.height(24.dp))
@@ -57,7 +57,7 @@ fun PasoNombreApl(nombre: String, apellidos: String, onNombreChange: (String) ->
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             TextButton(onClick = onBack) { Text("Cancelar") }
-            ThumbUpPrimaryButton(
+            ThumbsUpPrimaryButton(
                 text = "Siguiente",
                 enabled = nombre.isNotBlank() && apellidos.isNotBlank(),
                 onClick = {

@@ -82,7 +82,7 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(ThumbUpPurple),
+                .background(ThumbsUpPurple),
             contentAlignment = Alignment.Center
         ) {
 
@@ -111,11 +111,11 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(14.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = ThumbUpMustard,
+                        focusedIndicatorColor = ThumbsUpMustard,
                         unfocusedIndicatorColor = Color.White.copy(alpha = 1f),
-                        focusedLabelColor = ThumbUpMustard,
+                        focusedLabelColor = ThumbsUpMustard,
                         unfocusedLabelColor = Color.White.copy(alpha = 1f),
-                        cursorColor = ThumbUpMustard,
+                        cursorColor = ThumbsUpMustard,
                         focusedTextColor = Color(0xFF111111),
                         unfocusedTextColor = Color(0xFF111111)
                     )
@@ -132,11 +132,11 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(14.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = ThumbUpMustard,
+                        focusedIndicatorColor = ThumbsUpMustard,
                         unfocusedIndicatorColor = Color.White.copy(alpha = 1f),
-                        focusedLabelColor = ThumbUpMustard,
+                        focusedLabelColor = ThumbsUpMustard,
                         unfocusedLabelColor = Color.White.copy(alpha = 1f),
-                        cursorColor = ThumbUpMustard,
+                        cursorColor = ThumbsUpMustard,
                         focusedTextColor = Color(0xFF111111),
                         unfocusedTextColor = Color(0xFF111111)
                     )
@@ -172,9 +172,9 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                         .height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ThumbUpMustard,
+                        containerColor = ThumbsUpMustard,
                         contentColor = Color(0xFF1A1A1A),
-                        disabledContainerColor = ThumbUpMustard.copy(alpha = 0.40f),
+                        disabledContainerColor = ThumbsUpMustard.copy(alpha = 0.40f),
                         disabledContentColor = Color(0xFF1A1A1A).copy(alpha = 0.60f)
                     )
                 ) {
@@ -196,7 +196,7 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                                 .background(Color.White, shape = RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = ThumbUpMustard)
+                            CircularProgressIndicator(color = ThumbsUpMustard)
                         }
                     }
                 }
