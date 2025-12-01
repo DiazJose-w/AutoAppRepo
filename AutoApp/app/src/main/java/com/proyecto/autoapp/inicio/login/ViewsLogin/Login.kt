@@ -101,7 +101,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                         )
                     ) {
                         Text(
-                            text = "Modo viajero",
+                            text = "Viajero",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -128,7 +128,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "Modo conductor",
+                            text = "Conductor",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             )

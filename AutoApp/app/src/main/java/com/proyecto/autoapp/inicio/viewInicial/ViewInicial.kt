@@ -9,16 +9,26 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -31,6 +41,10 @@ import com.proyecto.autoapp.ui.theme.*
 fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     var TAG="Jose"
     var context = LocalContext.current
+
+    var showDialogRol by remember { mutableStateOf(false) }
+    var rolEsViajero by remember { mutableStateOf(true) }
+    var rolEsConductor by remember { mutableStateOf(false) }
 
     // Launcher que recibe el resultado del intent de Google
     val googleSignInLauncher = rememberLauncherForActivityResult(
@@ -45,8 +59,25 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                 if (idToken != null) {
                     loginVM.loginWithGoogle(idToken, { ok ->
                         if (ok) {
-                            Toast.makeText(context, "Sesión iniciada", Toast.LENGTH_SHORT).show()
-                            navController.navigate(Rutas.ViewViajero)
+                            loginVM.obtenerRolesUsuario { esViajero, esConductor ->
+                                rolEsViajero = esViajero
+                                rolEsConductor = esConductor
+
+                                when {
+                                    esConductor && !esViajero -> {
+                                        navController.navigate(Rutas.ViewConductor)
+                                    }
+                                    esViajero && !esConductor -> {
+                                        navController.navigate(Rutas.ViewViajero)
+                                    }
+                                    esViajero && esConductor -> {
+                                        showDialogRol = true
+                                    }
+                                    else -> {
+                                        navController.navigate(Rutas.Perfil)
+                                    }
+                                }
+                            }
                         } else {
                             Toast.makeText(context, "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
                         }
@@ -80,6 +111,90 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
     }
 
     /** ----------------------------------------------- */
+
+    if (showDialogRol) {
+        AlertDialog(
+            onDismissRequest = { showDialogRol = false },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .border(1.dp, ThumbUpMustard, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp)),
+            title = {
+                Text(
+                    text = "¿Cómo quieres usar ThumbsUp?",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Tu cuenta tiene rol de viajero y de conductor. Elige con qué modo quieres entrar ahora.",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(end = 4.dp, bottom = 4.dp)
+                ) {
+                    // Botón Modo viajero
+                    OutlinedButton(
+                        onClick = {
+                            showDialogRol = false
+                            navController.navigate(Rutas.ViewViajero)
+                            Toast.makeText(context, "Entrando en modo viajero", Toast.LENGTH_SHORT).show()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, ThumbUpMustard),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = ThumbUpMustard
+                        )
+                    ) {
+                        Text(
+                            text = "Viajero",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+
+                    // Botón Modo conductor
+                    Button(
+                        onClick = {
+                            showDialogRol = false
+                            navController.navigate(Rutas.ViewConductor)
+                            Toast.makeText(context, "Entrando en modo conductor", Toast.LENGTH_SHORT).show()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ThumbUpMustard,
+                            contentColor = Color(0xFF1A1A1A)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Conductor",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
+            },
+            dismissButton = {}
+        )
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
