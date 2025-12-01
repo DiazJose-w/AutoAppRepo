@@ -2,7 +2,6 @@ package com.proyecto.autoapp.inicio.registro
 
 import com.google.firebase.functions.FirebaseFunctions
 import android.util.Log
-import androidx.compose.foundation.layout.Column
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -12,9 +11,12 @@ import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 import com.proyecto.autoapp.general.modelo.perfil.PerfilConductor
 import com.proyecto.autoapp.general.modelo.perfil.PerfilPasajero
 import com.proyecto.autoapp.general.modelo.usuarios.Customer
-import com.proyecto.autoapp.general.modelo.usuarios.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.Timestamp
+import java.util.Date
+
+
 
 class RegistroVM() {
     val TAG = "Jose"
@@ -36,6 +38,10 @@ class RegistroVM() {
 
                     if (userId != null) {
                         val edadInt = calcularEdad(fechaNacimiento)
+
+                        val fechaNacimientoTimestamp = fechaNacimiento?.let { millis ->
+                            Timestamp(Date(millis))
+                        }
 
                         val customer = Customer(
                             id = userId,
@@ -67,7 +73,7 @@ class RegistroVM() {
                             "apellidos" to customer.apellidos,
                             "email" to customer.email,
                             "edad" to customer.edad,
-                            "fechaNacimiento" to (fechaNacimiento ?: 0L),
+                            "fechaNacimiento" to fechaNacimientoTimestamp,
                             "password" to customer.password,
                             "fotoUrl" to customer.fotoUrl,
                             "rol" to RolUsuario.CUSTOMER.name,
@@ -144,7 +150,8 @@ class RegistroVM() {
 
             val hoy = java.util.Calendar.getInstance()
 
-            edadResultado = hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
+            edadResultado =
+                hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
 
             val mesHoy = hoy.get(java.util.Calendar.MONTH)
             val diaHoy = hoy.get(java.util.Calendar.DAY_OF_MONTH)
@@ -159,4 +166,5 @@ class RegistroVM() {
 
         return edadResultado
     }
+
 }
