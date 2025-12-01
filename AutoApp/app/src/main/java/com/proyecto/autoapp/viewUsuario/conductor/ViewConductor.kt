@@ -55,6 +55,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     var showDialogAccion by remember { mutableStateOf(false) }
     var peticionSeleccionada by remember { mutableStateOf<Peticion?>(null) }
     var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
+    var showDialogPasajero by remember { mutableStateOf(false) }
 
     // Launcher para poder escuchar las peticiones
     LaunchedEffect(Unit) {
@@ -102,6 +103,85 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
             }
         }
     )
+
+    if (showDialogPasajero) {
+        AlertDialog(
+            onDismissRequest = { showDialogPasajero = false },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            tonalElevation = 8.dp,
+            title = {
+                Text(
+                    text = "¿Quieres activar el modo viajero?",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Para continuar deberás activar tu perfil como pasajero. ¿Deseas activar el modo viajero?",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialogPasajero = false
+                        perfilVM.modEstadoPasajero(usuarioActual) { ok ->
+                            if (ok) {
+                                navController.navigate(Rutas.ViewViajero) {
+                                    popUpTo(Rutas.ViewConductor) { inclusive = true }
+                                }
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Hubo un error al activar el modo viajero",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbsUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    )
+                ) {
+                    Text(
+                        text = "Sí, activar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showDialogPasajero = false },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbsUpMustard
+                    )
+                ) {
+                    Text(
+                        text = "Cancelar",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            },
+            modifier = Modifier
+                .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+        )
+    }
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -492,8 +572,12 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 // BOTÓN FIJO ABAJO (fuera del scroll)
                 Button(
                     onClick = {
-                        navController.navigate(Rutas.ViewViajero) {
-                            popUpTo(Rutas.ViewConductor) { inclusive = true }
+                        if (uiState.isPasajeroSelected) {
+                            navController.navigate(Rutas.ViewViajero) {
+                                popUpTo(Rutas.ViewConductor) { inclusive = true }
+                            }
+                        } else {
+                            showDialogPasajero = true
                         }
                     },
                     modifier = Modifier

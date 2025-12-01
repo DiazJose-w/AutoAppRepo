@@ -1,5 +1,6 @@
 package com.proyecto.autoapp.viewUsuario
 
+import android.R.attr.navigationIcon
 import android.net.Uri
 import android.os.Environment
 import android.util.Log
@@ -135,6 +136,8 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
 
     var showExitDialog by remember { mutableStateOf(false) }
     var showDialogPassword by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showDialogElegirRolPrimerAcceso by remember { mutableStateOf(false) }
 
     if (mostrarDialogoElegirFuente) {
         AlertDialog(
@@ -233,6 +236,95 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
         )
     }
 
+    if (showDialogElegirRolPrimerAcceso) {
+        AlertDialog(
+            onDismissRequest = { showDialogElegirRolPrimerAcceso = false },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color(0xFF1A1A1A),
+            title = {
+                Text(
+                    text = "¿Cómo quieres usar ThumbsUp?",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    text = "Tienes activado el modo viajero y conductor. Elige cómo quieres entrar ahora.",
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialogElegirRolPrimerAcceso = false
+                        navController.navigate(Rutas.ViewConductor) {
+                            popUpTo(Rutas.ViewInicial) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThumbsUpMustard,
+                        contentColor = Color(0xFF1A1A1A)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DirectionsCar,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Entrar como conductor")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showDialogElegirRolPrimerAcceso = false
+                        navController.navigate(Rutas.ViewViajero) {
+                            popUpTo(Rutas.ViewInicial) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, ThumbsUpMustard),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ThumbsUpMustard
+                    )
+                ) {
+                    Text("Entrar como viajero")
+                }
+            }
+        )
+    }
+
+    if (showDatePicker && primerAcceso) {
+        val fechaInicial = uiState.fechaNacimiento ?: System.currentTimeMillis()
+
+        val calInicial = Calendar.getInstance().apply {
+            timeInMillis = fechaInicial
+        }
+
+        val year = calInicial.get(Calendar.YEAR)
+        val month = calInicial.get(Calendar.MONTH)
+        val day = calInicial.get(Calendar.DAY_OF_MONTH)
+
+        DatePickerDialog(context,
+            { _, y, m, d ->
+                val calSeleccionada = Calendar.getInstance().apply {
+                    set(y, m, d, 0, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val fechaMillis = calSeleccionada.timeInMillis
+
+                perfilVM.onFechaNacimientoSeleccionada(fechaMillis)
+                showDatePicker = false
+            }, year, month, day).show()
+    }
+
     LaunchedEffect(usuario) {
         if (usuario.isNotBlank()) {
             perfilVM.cargarUsuario(usuario)
@@ -244,13 +336,57 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
         visible = showExitDialog,
         onSalirIgualmente = {
             showExitDialog = false
+
             if (primerAcceso) {
-                navController.navigate(Rutas.ViewViajero) {
-                    popUpTo(Rutas.ViewInicial) { inclusive = false }
-                    launchSingleTop = true
+                perfilVM.comprobarRolesServidor(usuario) { esPasajeroSrv, esConductorSrv ->
+                    when {
+                        !esPasajeroSrv && !esConductorSrv -> {
+                            Toast.makeText(context, "Debes elegir al menos un rol para continuar", Toast.LENGTH_SHORT).show()
+                        }
+                        esPasajeroSrv && !esConductorSrv -> {
+                            navController.navigate(Rutas.ViewViajero) {
+                                popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                        !esPasajeroSrv && esConductorSrv -> {
+                            navController.navigate(Rutas.ViewConductor) {
+                                popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                        else -> {
+                            showDialogElegirRolPrimerAcceso = true
+                        }
+                    }
                 }
             } else {
-                navController.popBackStack()
+                perfilVM.comprobarRolesServidor(usuario) { esPasajeroSrv, esConductorSrv ->
+                    if (!esPasajeroSrv && !esConductorSrv) {
+                        Toast.makeText(context, "Debes tener al menos un rol activo", Toast.LENGTH_SHORT).show()
+                    } else {
+                        when {
+                            !esPasajeroSrv && !esConductorSrv -> {
+                                Toast.makeText(context, "Debes elegir al menos un rol para continuar", Toast.LENGTH_SHORT).show()
+                            }
+                            esPasajeroSrv && !esConductorSrv -> {
+                                navController.navigate(Rutas.ViewViajero) {
+                                    popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            }
+                            !esPasajeroSrv && esConductorSrv -> {
+                                navController.navigate(Rutas.ViewConductor) {
+                                    popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            }
+                            else -> {
+                                showDialogElegirRolPrimerAcceso = true
+                            }
+                        }
+                    }
+                }
             }
         },
         onCancelar = {
@@ -260,6 +396,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             showExitDialog = false
         }
     )
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -274,28 +411,53 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                     )
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if (uiState.isSaveEnabled) {
-                                showExitDialog = true
-                            } else {
-                                if (primerAcceso) {
-                                    navController.navigate(Rutas.ViewViajero) {
-                                        popUpTo(Rutas.ViewInicial) { inclusive = false }
-                                        launchSingleTop = true
-                                    }
+                        IconButton(
+                            onClick = {
+                                if (uiState.isSaveEnabled) {
+                                    showExitDialog = true
                                 } else {
-                                    navController.popBackStack()
+                                    if (primerAcceso) {
+                                        perfilVM.comprobarRolesServidor(usuario) { esPasajeroSrv, esConductorSrv ->
+                                            when {
+                                                !esPasajeroSrv && !esConductorSrv -> {
+                                                    Toast.makeText(context, "Debes elegir al menos un rol para continuar", Toast.LENGTH_SHORT).show()
+                                                }
+                                                esPasajeroSrv && !esConductorSrv -> {
+                                                    navController.navigate(Rutas.ViewViajero) {
+                                                        popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                                        launchSingleTop = true
+                                                    }
+                                                }
+                                                !esPasajeroSrv && esConductorSrv -> {
+                                                    navController.navigate(Rutas.ViewConductor) {
+                                                        popUpTo(Rutas.ViewInicial) { inclusive = false }
+                                                        launchSingleTop = true
+                                                    }
+                                                }
+                                                else -> {
+                                                    showDialogElegirRolPrimerAcceso = true
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        perfilVM.comprobarRolesServidor(usuario) { esPasajeroSrv, esConductorSrv ->
+                                            if (!esPasajeroSrv && !esConductorSrv) {
+                                                Toast.makeText(context, "Debes tener al menos un rol activo", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                navController.popBackStack()
+                                            }
+                                        }
+                                    }
                                 }
                             }
+
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = ThumbsUpMustard
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = ThumbsUpMustard
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = ThumbsUpPurple
@@ -421,11 +583,30 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                             label = { Text("Fecha de nacimiento", color = ThumbsUpTextSecondary) },
                             singleLine = true,
                             readOnly = true,
+                            enabled = primerAcceso,
                             modifier = Modifier
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .then(
+                                    if (primerAcceso) {
+                                        Modifier.clickable { showDatePicker = true }
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
                             textStyle = TextStyle(color = ThumbsUpTextPrimary),
                             colors = ThumbsUpTextFieldColors(),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            trailingIcon = {
+                                if (primerAcceso) {
+                                    IconButton(onClick = { showDatePicker = true }) {
+                                        Icon(
+                                            imageVector = Icons.Default.CalendarMonth,
+                                            contentDescription = "Seleccionar fecha",
+                                            tint = ThumbsUpMustard
+                                        )
+                                    }
+                                }
+                            }
                         )
 
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -470,7 +651,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = ThumbsUpPurple,
-                            contentColor = ThumbsUpTextPrimary    // blanco
+                            contentColor = ThumbsUpTextPrimary
                         )
                     ) {
                         Text(
@@ -986,3 +1167,4 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
         }
     }
 }
+

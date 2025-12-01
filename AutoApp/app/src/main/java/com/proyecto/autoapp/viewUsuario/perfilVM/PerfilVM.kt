@@ -133,6 +133,29 @@ class PerfilVM {
             }
     }
 
+    fun modEstadoPasajero(usuarioActual: String, success: (Boolean) -> Unit) {
+        val updates = mapOf(
+            "perfilPasajero.enabled" to true
+        )
+
+        db.collection(usuario)
+            .document(usuarioActual)
+            .update(updates)
+            .addOnSuccessListener {
+                _uiState.update {
+                    it.copy(
+                        isPasajeroSelected = true,
+                        pasajeroEnabled = Estado.ACTIVO
+                    )
+                }
+                success(true)
+            }
+            .addOnFailureListener { e ->
+                Log.e("PerfilVM", "Error al actualizar pasajeroEnabled en Firestore", e)
+                success(false)
+            }
+    }
+
     // =============================================================
     // CARGAR LOS DATOS DEL USUARIO
     // =============================================================
@@ -318,6 +341,25 @@ class PerfilVM {
             }
     }
 
+    fun comprobarRolesServidor(uid: String, onResult: (esPasajeroSrv: Boolean, esConductorSrv: Boolean) -> Unit) {
+        db.collection(usuario)
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                // Ajusta los nombres de campos a los tuyos reales
+                val perfilPasajero = doc.get("perfilPasajero") as? Map<*, *>
+                val perfilConductor = doc.get("perfilConductor") as? Map<*, *>
+
+                val pasajeroEnabled = perfilPasajero?.get("enabled") as? Boolean ?: false
+                val conductorEnabled = perfilConductor?.get("enabled") as? Boolean ?: false
+
+                onResult(pasajeroEnabled, conductorEnabled)
+            }
+            .addOnFailureListener {
+                onResult(false, false)
+            }
+    }
+
     // =============================================================
     // MÉTODOS QUE TRABAJAN LAS VARIABLES DE LA VISTA. MODIFICACIÓN INSTANTÁNEA
     // =============================================================
@@ -347,7 +389,6 @@ class PerfilVM {
     }
 
     // Métodos para poder modificar los datos del usuario
-
     fun onShowEditorVehiculo(){
         _uiState.update {
             it.copy(showVehiculoEditor = !it.showVehiculoEditor)
@@ -362,6 +403,20 @@ class PerfilVM {
             )
         }
     }
+
+    fun onFechaNacimientoSeleccionada(fechaMillis: Long) {
+        _uiState.update { curr ->
+            val edadCalculada = calcularEdad(fechaMillis)
+
+            curr.copy(
+                fechaNacimiento = fechaMillis,
+                edad = if (edadCalculada <= 0) "" else edadCalculada.toString(),
+                showEdadWarningConductor = curr.isConductorSelected && edadCalculada < 18,
+                isSaveEnabled = true
+            )
+        }
+    }
+
 
     // Métodos para poder modificar los datos del vehículo
     fun onModeloChange(modelo: String){
