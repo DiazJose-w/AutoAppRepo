@@ -86,12 +86,15 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(end = 4.dp, bottom = 4.dp)
                 ) {
-                    // Botón Modo viajero
                     OutlinedButton(
                         onClick = {
                             showDialogRol = false
                             navController.navigate(Rutas.ViewViajero)
-                            Toast.makeText(context, "Entrando en modo viajero", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Entrando en modo viajero",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         },
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, ThumbsUpMustard),
@@ -108,12 +111,15 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                         )
                     }
 
-                    // Botón Modo conductor
                     Button(
                         onClick = {
                             showDialogRol = false
                             navController.navigate(Rutas.ViewConductor)
-                            Toast.makeText(context, "Entrando en modo conductor", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Entrando en modo conductor",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -186,10 +192,8 @@ fun Login(navController: NavController, loginVM: LoginVM) {
 
                 Spacer(Modifier.height(24.dp))
 
-                // Card del formulario de login
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = ThumbsUpCard)
                 ) {
@@ -203,8 +207,7 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                             onValueChange = { email = it },
                             label = { Text("Correo") },
                             singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
                             colors = ThumbsUpTextFieldColors()
                         )
@@ -217,21 +220,32 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                             label = { Text("Password") },
                             visualTransformation = PasswordVisualTransformation(),
                             singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
                             colors = ThumbsUpTextFieldColors()
                         )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        TextButton(
+                            onClick = { navController.navigate(Rutas.TokenSMS) },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                text = "¿Has olvidado la contraseña? Entrar con SMS",
+                                color = ThumbsUpMustard,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
 
                 Spacer(Modifier.height(24.dp))
 
-                // Botón login
                 Button(
                     onClick = {
                         if (email.isBlank() || password.isBlank()) {
-                            Toast.makeText(context, "No debe haber campos vacíos", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "No debe haber campos vacíos",Toast.LENGTH_SHORT).show()
                         } else {
                             loginVM.login(email, password) { ok ->
                                 if (ok) {
@@ -243,19 +257,22 @@ fun Login(navController: NavController, loginVM: LoginVM) {
                                             esConductor && !esViajero -> {
                                                 navController.navigate(Rutas.ViewConductor)
                                             }
+
                                             esViajero && !esConductor -> {
                                                 navController.navigate(Rutas.ViewViajero)
                                             }
+
                                             esViajero && esConductor -> {
                                                 showDialogRol = true
                                             }
+
                                             else -> {
                                                 navController.navigate(Rutas.Perfil)
                                             }
                                         }
                                     }
                                 } else {
-                                    Toast.makeText(context, "Comprueba usuario o contraseña", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Comprueba usuario o contraseña",  Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }

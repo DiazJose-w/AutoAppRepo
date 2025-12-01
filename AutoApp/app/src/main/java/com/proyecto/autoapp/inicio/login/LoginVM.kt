@@ -271,15 +271,33 @@ class LoginVM {
             isLoading.value = true
 
             val options = PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(numberPhone)                // p.ej. "+34600111222"
+                .setPhoneNumber(numberPhone)
                 .setTimeout(60L, TimeUnit.SECONDS)
-                .setActivity(activity)                    // la Activity viene de la UI
+                .setActivity(activity)
                 .setCallbacks(callbacks)
                 .build()
 
             PhoneAuthProvider.verifyPhoneNumber(options)
         }
     }
+
+    fun comprobarTelefonoRegistrado(phoneE164: String, onResult: (Boolean) -> Unit) {
+        FirebaseFirestore.getInstance()
+            .collection(usuario)
+            .whereEqualTo("telefono", phoneE164)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val existe = !snapshot.isEmpty
+                onResult(existe)
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error comprobando teléfono", e)
+                errorMessage.value = e.message ?: "Error comprobando el teléfono"
+                onResult(false)
+            }
+    }
+
 
     fun resendCode(activity: Activity, phoneE164: String) {
         val token = resendToken ?: run { errorMessage.value = "No hay token de reenvío"; return }

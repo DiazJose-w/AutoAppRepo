@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.proyecto.autoapp.general.Rutas
 import com.proyecto.autoapp.general.funcionesComunes.formatE164
 import com.proyecto.autoapp.ui.theme.TopBarGeneral
 import com.proyecto.autoapp.inicio.login.LoginVM
@@ -44,7 +45,7 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
 
     val isLoading by loginVM.isLoading.collectAsState()
     val errorMsg by loginVM.errorMessage.collectAsState()
-    val codeSent by loginVM.codeSent.collectAsState()       // <- ver ajuste del VM abajo
+    val codeSent by loginVM.codeSent.collectAsState()
     val loginOk by loginVM.loginSuccess.collectAsState()
 
     /**
@@ -58,9 +59,10 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
     LaunchedEffect(loginOk) {
         if (loginOk) {
             Toast.makeText(context, "Inicio de sesión correcto", Toast.LENGTH_LONG).show()
-            navController.navigate("home") { popUpTo("login") { inclusive = true } }
+            navController.navigate(Rutas.Perfil)
         }
     }
+
     /** --------------------------------------  */
 
     Scaffold(
@@ -150,10 +152,16 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                         if (!codeRequested) {
                             val formato = formatE164(phone, defaultRegion = "ES")
                             if (formato == null) {
-                                Toast.makeText(context, "Formáto incorrecto", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Formato de teléfono incorrecto", Toast.LENGTH_SHORT).show()
                             } else {
-                                loginVM.startPhoneVerification(context as Activity, formato)
-                                codeRequested = true
+                                loginVM.comprobarTelefonoRegistrado(formato) { existe ->
+                                    if (existe) {
+                                        loginVM.startPhoneVerification(context as Activity, formato)
+                                        codeRequested = true
+                                    } else {
+                                        Toast.makeText(context, "El número introducido no está asociado a ninguna cuenta", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             }
                         } else {
                             if (code.length == 6) {
@@ -164,8 +172,7 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                         }
                     },
                     enabled = !isLoading && (
-                            if (!codeRequested) phone.isNotBlank() else code.length == 6
-                            ),
+                            if (!codeRequested) phone.isNotBlank() else code.length == 6),
                     modifier = Modifier
                         .fillMaxWidth(0.5f)
                         .align(Alignment.CenterHorizontally)
@@ -185,6 +192,7 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                     }
                     Text(text, fontWeight = FontWeight.SemiBold)
                 }
+
 
                 Spacer(modifier = Modifier.height(8.dp))
 

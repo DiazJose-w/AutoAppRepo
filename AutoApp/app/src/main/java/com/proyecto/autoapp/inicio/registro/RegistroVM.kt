@@ -116,7 +116,6 @@ class RegistroVM() {
                         errorMessage.value = "No se pudo obtener el UID del usuario"
                         onResult(false)
                     }
-
                 } else {
                     isLoading.value = false
                     errorMessage.value = task.exception?.message ?: "Error creando Auth"
@@ -150,8 +149,7 @@ class RegistroVM() {
 
             val hoy = java.util.Calendar.getInstance()
 
-            edadResultado =
-                hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
+            edadResultado = hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
 
             val mesHoy = hoy.get(java.util.Calendar.MONTH)
             val diaHoy = hoy.get(java.util.Calendar.DAY_OF_MONTH)
@@ -166,5 +164,4 @@ class RegistroVM() {
 
         return edadResultado
     }
-
 }
