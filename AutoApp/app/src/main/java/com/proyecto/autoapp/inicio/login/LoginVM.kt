@@ -1,7 +1,6 @@
 package com.proyecto.autoapp.inicio.login
 
 import android.app.Activity
-import com.proyecto.autoapp.R
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -13,168 +12,192 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.proyecto.autoapp.R
 import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.funcionesComunes.formatE164
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.toString
 
 class LoginVM {
-    var TAG = "Jose"
-    var usuario = Coleccion.Usuario
-    private val auth = FirebaseAuth.getInstance()
+
+    private val TAG = "Jose"
+
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val usuarioCollection = Coleccion.Usuario
+
+    private val _uidActual = MutableStateFlow("")
+    val uidActual: StateFlow<String> = _uidActual.asStateFlow()
+
+    fun setUidActual(uid: String) {
+        _uidActual.value = uid
+    }
+
+    fun limpiarUidActual() {
+        _uidActual.value = ""
+    }
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _loginSuccess = MutableStateFlow(false)
+    val loginSuccess: StateFlow<Boolean> = _loginSuccess.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private fun setLoading(value: Boolean) {
+        _isLoading.value = value
+    }
+
+    private fun setError(msg: String?) {
+        _errorMessage.value = msg
+    }
+
+    private fun setLoginSuccess(value: Boolean) {
+        _loginSuccess.value = value
+    }
 
     var usuarioLogeado: Map<String, Any>? = null
-    private val _uidActual = MutableStateFlow("")
-    val uidActual = _uidActual.asStateFlow()
 
-    val isLoading = MutableStateFlow(false)
-    val loginSuccess = MutableStateFlow(false)
-    val errorMessage = MutableStateFlow<String?>(null)
-
-    // Propiedad de verificación sms
-    val codeSent = MutableStateFlow(false)
-
-    /** Login con correo y contraseña.
-     *  Login con Google.
-     *  SingOut
-     **/
     fun login(correo: String, pass: String, onResult: (Boolean) -> Unit) {
-        isLoading.value = true
-        errorMessage.value = null
+        setLoading(true)
+        setError(null)
 
         auth.signInWithEmailAndPassword(correo, pass)
             .addOnCompleteListener { task ->
-                isLoading.value = false
+                setLoading(false)
 
-                if (task.isSuccessful) {
-                    val usuarioAuth = task.result?.user
+                if (!task.isSuccessful) {
+                    setError(task.exception?.message ?: "Error desconocido en el inicio de sesión")
+                    onResult(false)
+                    return@addOnCompleteListener
+                }
 
-                    if (usuarioAuth != null) {
-                        val firestore = FirebaseFirestore.getInstance()
-                        val usuarioDocRef = firestore.collection(usuario).document(usuarioAuth.uid)
+                val usuarioAuth = task.result?.user
+                if (usuarioAuth == null) {
+                    setError("Error al obtener el usuario")
+                    onResult(false)
+                    return@addOnCompleteListener
+                }
 
-                        usuarioDocRef.get()
-                            .addOnSuccessListener { user ->
-                                if (user.exists()) {
-                                    setUidActual(user.id)
-                                    Log.e("Jose", "Uid de usuario logeado ${uidActual.value}}")
-                                    onResult(true)
-                                } else {
-                                    onResult(false)
-                                }
-                            }
-                            .addOnFailureListener { e ->
-                                errorMessage.value = e.message
-                                onResult(false)
-                            }
-                    } else {
-                        errorMessage.value = "Error al obtener el usuario"
+                db.collection(usuarioCollection)
+                    .document(usuarioAuth.uid)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        if (doc.exists()) {
+                            setUidActual(doc.id)
+                            Log.e(TAG, "Uid de usuario logeado = ${uidActual.value}")
+                            onResult(true)
+                        } else {
+                            setError("No existe documento de usuario en Firestore")
+                            onResult(false)
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        setError(e.message)
                         onResult(false)
                     }
-                } else {
-                    errorMessage.value = task.exception?.message ?: "Error desconocido en el inicio de sesión"
-                    onResult(false)
-                }
             }
     }
 
     fun loginWithGoogle(idToken: String, onResult: (Boolean) -> Unit, uid: (String) -> Unit) {
-        isLoading.value = true
-        errorMessage.value = null
+        setLoading(true)
+        setError(null)
 
         val credential = GoogleAuthProvider.getCredential(idToken, null)
 
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
-                isLoading.value = false
+                setLoading(false)
 
-                if (task.isSuccessful) {
-                    val userAuth = auth.currentUser
+                if (!task.isSuccessful) {
+                    setError(task.exception?.message ?: "Error desconocido en login")
+                    onResult(false)
+                    return@addOnCompleteListener
+                }
 
-                    if (userAuth != null) {
-                        val uidUsuario = userAuth.uid
-                        val firestore = FirebaseFirestore.getInstance()
-                        val usuarioDocRef = firestore.collection(usuario).document(uidUsuario)
+                val userAuth = auth.currentUser
+                if (userAuth == null) {
+                    setError("No se pudo obtener el usuario autenticado")
+                    onResult(false)
+                    return@addOnCompleteListener
+                }
 
-                        usuarioDocRef.get()
-                            .addOnSuccessListener { user ->
-                                if (user.exists()) {
-                                    //usuarioLogeado = user.data
-                                    setUidActual(user.id)
-                                    val esNuevo = user.getBoolean("nuevo") ?: false
-                                    if (esNuevo) {
-                                        usuarioDocRef.update("nuevo", false)
-                                    }
+                val uidUsuario = userAuth.uid
+                val usuarioDocRef = db.collection(usuarioCollection).document(uidUsuario)
+
+                usuarioDocRef.get()
+                    .addOnSuccessListener { doc ->
+                        if (doc.exists()) {
+                            setUidActual(doc.id)
+
+                            val esNuevo = doc.getBoolean("nuevo") ?: false
+                            if (esNuevo) {
+                                usuarioDocRef.update("nuevo", false)
+                            }
+
+                            uid(uidActual.value)
+                            onResult(true)
+                        } else {
+                            val perfilConductorInit = mapOf(
+                                "enabled" to false,
+                                "ratingAvg" to 0.0,
+                                "ratingCount" to 0,
+                                "vehiculoActivoId" to null,
+                                "licenciaSubida" to false,
+                                "licenciaVerificada" to false
+                            )
+                            val perfilPasajeroInit = mapOf(
+                                "enabled" to false,
+                                "ratingAvg" to 0.0,
+                                "ratingCount" to 0
+                            )
+
+                            val nuevoUsuario: Map<String, Any> = mapOf(
+                                "id" to uidUsuario,
+                                "nombre" to (userAuth.displayName ?: ""),
+                                "apellidos" to "",
+                                "email" to (userAuth.email ?: ""),
+                                "edad" to 0,
+                                "password" to "",
+                                "fotoUrl" to (userAuth.photoUrl?.toString() ?: ""),
+                                "rol" to RolUsuario.CUSTOMER.name,
+                                "nuevo" to true,
+                                "perfilConductor" to perfilConductorInit,
+                                "perfilPasajero" to perfilPasajeroInit
+                            )
+
+                            usuarioDocRef
+                                .set(nuevoUsuario)
+                                .addOnSuccessListener {
+                                    setUidActual(usuarioDocRef.id)
                                     uid(uidActual.value)
                                     onResult(true)
-                                } else {
-                                    // Primero mapear los perfiles
-                                    val perfilConductorInit = mapOf(
-                                        "enabled" to false,
-                                        "ratingAvg" to 0.0,
-                                        "ratingCount" to 0,
-                                        "vehiculoActivoId" to null,
-                                        "licenciaSubida" to false,
-                                        "licenciaVerificada" to false
-                                    )
-                                    val perfilPasajeroInit = mapOf(
-                                        "enabled" to false,
-                                        "ratingAvg" to 0.0,
-                                        "ratingCount" to 0
-                                    )
-
-                                    // 2. Montamos el documento del usuario
-                                    val nuevoUsuario: Map<String, Any> = mapOf(
-                                        "id" to uidUsuario,
-                                        "nombre" to (userAuth.displayName ?: ""),
-                                        "apellidos" to "",
-                                        "email" to (userAuth.email ?: ""),
-                                        "edad" to 0,
-                                        "password" to "",
-                                        "fotoUrl" to (userAuth.photoUrl?.toString() ?: ""),
-                                        "rol" to RolUsuario.CUSTOMER.name,
-                                        "nuevo" to true,
-                                        "perfilConductor" to perfilConductorInit,
-                                        "perfilPasajero" to perfilPasajeroInit
-                                    )
-
-                                    usuarioDocRef
-                                        .set(nuevoUsuario)
-                                        .addOnSuccessListener {
-                                            //usuarioLogeado = nuevoUsuario
-                                            setUidActual(usuarioDocRef.id)
-                                            uid(uidActual.value)
-                                            onResult(true)
-                                        }
-                                        .addOnFailureListener { e ->
-                                            errorMessage.value = e.message ?: "Error guardando usuario nuevo"
-                                            onResult(false)
-                                        }
                                 }
-                            }
-                            .addOnFailureListener { e ->
-                                errorMessage.value = e.message ?: "Error leyendo usuario en Firestore"
-                                onResult(false)
-                            }
-                    } else {
-                        errorMessage.value = "No se pudo obtener el usuario autenticado"
+                                .addOnFailureListener { e ->
+                                    setError(e.message ?: "Error guardando usuario nuevo")
+                                    onResult(false)
+                                }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        setError(e.message ?: "Error leyendo usuario en Firestore")
                         onResult(false)
                     }
-                } else {
-                    errorMessage.value = task.exception?.message ?: "Error desconocido en login"
-                    onResult(false)
-                }
             }
     }
 
     fun signOut(context: Context, onResult: (Boolean) -> Unit) {
         usuarioLogeado = null
+        limpiarUidActual()
+        setLoginSuccess(false)
+        setError(null)
 
-        // No usamos revokeAccess() porque no queremos volver a pedir permisos cada vez.
         try {
             val googleSignInClient = GoogleSignIn.getClient(
                 context,
@@ -191,28 +214,24 @@ class LoginVM {
                 }
                 .addOnFailureListener { e ->
                     auth.signOut()
-                    errorMessage.value = e.message
+                    setError(e.message)
                     onResult(false)
                 }
-
         } catch (e: Exception) {
-            try {
-                auth.signOut()
-            } catch (_: Exception) { }
-            errorMessage.value = e.message
+            try { auth.signOut() } catch (_: Exception) { }
+            setError(e.message)
             onResult(true)
         }
     }
 
     fun obtenerRolesUsuario(onResult: (esViajero: Boolean, esConductor: Boolean) -> Unit) {
         val uid = auth.currentUser?.uid
-        if (uid == null) {
-            onResult(true, false)   // por defecto: solo viajero
+        if (uid.isNullOrBlank()) {
+            onResult(true, false)
             return
         }
 
-        FirebaseFirestore.getInstance()
-            .collection(Coleccion.Usuario)
+        db.collection(usuarioCollection)
             .document(uid)
             .get()
             .addOnSuccessListener { doc ->
@@ -221,6 +240,7 @@ class LoginVM {
 
                 val perfilConductor = doc.get("perfilConductor") as? Map<*, *>
                 val esConductor = (perfilConductor?.get("enabled") as? Boolean) ?: false
+
                 onResult(esViajero, esConductor)
             }
             .addOnFailureListener {
@@ -228,41 +248,37 @@ class LoginVM {
             }
     }
 
-    fun setUidActual(uid: String) {
-        _uidActual.value = uid
-    }
-
-    /**
-     * MÉTODOS Y HERRAMIENTAS PARA LA VERIFICACIÓN MEDIANTE SMS
-     *  -> 1) Enviar SMS
-     *  -> 2) Reenviar SMS
-     *  -> 3) Verificar código manual
-     *  -> 4) Entrar con el código enviado al teléfono
-     * */
-    // Guardamos datos del proceso OTP
+    // ==========================================================
+    // OTP / VERIFICACIÓN POR SMS
+    // ==========================================================
     private var verificationId: String? = null
     private var resendToken: PhoneAuthProvider.ForceResendingToken? = null
 
-    // Callbacks con firmas correctas
+    private val _codeSent = MutableStateFlow(false)
+    val codeSent: StateFlow<Boolean> = _codeSent.asStateFlow()
+
     private val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+
         override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-            // Puede auto-verificar sin teclear el código
             signInWithPhoneAuthCredential(credential)
         }
 
-        override fun onVerificationFailed(e: FirebaseException) {   // <-- FirebaseException
-            isLoading.value = false
+        override fun onVerificationFailed(e: FirebaseException) {
+            setLoading(false)
             Log.e(TAG, "onVerificationFailed", e)
-            errorMessage.value = e.localizedMessage ?: "No se pudo verificar el teléfono"
+            setError(e.localizedMessage ?: "No se pudo verificar el teléfono")
         }
 
-        override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+        override fun onCodeSent(
+            verificationId: String,
+            token: PhoneAuthProvider.ForceResendingToken
+        ) {
             super.onCodeSent(verificationId, token)
-            isLoading.value = false
+            setLoading(false)
             this@LoginVM.verificationId = verificationId
             this@LoginVM.resendToken = token
-            codeSent.value = true
-            Log.d(TAG, "onCodeSent: id guardado $token")
+            _codeSent.value = true
+            Log.d(TAG, "onCodeSent: token guardado")
         }
 
         override fun onCodeAutoRetrievalTimeOut(verificationId: String) {
@@ -273,57 +289,31 @@ class LoginVM {
 
     fun startPhoneVerification(activity: Activity, numberPhone: String) {
         if (numberPhone.isBlank()) {
-            errorMessage.value = "Introduce un teléfono válido"
-        } else {
-            isLoading.value = true
-
-            val options = PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(numberPhone)
-                .setTimeout(60L, TimeUnit.SECONDS)
-                .setActivity(activity)
-                .setCallbacks(callbacks)
-                .build()
-
-            PhoneAuthProvider.verifyPhoneNumber(options)
+            setError("Introduce un teléfono válido")
+            return
         }
-    }
 
-    fun comprobarTelefonoRegistrado(email: String, phoneInput: String, onResult: (Boolean) -> Unit) {
-        val emailNorm = email.trim().lowercase(Locale.ROOT)
+        setLoading(true)
+        setError(null)
 
-        // Normaliza el teléfono a E.164 sin exigir +34 al usuario
-        val phoneE164 = if (phoneInput.isBlank()) null else formatE164(phoneInput, defaultRegion = "ES")
+        val options = PhoneAuthOptions.newBuilder(auth)
+            .setPhoneNumber(numberPhone)
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(callbacks)
+            .build()
 
-        if (phoneInput.isNotBlank() && phoneE164 == null) {
-            Log.e(TAG, "Teléfono inválido: $phoneInput")
-            onResult(false)
-        } else {
-            Log.e(TAG, "QUERY emailNorm=[$emailNorm] len=${emailNorm.length}")
-            Log.e(TAG, "QUERY phoneInput=[$phoneInput] len=${phoneInput.length}")
-            Log.e(TAG, "QUERY phoneE164=[$phoneE164] len=${phoneE164?.length}")
-
-            FirebaseFirestore.getInstance()
-                .collection(usuario)
-                .whereEqualTo("telefono", phoneE164 ?: "")
-                .whereEqualTo("email", emailNorm)
-                .limit(1)
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    val existe = !snapshot.isEmpty
-                    Log.e(TAG, "Existe = $existe (tel=$phoneE164, email=$emailNorm)")
-                    onResult(existe)
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "Error comprobando teléfono", e)
-                    errorMessage.value = e.message ?: "Error comprobando el teléfono"
-                    onResult(false)
-                }
-        }
+        PhoneAuthProvider.verifyPhoneNumber(options)
     }
 
     fun resendCode(activity: Activity, phoneE164: String) {
-        val token = resendToken ?: run { errorMessage.value = "No hay token de reenvío"; return }
-        isLoading.value = true
+        val token = resendToken ?: run {
+            setError("No hay token de reenvío")
+            return
+        }
+
+        setLoading(true)
+        setError(null)
 
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(phoneE164)
@@ -337,10 +327,19 @@ class LoginVM {
     }
 
     fun verifyCode(code: String) {
-        val id = verificationId ?: run { errorMessage.value = "Primero solicita el código"; return }
-        if (code.length < 6) { errorMessage.value = "El código debe tener 6 dígitos"; return }
+        val id = verificationId ?: run {
+            setError("Primero solicita el código")
+            return
+        }
 
-        isLoading.value = true
+        if (code.length < 6) {
+            setError("El código debe tener 6 dígitos")
+            return
+        }
+
+        setLoading(true)
+        setError(null)
+
         val credential = PhoneAuthProvider.getCredential(id, code)
         signInWithPhoneAuthCredential(credential)
     }
@@ -348,15 +347,45 @@ class LoginVM {
     private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
         auth.signInWithCredential(credential)
             .addOnCompleteListener { task ->
-                isLoading.value = false
+                setLoading(false)
+
                 if (task.isSuccessful) {
-                    loginSuccess.value = true
+                    setLoginSuccess(true)
                     Log.d(TAG, "Inicio de sesión por SMS OK")
                 } else {
                     Log.e(TAG, "signInWithCredential error", task.exception)
-                    errorMessage.value = task.exception?.localizedMessage
-                        ?: "Código incorrecto o caducado"
+                    setError(task.exception?.localizedMessage ?: "Código incorrecto o caducado")
                 }
+            }
+    }
+
+    // -----------------------------
+    // CHECK TELÉFONO REGISTRADO
+    // -----------------------------
+    fun comprobarTelefonoRegistrado(email: String, phoneInput: String, onResult: (Boolean) -> Unit) {
+        val emailNorm = email.trim().lowercase(Locale.ROOT)
+        val phoneE164 = if (phoneInput.isBlank()) null else formatE164(phoneInput, defaultRegion = "ES")
+
+        if (phoneInput.isNotBlank() && phoneE164 == null) {
+            Log.e(TAG, "Teléfono inválido: $phoneInput")
+            onResult(false)
+            return
+        }
+
+        db.collection(usuarioCollection)
+            .whereEqualTo("telefono", phoneE164 ?: "")
+            .whereEqualTo("email", emailNorm)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val existe = !snapshot.isEmpty
+                Log.e(TAG, "Existe = $existe (tel=$phoneE164, email=$emailNorm)")
+                onResult(existe)
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error comprobando teléfono", e)
+                setError(e.message ?: "Error comprobando el teléfono")
+                onResult(false)
             }
     }
 }

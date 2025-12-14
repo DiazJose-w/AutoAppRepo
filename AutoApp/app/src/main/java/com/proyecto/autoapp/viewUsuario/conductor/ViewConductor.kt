@@ -1,6 +1,5 @@
 package com.proyecto.autoapp.viewUsuario.conductor
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -57,29 +56,40 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     var accionDialogo by remember { mutableStateOf<AccionDialogo?>(null) }
     var showDialogPasajero by remember { mutableStateOf(false) }
 
-    // Launcher para poder escuchar las peticiones
-    LaunchedEffect(Unit) {
-        peticionesVM.observarPeticionesPendientesAceptadas(usuarioActual)
+    val peticionAceptadaParaMi = remember(peticionesPendientes, usuarioActual) {
+        peticionesPendientes.firstOrNull { pet ->
+            pet.estado == "aceptada" && pet.infoConductor?.uid == usuarioActual
+        }
     }
 
-    // Si ya no tengo ningún viaje aceptado, dejo de escuchar tracking
+    LaunchedEffect(peticionAceptadaParaMi?.id) {
+        val id = peticionAceptadaParaMi?.id
+        if (!id.isNullOrBlank()) {
+            peticionesVM.observarTrackingPeticion(id)
+        }
+    }
+
+    // Launcher para poder escuchar las peticiones
+    LaunchedEffect(usuarioActual) {
+        if (usuarioActual.isNotBlank()) {
+            perfilVM.cargarUsuario(usuarioActual)
+            perfilVM.cargarFotoPerfil(usuarioActual) { fotoPerfil = it }
+            peticionesVM.observarPeticionesPendientesAceptadas(usuarioActual)
+        }
+    }
+
+    LaunchedEffect(usuarioActual) {
+        showDialogAccion = false
+        accionDialogo = null
+        peticionSeleccionada = null
+    }
+
     LaunchedEffect(peticionesPendientes, usuarioActual) {
-        val hayAceptadaParaMi = peticionesPendientes.any { pet ->
-            pet.estado == "aceptada" && pet.infoConductor?.uid == usuarioActual
+        val hayAceptadaParaMi = peticionesPendientes.any {
+            it.estado == "aceptada" && it.infoConductor?.uid == usuarioActual
         }
         if (!hayAceptadaParaMi) {
             peticionesVM.detenerTracking()
-        }
-    }
-
-    // Cargar foto de perfil
-    LaunchedEffect(usuarioActual) {
-        if (usuarioActual.isNotBlank()) {
-            perfilVM.cargarFotoPerfil(usuarioActual) {
-                fotoPerfil = it
-            }
-        } else {
-            Log.e(TAG, "Hubo un problema al cargar el usuario actual")
         }
     }
 
@@ -136,11 +146,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                     popUpTo(Rutas.ViewConductor) { inclusive = true }
                                 }
                             } else {
-                                Toast.makeText(
-                                    context,
-                                    "Hubo un error al activar el modo viajero",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "Hubo un error al activar el modo viajero", Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
@@ -181,7 +187,6 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 .clip(RoundedCornerShape(16.dp))
         )
     }
-
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -270,7 +275,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                 // CONTENIDO SCROLLEABLE (mapa + lista)
                 val configuration = LocalConfiguration.current
                 val screenHeight = configuration.screenHeightDp.dp
-                val mapHeight = screenHeight * 0.50F    // un poco más de la mitad
+                val mapHeight = screenHeight * 0.50F
 
                 Column(
                     modifier = Modifier
@@ -341,44 +346,30 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 itemsIndexed(peticionesPendientes) { index, peticion ->
-                                    val esAceptadaParaMi =
-                                        peticion.estado == "aceptada" && peticion.infoConductor?.uid == usuarioActual
+                                    val esAceptadaParaMi = peticion.estado == "aceptada" && peticion.infoConductor?.uid == usuarioActual
 
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(top = 12.dp)
                                             .shadow(8.dp, RoundedCornerShape(16.dp))
-                                            .border(
-                                                1.dp,
-                                                ThumbsUpMustard,
-                                                RoundedCornerShape(16.dp)
-                                            ),
+                                            .border(1.dp, ThumbsUpMustard, RoundedCornerShape(16.dp)),
                                         shape = RoundedCornerShape(16.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color(0xFF1A1A1A)
-                                        ),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
                                         elevation = CardDefaults.cardElevation(6.dp)
                                     ) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(
-                                                    horizontal = 16.dp,
-                                                    vertical = 14.dp
-                                                ),
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                                 Text(
                                                     text = "Viajero ${index + 1}",
                                                     color = ThumbsUpTextPrimary,
-                                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
+                                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
                                                 )
                                             }
 
@@ -387,28 +378,16 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                     onClick = {
                                                         val posTracking = posicionViajero
                                                         val posInicio: LatLng? =
-                                                            if (peticion.inicio.lat != null &&
-                                                                peticion.inicio.lng != null
-                                                            ) {
-                                                                LatLng(
-                                                                    peticion.inicio.lat,
-                                                                    peticion.inicio.lng
-                                                                )
+                                                            if (peticion.inicio.lat != null && peticion.inicio.lng != null) {
+                                                                LatLng(peticion.inicio.lat, peticion.inicio.lng)
                                                             } else null
 
                                                         val destino = posTracking ?: posInicio
 
                                                         if (destino != null) {
-                                                            mapViewModel.updateCameraPosition(
-                                                                destino,
-                                                                15f
-                                                            )
+                                                            mapViewModel.updateCameraPosition(destino, 15f)
                                                         } else {
-                                                            Toast.makeText(
-                                                                context,
-                                                                "Aún no hay ubicación del viajero",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
+                                                            Toast.makeText(context, "Aún no hay ubicación del viajero", Toast.LENGTH_SHORT).show()
                                                         }
                                                     },
                                                     colors = ButtonDefaults.buttonColors(
@@ -419,9 +398,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                 ) {
                                                     Text(
                                                         text = "Ir a por el viajero",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontWeight = FontWeight.SemiBold
-                                                        )
+                                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
                                                     )
                                                 }
                                             } else {
@@ -431,10 +408,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                         accionDialogo = AccionDialogo.RECHAZAR
                                                         showDialogAccion = true
                                                     },
-                                                    border = BorderStroke(
-                                                        1.dp,
-                                                        ThumbsUpMustard
-                                                    ),
+                                                    border = BorderStroke(1.dp, ThumbsUpMustard),
                                                     colors = ButtonDefaults.outlinedButtonColors(
                                                         containerColor = Color.Transparent,
                                                         contentColor = ThumbsUpMustard
@@ -444,9 +418,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                 ) {
                                                     Text(
                                                         text = "Rechazar",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontWeight = FontWeight.SemiBold
-                                                        )
+                                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
                                                     )
                                                 }
 
@@ -465,104 +437,80 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
                                                 ) {
                                                     Text(
                                                         text = "Aceptar",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            fontWeight = FontWeight.SemiBold
-                                                        )
+                                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
                                                     )
                                                 }
                                             }
                                         }
                                     }
+                                }
+                            }
 
-                                    ThumbsUpAceptarRechazarViaje(
-                                        visible = showDialogAccion,
-                                        title = when (accionDialogo) {
-                                            AccionDialogo.ACEPTAR -> "Aceptar petición"
-                                            AccionDialogo.RECHAZAR -> "Rechazar petición"
-                                            else -> ""
-                                        },
-                                        message = when (accionDialogo) {
-                                            AccionDialogo.ACEPTAR ->
-                                                "¿Quieres ofrecerte para llevar a este viajero?"
-                                            AccionDialogo.RECHAZAR ->
-                                                "¿Seguro que quieres rechazar a este viajero?"
-                                            else -> ""
-                                        },
-                                        confirmText = when (accionDialogo) {
-                                            AccionDialogo.ACEPTAR -> "Sí, aceptar"
-                                            AccionDialogo.RECHAZAR -> "Sí, rechazar"
-                                            else -> ""
-                                        },
-                                        dismissText = "Cancelar",
-                                        onConfirm = {
-                                            val pet = peticionSeleccionada
-                                            val accion = accionDialogo
+                            ThumbsUpAceptarRechazarViaje(
+                                visible = showDialogAccion,
+                                title = when (accionDialogo) {
+                                    AccionDialogo.ACEPTAR -> "Aceptar petición"
+                                    AccionDialogo.RECHAZAR -> "Rechazar petición"
+                                    else -> ""
+                                },
+                                message = when (accionDialogo) {
+                                    AccionDialogo.ACEPTAR -> "¿Quieres ofrecerte para llevar a este viajero?"
+                                    AccionDialogo.RECHAZAR -> "¿Seguro que quieres rechazar a este viajero?"
+                                    else -> ""
+                                },
+                                confirmText = when (accionDialogo) {
+                                    AccionDialogo.ACEPTAR -> "Sí, aceptar"
+                                    AccionDialogo.RECHAZAR -> "Sí, rechazar"
+                                    else -> ""
+                                },
+                                dismissText = "Cancelar",
+                                onConfirm = {
+                                    val pet = peticionSeleccionada
+                                    val accion = accionDialogo
 
-                                            if (pet != null && accion != null) {
-                                                when (accion) {
-                                                    AccionDialogo.ACEPTAR -> {
-                                                        val nombreConductor =
-                                                            listOf(
-                                                                uiState.nombre,
-                                                                uiState.apellidos
-                                                            )
-                                                                .filter { it.isNotBlank() }
-                                                                .joinToString(" ")
+                                    if (pet != null && accion != null) {
+                                        when (accion) {
+                                            AccionDialogo.ACEPTAR -> {
+                                                val nombreConductor = listOf(uiState.nombre, uiState.apellidos)
+                                                    .filter { it.isNotBlank() }
+                                                    .joinToString(" ")
 
-                                                        peticionesVM.aceptarPeticionConductor(
-                                                            pet,
-                                                            usuarioActual.toString(),
-                                                            nombreConductor,
-                                                            uiState.fotoPerfilUrl.toString()
-                                                        ) { ok ->
-                                                            if (ok) {
-                                                                peticionesVM.observarTrackingPeticion(
-                                                                    pet.id
-                                                                )
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "Petición aceptada",
-                                                                    Toast.LENGTH_SHORT
-                                                                ).show()
-                                                            } else {
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "La petición ya fue atendida",
-                                                                    Toast.LENGTH_SHORT
-                                                                ).show()
-                                                            }
-                                                        }
-                                                    }
-
-                                                    AccionDialogo.RECHAZAR -> {
-                                                        peticionesVM.rechazarPeticionConductor(
-                                                            pet,
-                                                            usuarioActual
-                                                        ) { ok ->
-                                                            if (ok) {
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "Error al rechazar petición",
-                                                                    Toast.LENGTH_SHORT
-                                                                ).show()
-                                                            }
-                                                        }
+                                                peticionesVM.aceptarPeticionConductor(
+                                                    pet,
+                                                    usuarioActual,
+                                                    nombreConductor,
+                                                    uiState.fotoPerfilUrl.toString()
+                                                ) { ok ->
+                                                    if (ok) {
+                                                        peticionesVM.observarTrackingPeticion(pet.id)
+                                                        Toast.makeText(context, "Petición aceptada", Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, "La petición ya fue atendida", Toast.LENGTH_SHORT).show()
                                                     }
                                                 }
                                             }
 
-                                            showDialogAccion = false
-                                            accionDialogo = null
-                                            peticionSeleccionada = null
-                                        },
-                                        onDismiss = {
-                                            showDialogAccion = false
-                                            accionDialogo = null
-                                            peticionSeleccionada = null
+                                            AccionDialogo.RECHAZAR -> {
+                                                peticionesVM.rechazarPeticionConductor(pet, usuarioActual) { ok ->
+                                                    if (!ok) {
+                                                        Toast.makeText(context, "Error al rechazar petición", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
                                         }
-                                    )
+                                    }
+
+                                    showDialogAccion = false
+                                    accionDialogo = null
+                                    peticionSeleccionada = null
+                                },
+                                onDismiss = {
+                                    showDialogAccion = false
+                                    accionDialogo = null
+                                    peticionSeleccionada = null
                                 }
-                            }
+                            )
+
                         }
                     }
                 }

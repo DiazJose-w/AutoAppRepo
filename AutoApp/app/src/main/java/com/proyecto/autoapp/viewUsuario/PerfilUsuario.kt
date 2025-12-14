@@ -325,19 +325,15 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             }, year, month, day).show()
     }
 
-    Log.e(TAG, "PerfilUsuario usuario = [$usuario]")
     LaunchedEffect(usuario) {
-        if (usuario.isNotBlank()) {
-            perfilVM.cargarUsuario(usuario)
-            Log.e(TAG, "Este es el estado del usuario al registrar $primerAcceso")
-        }
+        Log.e(TAG, "Usuario actual 1 $usuario")
+        perfilVM.cargarUsuario(usuario)
     }
 
     DialogoSalirThumbsUp(
         visible = showExitDialog,
         onSalirIgualmente = {
             showExitDialog = false
-
             if (primerAcceso) {
                 perfilVM.comprobarRolesServidor(usuario) { esPasajeroSrv, esConductorSrv ->
                     when {

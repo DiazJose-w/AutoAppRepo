@@ -1,8 +1,7 @@
 package com.proyecto.autoapp.viewUsuario.perfilVM
 
-import android.net.Uri
-import com.google.firebase.storage.FirebaseStorage
 import PerfilUiState
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,8 +9,10 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.proyecto.autoapp.general.Coleccion
 import com.proyecto.autoapp.general.DirectorioStorage
+import com.proyecto.autoapp.general.funcionesComunes.formatE164
 import com.proyecto.autoapp.general.modelo.dataClass.Vehiculo
 import com.proyecto.autoapp.general.modelo.enumClass.Estado
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
@@ -19,12 +20,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
-import com.proyecto.autoapp.general.funcionesComunes.formatE164
 import java.util.Calendar
 
-
 class PerfilVM {
-    var TAG = "jose"
+    var TAG = "Jose"
     var usuario = Coleccion.Usuario
     var vehiculo = Coleccion.Vehiculo
     private var nuevaFotoFile: File? = null
@@ -41,101 +40,97 @@ class PerfilVM {
     private val _usuarioNuevo = mutableStateOf(false)
     val usuarioNuevo: Boolean get() = _usuarioNuevo.value
 
-
-    // =============================================================
-    // GUARDAR MODIFICACIONES EN EL PERFIL
-    // =============================================================
     fun modPerfilUsuario(usuarioActual: String, success: (Boolean) -> Unit) {
         val state = _uiState.value
         val edadInt = calcularEdad(state.fechaNacimiento)
 
         if (edadInt <= 0) {
             success(false)
+            return
+        }
+
+        val telNormalizado = if (state.telefono.isBlank()) {
+            ""
         } else {
-            // ====== NORMALIZACIÓN TELÉFONO (E.164) ======
-            val telNormalizado = if (state.telefono.isBlank()) {
-                ""
-            } else {
-                formatE164(state.telefono, defaultRegion = "ES")
+            formatE164(state.telefono, defaultRegion = "ES")
+        }
+
+        if (state.telefono.isNotBlank() && telNormalizado == null) {
+            Log.e(TAG, "Teléfono inválido: ${state.telefono}")
+            success(false)
+            return
+        }
+
+        val fechaNacimientoTimestamp = state.fechaNacimiento?.let { millis ->
+            val cal = Calendar.getInstance().apply {
+                timeInMillis = millis
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }
+            Timestamp(cal.time)
+        }
 
-            if (state.telefono.isNotBlank() && telNormalizado == null) {
-                Log.e(TAG, "Teléfono inválido: ${state.telefono}")
-                success(false)
-            } else {
+        val baseUpdates = mutableMapOf<String, Any>(
+            "perfilPasajero.enabled" to state.isPasajeroSelected,
+            "perfilConductor.enabled" to state.isConductorSelected,
+            "edad" to edadInt,
+            "telefono" to (telNormalizado ?: ""),
+            "fechaNacimiento" to (fechaNacimientoTimestamp ?: Timestamp.now())
+        )
 
-                val fechaNacimientoTimestamp = state.fechaNacimiento?.let { millis ->
-                    val cal = Calendar.getInstance().apply {
-                        timeInMillis = millis
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    Timestamp(cal.time)
+        val file = nuevaFotoFile
+        if (file == null) {
+            db.collection(usuario)
+                .document(usuarioActual)
+                .update(baseUpdates as Map<String, Any>)
+                .addOnSuccessListener {
+                    _uiState.value = state.copy(
+                        pasajeroEnabled = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                        conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                        isSaveEnabled = false
+                    )
+                    success(true)
                 }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error al actualizar perfil en Firestore", e)
+                    success(false)
+                }
+        } else {
+            val rutaStorage = "${DirectorioStorage.FotoPerfil}/$usuarioActual/${file.name}"
+            val refStorage = FirebaseStorage.getInstance().reference.child(rutaStorage)
+            val fileUri = Uri.fromFile(file)
 
-                val baseUpdates = mutableMapOf<String, Any>(
-                    "perfilPasajero.enabled"  to state.isPasajeroSelected,
-                    "perfilConductor.enabled" to state.isConductorSelected,
-                    "edad" to edadInt,
-                    "telefono" to (telNormalizado ?: ""),
-                    "fechaNacimiento" to (fechaNacimientoTimestamp ?: Timestamp.now())
-                )
+            refStorage.putFile(fileUri)
+                .continueWithTask { refStorage.downloadUrl }
+                .addOnSuccessListener { uri ->
+                    val url = uri.toString()
+                    baseUpdates["fotoUrl"] = url
 
-                val file = nuevaFotoFile
-                if (file == null) {
                     db.collection(usuario)
                         .document(usuarioActual)
                         .update(baseUpdates as Map<String, Any>)
                         .addOnSuccessListener {
+                            nuevaFotoFile = null
+
                             _uiState.value = state.copy(
-                                pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                fotoPerfilUrl = url,
+                                pasajeroEnabled = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
                                 conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
                                 isSaveEnabled = false
                             )
                             success(true)
                         }
                         .addOnFailureListener { e ->
-                            Log.e(TAG, "Error al actualizar perfil en Firestore", e)
-                            success(false)
-                        }
-                } else {
-                    val rutaStorage = "${DirectorioStorage.FotoPerfil}/$usuarioActual/${file.name}"
-                    val refStorage = FirebaseStorage.getInstance().reference.child(rutaStorage)
-                    val fileUri = Uri.fromFile(file)
-
-                    refStorage.putFile(fileUri)
-                        .continueWithTask { refStorage.downloadUrl }
-                        .addOnSuccessListener { uri ->
-                            val url = uri.toString()
-                            baseUpdates["fotoUrl"] = url
-
-                            db.collection(usuario)
-                                .document(usuarioActual)
-                                .update(baseUpdates as Map<String, Any>)
-                                .addOnSuccessListener {
-                                    nuevaFotoFile = null
-
-                                    _uiState.value = state.copy(
-                                        fotoPerfilUrl = url,
-                                        pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                                        conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                                        isSaveEnabled = false
-                                    )
-                                    success(true)
-                                }
-                                .addOnFailureListener { e ->
-                                    Log.e(TAG, "Error al actualizar perfil + foto en Firestore", e)
-                                    success(false)
-                                }
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e(TAG, "Error subiendo foto de perfil a Storage", e)
+                            Log.e(TAG, "Error al actualizar perfil + foto en Firestore", e)
                             success(false)
                         }
                 }
-            }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error subiendo foto de perfil a Storage", e)
+                    success(false)
+                }
         }
     }
 
@@ -182,18 +177,13 @@ class PerfilVM {
             }
     }
 
-    // =============================================================
-    // CARGAR LOS DATOS DEL USUARIO
-    // =============================================================
     fun cargarUsuario(usuActual: String) {
-        Log.e("jose", "verás como es nulo $usuActual")
         db.collection(usuario)
             .document(usuActual)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     try {
-                        //DATOS DEL USUARIO
                         val nombre = document.getString("nombre").orEmpty()
                         val apellidos = document.getString("apellidos").orEmpty()
                         val edad = (document.get("edad") as? Number)?.toInt() ?: 0
@@ -203,13 +193,11 @@ class PerfilVM {
                         val fechaNacimiento = document.getTimestamp("fechaNacimiento")?.toDate()?.time
                         val edadCalculada = calcularEdad(fechaNacimiento)
 
-                        // PERFIL PASAJERO
                         val perfilPasajeroMap = document.get("perfilPasajero") as? Map<*, *>
                         val pasajeroEnabled = (perfilPasajeroMap?.get("enabled") as? Boolean) ?: false
                         val pasajeroRatingAvg = (perfilPasajeroMap?.get("ratingAvg") as? Number)?.toDouble() ?: 0.0
                         val pasajeroRatingCount = (perfilPasajeroMap?.get("ratingCount") as? Number)?.toLong() ?: 0L
 
-                        // PERFIL CONDUCTOR
                         val perfilConductorMap = document.get("perfilConductor") as? Map<*, *>
                         val conductorEnabled = (perfilConductorMap?.get("enabled") as? Boolean) ?: false
                         val conductorRatingAvg = (perfilConductorMap?.get("ratingAvg") as? Number)?.toDouble() ?: 0.0
@@ -217,10 +205,8 @@ class PerfilVM {
                         val licenciaSubida = (perfilConductorMap?.get("licenciaSubida") as? Boolean) ?: false
                         val licenciaVerificada = (perfilConductorMap?.get("licenciaVerificada") as? Boolean) ?: false
 
-                        // Vehículo activo (por ahora null si no tiene)
                         val vehiculoActivoId = perfilConductorMap?.get("vehiculoActivoId") as? String
 
-                        // ROL
                         val rolStr = document.getString("rol")
                         val rol = try {
                             RolUsuario.valueOf(rolStr ?: RolUsuario.CUSTOMER.name)
@@ -228,7 +214,6 @@ class PerfilVM {
                             RolUsuario.CUSTOMER
                         }
 
-                        // MAPEAMOS AL ESTADO DEL PERFIL
                         _uiState.value = PerfilUiState(
                             nombre = nombre,
                             apellidos = apellidos,
@@ -253,6 +238,7 @@ class PerfilVM {
 
                         val nuevo = document.getBoolean("nuevo") ?: false
                         _usuarioNuevo.value = nuevo
+                        Log.e(TAG, "verás como es nulo 2 $_usuarioNuevo")
 
                         if (conductorEnabled) {
                             cargarVehiculosUsuario(usuActual)
@@ -269,9 +255,8 @@ class PerfilVM {
             }
     }
 
-    fun cargarFotoPerfil(usuarioActual: String, fotoPerfil: (String) -> Unit){
-        FirebaseFirestore.getInstance()
-            .collection(Coleccion.Usuario)
+    fun cargarFotoPerfil(usuarioActual: String, fotoPerfil: (String) -> Unit) {
+        db.collection(Coleccion.Usuario)
             .document(usuarioActual)
             .get()
             .addOnSuccessListener { doc ->
@@ -282,7 +267,7 @@ class PerfilVM {
             }
     }
 
-    fun cambiarPassword(passwordActual: String, passwordNueva: String,  passwordConfirmacion: String, onResult: (Boolean, String) -> Unit) {
+    fun cambiarPassword(passwordActual: String, passwordNueva: String, passwordConfirmacion: String, onResult: (Boolean, String) -> Unit) {
         val user = auth.currentUser
 
         if (user == null) {
@@ -297,7 +282,7 @@ class PerfilVM {
                 onResult(false, "No se ha podido obtener el email del usuario.")
             } else if (!tienePassword) {
                 onResult(false, "Tu cuenta está vinculada a Google. La contraseña se gestiona desde tu cuenta de Google.")
-            }else if (passwordActual.isBlank() || passwordNueva.isBlank() || passwordConfirmacion.isBlank()) {
+            } else if (passwordActual.isBlank() || passwordNueva.isBlank() || passwordConfirmacion.isBlank()) {
                 onResult(false, "Debes rellenar todos los campos.")
             } else if (passwordNueva != passwordConfirmacion) {
                 onResult(false, "Las contraseñas nuevas no coinciden.")
@@ -325,11 +310,8 @@ class PerfilVM {
         }
     }
 
-    /**
-     * MODIFICAR ESTE CÓDIGO.
-     */
-    fun cargarVehiculosUsuario(uid: String? = auth.currentUser?.uid) {
-        if (uid == null) return
+    fun cargarVehiculosUsuario(uid: String) {
+        if (uid.isBlank()) return
 
         db.collection(usuario)
             .document(uid)
@@ -371,7 +353,6 @@ class PerfilVM {
             .document(uid)
             .get()
             .addOnSuccessListener { doc ->
-                // Ajusta los nombres de campos a los tuyos reales
                 val perfilPasajero = doc.get("perfilPasajero") as? Map<*, *>
                 val perfilConductor = doc.get("perfilConductor") as? Map<*, *>
 
@@ -385,10 +366,6 @@ class PerfilVM {
             }
     }
 
-    // =============================================================
-    // MÉTODOS QUE TRABAJAN LAS VARIABLES DE LA VISTA. MODIFICACIÓN INSTANTÁNEA
-    // =============================================================
-    // Métodos para los switch
     fun onPasajeroToggle(checked: Boolean) {
         _uiState.update { curr ->
             curr.copy(
@@ -413,8 +390,7 @@ class PerfilVM {
         }
     }
 
-    // Métodos para poder modificar los datos del usuario
-    fun onShowEditorVehiculo(){
+    fun onShowEditorVehiculo() {
         _uiState.update {
             it.copy(showVehiculoEditor = !it.showVehiculoEditor)
         }
@@ -442,8 +418,7 @@ class PerfilVM {
         }
     }
 
-    // Métodos para poder modificar los datos del vehículo
-    fun onModeloChange(modelo: String){
+    fun onModeloChange(modelo: String) {
         _uiState.update {
             it.copy(
                 vehiculoModelo = modelo,
@@ -452,7 +427,7 @@ class PerfilVM {
         }
     }
 
-    fun onMatriculaChange(matricula: String){
+    fun onMatriculaChange(matricula: String) {
         _uiState.update {
             it.copy(
                 vehiculoMatricula = matricula,
@@ -461,7 +436,7 @@ class PerfilVM {
         }
     }
 
-    fun onColorChange(color: String){
+    fun onColorChange(color: String) {
         _uiState.update {
             it.copy(
                 vehiculoColor = color,
@@ -469,8 +444,6 @@ class PerfilVM {
             )
         }
     }
-
-    // Métodos para poder modificar la foto de perfil
 
     fun setNuevaFotoFile(file: File?) {
         nuevaFotoFile = file
@@ -483,7 +456,7 @@ class PerfilVM {
     fun onFotoPerfilSeleccionadaLocal(nuevaUri: String) {
         _uiState.value = _uiState.value.copy(
             fotoPerfilUrl = nuevaUri,
-            isSaveEnabled = true   // activamos el botón "Guardar cambios"
+            isSaveEnabled = true
         )
     }
 
@@ -491,19 +464,19 @@ class PerfilVM {
         var edad = 0
 
         if (fechaNacimiento != null) {
-            val nacimiento = java.util.Calendar.getInstance().apply {
+            val nacimiento = Calendar.getInstance().apply {
                 timeInMillis = fechaNacimiento
             }
 
-            val hoy = java.util.Calendar.getInstance()
+            val hoy = Calendar.getInstance()
 
-            edad = hoy.get(java.util.Calendar.YEAR) - nacimiento.get(java.util.Calendar.YEAR)
+            edad = hoy.get(Calendar.YEAR) - nacimiento.get(Calendar.YEAR)
 
-            val mesHoy = hoy.get(java.util.Calendar.MONTH)
-            val diaHoy = hoy.get(java.util.Calendar.DAY_OF_MONTH)
+            val mesHoy = hoy.get(Calendar.MONTH)
+            val diaHoy = hoy.get(Calendar.DAY_OF_MONTH)
 
-            val mesNac = nacimiento.get(java.util.Calendar.MONTH)
-            val diaNac = nacimiento.get(java.util.Calendar.DAY_OF_MONTH)
+            val mesNac = nacimiento.get(Calendar.MONTH)
+            val diaNac = nacimiento.get(Calendar.DAY_OF_MONTH)
 
             if (mesHoy < mesNac || (mesHoy == mesNac && diaHoy < diaNac)) {
                 edad--

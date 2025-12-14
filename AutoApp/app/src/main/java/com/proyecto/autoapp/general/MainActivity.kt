@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 import androidx.navigation.compose.NavHost
@@ -35,22 +37,21 @@ class MainActivity : ComponentActivity() {
         }
 
         val placesClient: PlacesClient = Places.createClient(this)
-
-        var loginVM = LoginVM()
-        var registroVM = RegistroVM()
-        var mapViewModel = MapViewModel()
-        var perfilVM = PerfilVM()
-        var galeriaViewModel = GaleriaViewModel()
-        var peticionesVM= PeticionesVM()
-
-        mapViewModel.setPlacesClient(placesClient)
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             AutoAppTheme {
                 val navController = rememberNavController()
-                val context = LocalContext.current
+                val loginVM = remember { LoginVM() }
+                val registroVM = remember { RegistroVM() }
+                val mapViewModel = remember { MapViewModel() }
+                val perfilVM = remember { PerfilVM() }
+                val galeriaViewModel = remember { GaleriaViewModel() }
+                val peticionesVM = remember { PeticionesVM() }
+
+                LaunchedEffect(Unit) {
+                    mapViewModel.setPlacesClient(placesClient)
+                }
                 NavHost(navController, Rutas.ViewInicial) {
 
                     /**

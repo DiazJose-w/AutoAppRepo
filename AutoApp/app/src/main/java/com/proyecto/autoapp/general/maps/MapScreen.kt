@@ -203,6 +203,7 @@ fun MapScreen(mapViewModel: MapViewModel, esViajero: Boolean, peticionesVM: Peti
                 )
             }
 
+            Log.e(TAG, "posicionViajero = $posicionViajero")
             // Marcador del viajero (solo se verá en el mapa del CONDUCTOR)
             posicionViajero?.let { pos ->
                 Marker(

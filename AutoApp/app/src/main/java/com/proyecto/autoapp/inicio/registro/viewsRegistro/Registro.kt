@@ -166,7 +166,6 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                             }
                                         ) { uid ->
                                             loginVM.setUidActual(uid)
-                                            Log.e(TAG, "Usuario registrado. UID => $uid")
                                         }
                                     }else{
                                         Toast.makeText(context, "Algo ocurre", Toast.LENGTH_SHORT).show()
