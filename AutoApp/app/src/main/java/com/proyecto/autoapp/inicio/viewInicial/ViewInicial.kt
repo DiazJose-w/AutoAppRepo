@@ -82,8 +82,8 @@ fun ViewInicial(navController: NavController, loginVM: LoginVM) {
                             Toast.makeText(context, "No se pudo iniciar sesión", Toast.LENGTH_SHORT).show()
                         }
                     }) { uid ->
-                        loginVM.uidActual= uid
-                        Log.d("Jose", "UID del usuario: ${loginVM.uidActual}")
+                        loginVM.setUidActual(uid)
+                        Log.e(TAG, "Usuario registrado. UID => $uid")
                     }
                 } else {
                     Toast.makeText(context, "Error obteniendo token de Google", Toast.LENGTH_SHORT).show()

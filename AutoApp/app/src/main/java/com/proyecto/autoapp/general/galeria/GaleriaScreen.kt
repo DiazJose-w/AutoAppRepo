@@ -43,6 +43,7 @@ import com.proyecto.autoapp.inicio.login.LoginVM
 import com.proyecto.autoapp.ui.theme.*
 import com.proyecto.autoapp.viewUsuario.perfilVM.PerfilVM
 import java.io.File
+import androidx.compose.runtime.collectAsState
 import androidx.core.net.toUri
 
 
@@ -63,7 +64,7 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
     val listaFotosPerfil by galeriaViewModel.fotosPerfil.observeAsState(emptyList())
     val hayCambiosPendientes by galeriaViewModel.hayCambiosPendientes.observeAsState(false)
 
-    val usuarioActual = loginVM.uidActual
+    val usuarioActual by loginVM.uidActual.collectAsState()
     var fotoPerfilUrl by remember { mutableStateOf<String?>(null) }
 
     /**
@@ -119,7 +120,6 @@ fun GaleriaScreen(contexto: Context, galeriaViewModel: GaleriaViewModel, navCont
         if (usuarioActual.isNotBlank()) {
             perfilVM.cargarFotoPerfil(usuarioActual) { url ->
                 fotoPerfilUrl = url
-
                 if (url.isNotBlank()) {
                     galeriaViewModel.updateImageUri(url.toUri())
                 } else {

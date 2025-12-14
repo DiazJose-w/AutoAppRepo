@@ -165,7 +165,7 @@ fun Registro(navController: NavController, registroVM: RegistroVM, loginVM: Logi
                                                 }
                                             }
                                         ) { uid ->
-                                            loginVM.uidActual = uid
+                                            loginVM.setUidActual(uid)
                                             Log.e(TAG, "Usuario registrado. UID => $uid")
                                         }
                                     }else{

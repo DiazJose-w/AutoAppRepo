@@ -16,8 +16,6 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
 import java.util.Date
 
-
-
 class RegistroVM() {
     val TAG = "Jose"
     val auth = FirebaseAuth.getInstance()

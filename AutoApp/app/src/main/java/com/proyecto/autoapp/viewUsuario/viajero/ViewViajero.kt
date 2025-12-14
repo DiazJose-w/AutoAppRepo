@@ -49,7 +49,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
     var estadoSolicitud by remember { mutableStateOf<EstadoSolicitud?>(null) }
 
     // UID del usuario actual
-    val usuarioActual = loginVM.uidActual
+    val usuarioActual by loginVM.uidActual.collectAsState()
     val miPeticionState by peticionesVM.miPeticion.collectAsState()
 
     /**
@@ -442,6 +442,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ThumbsUpTextFieldColors()
                             )
+
                             if (sugerenciasDestino.isNotEmpty()) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
@@ -529,8 +530,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                             is OfertaConductor -> {
                                 Log.e(TAG, "estado ${estado.peticion}")
                                 val pet = estado.peticion
-                                val nombreConductor =
-                                    pet.infoConductor?.nombre ?: "Conductor"
+                                val nombreConductor = pet.infoConductor?.nombre ?: "Conductor"
                                 val fotoConductor = pet.infoConductor?.foto
 
                                 PanelEstadoPeticion(
@@ -603,8 +603,7 @@ fun ViewViajero(mapViewModel: MapViewModel,loginVM: LoginVM,navController: NavCo
                                     onMostrarInfoViaje = { },
                                     onCancelarViaje = {
                                         showDialogCancelar = true
-                                    }
-                                )
+                                    }                                )
                                 Spacer(Modifier.height(12.dp))
                                 ThumbsUpPrimaryButton(
                                     text = "Ya estoy con el conductor",

@@ -55,7 +55,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
     var TAG = "Jose"
     var context = LocalContext.current
     val uiState by perfilVM.uiState.collectAsState()
-    var usuario = loginVM.uidActual
+    val usuario by loginVM.uidActual.collectAsState()
     var mostrarDialogoElegirFuente by remember { mutableStateOf(false) }
     var tempFile by remember { mutableStateOf<File?>(null) }
 
@@ -325,6 +325,7 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
             }, year, month, day).show()
     }
 
+    Log.e(TAG, "PerfilUsuario usuario = [$usuario]")
     LaunchedEffect(usuario) {
         if (usuario.isNotBlank()) {
             perfilVM.cargarUsuario(usuario)
@@ -366,16 +367,13 @@ fun PerfilUsuario(perfilVM: PerfilVM, navController: NavController, loginVM: Log
                         Toast.makeText(context, "Debes tener al menos un rol activo", Toast.LENGTH_SHORT).show()
                     } else {
                         when {
-                            !esPasajeroSrv && !esConductorSrv -> {
-                                Toast.makeText(context, "Debes elegir al menos un rol para continuar", Toast.LENGTH_SHORT).show()
-                            }
                             esPasajeroSrv && !esConductorSrv -> {
                                 navController.navigate(Rutas.ViewViajero) {
                                     popUpTo(Rutas.ViewInicial) { inclusive = false }
                                     launchSingleTop = true
                                 }
                             }
-                            !esPasajeroSrv && esConductorSrv -> {
+                            !esPasajeroSrv -> {
                                 navController.navigate(Rutas.ViewConductor) {
                                     popUpTo(Rutas.ViewInicial) { inclusive = false }
                                     launchSingleTop = true

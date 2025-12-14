@@ -6,6 +6,7 @@ import PerfilUiState
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -18,6 +19,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
+import com.proyecto.autoapp.general.funcionesComunes.formatE164
+import java.util.Calendar
+
 
 class PerfilVM {
     var TAG = "jose"
@@ -43,72 +47,94 @@ class PerfilVM {
     // =============================================================
     fun modPerfilUsuario(usuarioActual: String, success: (Boolean) -> Unit) {
         val state = _uiState.value
-
         val edadInt = calcularEdad(state.fechaNacimiento)
 
         if (edadInt <= 0) {
-            // No hay fecha o es incorrecta
             success(false)
         } else {
-            val baseUpdates = mutableMapOf<String, Any>(
-                "perfilPasajero.enabled"  to state.isPasajeroSelected,
-                "perfilConductor.enabled" to state.isConductorSelected,
-                "edad" to edadInt,
-                "telefono" to state.telefono,
-                "fechaNacimiento" to (state.fechaNacimiento ?: 0L)
-            )
-
-            val file = nuevaFotoFile
-            if (file == null) {
-                db.collection(usuario)
-                    .document(usuarioActual)
-                    .update(baseUpdates as Map<String, Any>)
-                    .addOnSuccessListener {
-                        _uiState.value = state.copy(
-                            pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                            conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                            isSaveEnabled = false
-                        )
-                        success(true)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "Error al actualizar perfil en Firestore", e)
-                        success(false)
-                    }
+            // ====== NORMALIZACIÓN TELÉFONO (E.164) ======
+            val telNormalizado = if (state.telefono.isBlank()) {
+                ""
             } else {
-                val rutaStorage = "${DirectorioStorage.FotoPerfil}/$usuarioActual/${file.name}"
-                val refStorage = FirebaseStorage.getInstance().reference.child(rutaStorage)
-                val fileUri = Uri.fromFile(file)
+                formatE164(state.telefono, defaultRegion = "ES")
+            }
 
-                refStorage.putFile(fileUri)
-                    .continueWithTask { refStorage.downloadUrl }
-                    .addOnSuccessListener { uri ->
-                        val url = uri.toString()
-                        baseUpdates["fotoUrl"] = url
+            if (state.telefono.isNotBlank() && telNormalizado == null) {
+                Log.e(TAG, "Teléfono inválido: ${state.telefono}")
+                success(false)
+            } else {
 
-                        db.collection(usuario)
-                            .document(usuarioActual)
-                            .update(baseUpdates as Map<String, Any>)
-                            .addOnSuccessListener {
-                                nuevaFotoFile = null
-
-                                _uiState.value = state.copy(
-                                    fotoPerfilUrl = url,
-                                    pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                                    conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
-                                    isSaveEnabled = false
-                                )
-                                success(true)
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e(TAG, "Error al actualizar perfil + foto en Firestore", e)
-                                success(false)
-                            }
+                val fechaNacimientoTimestamp = state.fechaNacimiento?.let { millis ->
+                    val cal = Calendar.getInstance().apply {
+                        timeInMillis = millis
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
                     }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "Error subiendo foto de perfil a Storage", e)
-                        success(false)
-                    }
+                    Timestamp(cal.time)
+                }
+
+                val baseUpdates = mutableMapOf<String, Any>(
+                    "perfilPasajero.enabled"  to state.isPasajeroSelected,
+                    "perfilConductor.enabled" to state.isConductorSelected,
+                    "edad" to edadInt,
+                    "telefono" to (telNormalizado ?: ""),
+                    "fechaNacimiento" to (fechaNacimientoTimestamp ?: Timestamp.now())
+                )
+
+                val file = nuevaFotoFile
+                if (file == null) {
+                    db.collection(usuario)
+                        .document(usuarioActual)
+                        .update(baseUpdates as Map<String, Any>)
+                        .addOnSuccessListener {
+                            _uiState.value = state.copy(
+                                pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                isSaveEnabled = false
+                            )
+                            success(true)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Error al actualizar perfil en Firestore", e)
+                            success(false)
+                        }
+                } else {
+                    val rutaStorage = "${DirectorioStorage.FotoPerfil}/$usuarioActual/${file.name}"
+                    val refStorage = FirebaseStorage.getInstance().reference.child(rutaStorage)
+                    val fileUri = Uri.fromFile(file)
+
+                    refStorage.putFile(fileUri)
+                        .continueWithTask { refStorage.downloadUrl }
+                        .addOnSuccessListener { uri ->
+                            val url = uri.toString()
+                            baseUpdates["fotoUrl"] = url
+
+                            db.collection(usuario)
+                                .document(usuarioActual)
+                                .update(baseUpdates as Map<String, Any>)
+                                .addOnSuccessListener {
+                                    nuevaFotoFile = null
+
+                                    _uiState.value = state.copy(
+                                        fotoPerfilUrl = url,
+                                        pasajeroEnabled  = if (state.isPasajeroSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                        conductorEnabled = if (state.isConductorSelected) Estado.ACTIVO else Estado.PENDIENTE,
+                                        isSaveEnabled = false
+                                    )
+                                    success(true)
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e(TAG, "Error al actualizar perfil + foto en Firestore", e)
+                                    success(false)
+                                }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Error subiendo foto de perfil a Storage", e)
+                            success(false)
+                        }
+                }
             }
         }
     }
@@ -170,12 +196,11 @@ class PerfilVM {
                         //DATOS DEL USUARIO
                         val nombre = document.getString("nombre").orEmpty()
                         val apellidos = document.getString("apellidos").orEmpty()
-                        val edad = (document.get("edad") as? Long)?.toInt() ?: 0
+                        val edad = (document.get("edad") as? Number)?.toInt() ?: 0
                         val email = document.getString("email").orEmpty()
                         val fotoUrl = document.getString("fotoUrl")
                         val telefono = document.getString("telefono").orEmpty()
-                        val fechaNacimiento = document.getLong("fechaNacimiento")
-
+                        val fechaNacimiento = document.getTimestamp("fechaNacimiento")?.toDate()?.time
                         val edadCalculada = calcularEdad(fechaNacimiento)
 
                         // PERFIL PASAJERO
@@ -416,7 +441,6 @@ class PerfilVM {
             )
         }
     }
-
 
     // Métodos para poder modificar los datos del vehículo
     fun onModeloChange(modelo: String){

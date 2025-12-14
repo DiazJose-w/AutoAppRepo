@@ -14,8 +14,11 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proyecto.autoapp.general.Coleccion
+import com.proyecto.autoapp.general.funcionesComunes.formatE164
 import com.proyecto.autoapp.general.modelo.enumClass.RolUsuario
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.toString
 
@@ -25,7 +28,8 @@ class LoginVM {
     private val auth = FirebaseAuth.getInstance()
 
     var usuarioLogeado: Map<String, Any>? = null
-    var uidActual: String = ""
+    private val _uidActual = MutableStateFlow("")
+    val uidActual = _uidActual.asStateFlow()
 
     val isLoading = MutableStateFlow(false)
     val loginSuccess = MutableStateFlow(false)
@@ -56,8 +60,8 @@ class LoginVM {
                         usuarioDocRef.get()
                             .addOnSuccessListener { user ->
                                 if (user.exists()) {
-                                    uidActual = user.id
-                                    Log.e("Jose", "Uid de usuario logeado $uidActual}")
+                                    setUidActual(user.id)
+                                    Log.e("Jose", "Uid de usuario logeado ${uidActual.value}}")
                                     onResult(true)
                                 } else {
                                     onResult(false)
@@ -92,20 +96,20 @@ class LoginVM {
                     val userAuth = auth.currentUser
 
                     if (userAuth != null) {
-                        val uid = userAuth.uid
+                        val uidUsuario = userAuth.uid
                         val firestore = FirebaseFirestore.getInstance()
-                        val usuarioDocRef = firestore.collection(usuario).document(uid)
+                        val usuarioDocRef = firestore.collection(usuario).document(uidUsuario)
 
                         usuarioDocRef.get()
                             .addOnSuccessListener { user ->
                                 if (user.exists()) {
                                     //usuarioLogeado = user.data
-                                    uidActual = user.id
+                                    setUidActual(user.id)
                                     val esNuevo = user.getBoolean("nuevo") ?: false
                                     if (esNuevo) {
                                         usuarioDocRef.update("nuevo", false)
                                     }
-                                    uid(uidActual)
+                                    uid(uidActual.value)
                                     onResult(true)
                                 } else {
                                     // Primero mapear los perfiles
@@ -125,7 +129,7 @@ class LoginVM {
 
                                     // 2. Montamos el documento del usuario
                                     val nuevoUsuario: Map<String, Any> = mapOf(
-                                        "id" to uid,
+                                        "id" to uidUsuario,
                                         "nombre" to (userAuth.displayName ?: ""),
                                         "apellidos" to "",
                                         "email" to (userAuth.email ?: ""),
@@ -142,14 +146,14 @@ class LoginVM {
                                         .set(nuevoUsuario)
                                         .addOnSuccessListener {
                                             //usuarioLogeado = nuevoUsuario
+                                            setUidActual(usuarioDocRef.id)
+                                            uid(uidActual.value)
                                             onResult(true)
                                         }
                                         .addOnFailureListener { e ->
                                             errorMessage.value = e.message ?: "Error guardando usuario nuevo"
                                             onResult(false)
                                         }
-                                    uidActual = usuarioDocRef.id
-                                    uid(uidActual)
                                 }
                             }
                             .addOnFailureListener { e ->
@@ -224,6 +228,10 @@ class LoginVM {
             }
     }
 
+    fun setUidActual(uid: String) {
+        _uidActual.value = uid
+    }
+
     /**
      * MÉTODOS Y HERRAMIENTAS PARA LA VERIFICACIÓN MEDIANTE SMS
      *  -> 1) Enviar SMS
@@ -248,7 +256,7 @@ class LoginVM {
             errorMessage.value = e.localizedMessage ?: "No se pudo verificar el teléfono"
         }
 
-        override fun onCodeSent( verificationId: String,token: PhoneAuthProvider.ForceResendingToken) {
+        override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
             super.onCodeSent(verificationId, token)
             isLoading.value = false
             this@LoginVM.verificationId = verificationId
@@ -266,8 +274,7 @@ class LoginVM {
     fun startPhoneVerification(activity: Activity, numberPhone: String) {
         if (numberPhone.isBlank()) {
             errorMessage.value = "Introduce un teléfono válido"
-
-        }else{
+        } else {
             isLoading.value = true
 
             val options = PhoneAuthOptions.newBuilder(auth)
@@ -281,23 +288,38 @@ class LoginVM {
         }
     }
 
-    fun comprobarTelefonoRegistrado(phoneE164: String, onResult: (Boolean) -> Unit) {
-        FirebaseFirestore.getInstance()
-            .collection(usuario)
-            .whereEqualTo("telefono", phoneE164)
-            .limit(1)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val existe = !snapshot.isEmpty
-                onResult(existe)
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Error comprobando teléfono", e)
-                errorMessage.value = e.message ?: "Error comprobando el teléfono"
-                onResult(false)
-            }
-    }
+    fun comprobarTelefonoRegistrado(email: String, phoneInput: String, onResult: (Boolean) -> Unit) {
+        val emailNorm = email.trim().lowercase(Locale.ROOT)
 
+        // Normaliza el teléfono a E.164 sin exigir +34 al usuario
+        val phoneE164 = if (phoneInput.isBlank()) null else formatE164(phoneInput, defaultRegion = "ES")
+
+        if (phoneInput.isNotBlank() && phoneE164 == null) {
+            Log.e(TAG, "Teléfono inválido: $phoneInput")
+            onResult(false)
+        } else {
+            Log.e(TAG, "QUERY emailNorm=[$emailNorm] len=${emailNorm.length}")
+            Log.e(TAG, "QUERY phoneInput=[$phoneInput] len=${phoneInput.length}")
+            Log.e(TAG, "QUERY phoneE164=[$phoneE164] len=${phoneE164?.length}")
+
+            FirebaseFirestore.getInstance()
+                .collection(usuario)
+                .whereEqualTo("telefono", phoneE164 ?: "")
+                .whereEqualTo("email", emailNorm)
+                .limit(1)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val existe = !snapshot.isEmpty
+                    Log.e(TAG, "Existe = $existe (tel=$phoneE164, email=$emailNorm)")
+                    onResult(existe)
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error comprobando teléfono", e)
+                    errorMessage.value = e.message ?: "Error comprobando el teléfono"
+                    onResult(false)
+                }
+        }
+    }
 
     fun resendCode(activity: Activity, phoneE164: String) {
         val token = resendToken ?: run { errorMessage.value = "No hay token de reenvío"; return }

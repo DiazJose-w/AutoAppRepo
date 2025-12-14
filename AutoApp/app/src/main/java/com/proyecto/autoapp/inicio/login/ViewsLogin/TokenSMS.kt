@@ -1,6 +1,7 @@
 package com.proyecto.autoapp.inicio.login.ViewsLogin
 
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,10 +38,12 @@ import com.proyecto.autoapp.ui.theme.*
 
 @Composable
 fun TokenSMS(navController: NavController, loginVM: LoginVM){
+    var TAG = "Jose"
     var context = LocalContext.current
 
     // Estados para teléfono y código
     var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
 
     val isLoading by loginVM.isLoading.collectAsState()
@@ -104,6 +107,27 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Email
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it.trim() },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = ThumbsUpMustard,
+                        unfocusedIndicatorColor = Color.White.copy(alpha = 1f),
+                        focusedLabelColor = ThumbsUpMustard,
+                        unfocusedLabelColor = Color.White.copy(alpha = 1f),
+                        cursorColor = ThumbsUpMustard,
+                        focusedTextColor = Color(0xFF111111),
+                        unfocusedTextColor = Color(0xFF111111)
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 // Teléfono (E.164)
                 OutlinedTextField(
                     value = phone,
@@ -122,9 +146,7 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                         unfocusedTextColor = Color(0xFF111111)
                     )
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
-
                 // Código (OTP de 6 dígitos)
                 OutlinedTextField(
                     value = code,
@@ -143,7 +165,6 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                         unfocusedTextColor = Color(0xFF111111)
                     )
                 )
-
                 Spacer(modifier = Modifier.height(30.dp))
                 var codeRequested by remember { mutableStateOf(false) }
 
@@ -154,14 +175,21 @@ fun TokenSMS(navController: NavController, loginVM: LoginVM){
                             if (formato == null) {
                                 Toast.makeText(context, "Formato de teléfono incorrecto", Toast.LENGTH_SHORT).show()
                             } else {
-                                loginVM.comprobarTelefonoRegistrado(formato) { existe ->
+                                Log.e(TAG, "Va a comprobar el teléfono")
+                                loginVM.comprobarTelefonoRegistrado(email, phone) { existe ->
                                     if (existe) {
-                                        loginVM.startPhoneVerification(context as Activity, formato)
-                                        codeRequested = true
+                                        val formato = formatE164(phone, defaultRegion = "ES")
+                                        if (formato == null) {
+                                            Toast.makeText(context, "Formato de teléfono incorrecto", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            loginVM.startPhoneVerification(context as Activity, formato)
+                                            codeRequested = true
+                                        }
                                     } else {
                                         Toast.makeText(context, "El número introducido no está asociado a ninguna cuenta", Toast.LENGTH_LONG).show()
                                     }
                                 }
+
                             }
                         } else {
                             if (code.length == 6) {

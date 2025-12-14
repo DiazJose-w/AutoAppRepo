@@ -45,7 +45,7 @@ fun ViewConductor(mapViewModel: MapViewModel, navController: NavHostController, 
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
 
-    val usuarioActual = loginVM.uidActual
+    val usuarioActual by loginVM.uidActual.collectAsState()
     var fotoPerfil by remember { mutableStateOf<String?>(null) }
     val uiState by perfilVM.uiState.collectAsState()
 
